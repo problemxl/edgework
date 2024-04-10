@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "edgework"
+version = "0.1.0"
+description = ""
+authors = ["Mark <email@email.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+yfpy = "^15.0.3"
+aiohttp = "^3.9.1"
+loguru = "^0.7.2"
+nhl-api-py = "^2.1.5"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+# flake8
+[tool.flake8]
+max-line-length = 120
