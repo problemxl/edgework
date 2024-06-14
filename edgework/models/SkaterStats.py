@@ -1,7 +1,8 @@
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 
+@dataclass
 class SkaterStats:
     """
     SkaterStats dataclass to store skater statistics.
@@ -31,7 +32,9 @@ class SkaterStats:
     """Points is the total number of combined goals and assists the player has."""
     points: int
 
-    """Plus/minus is the player's plus/minus rating. A positive number means the player's team has scored more goals while the player is on the ice than the opposing team. A negative number means the opposing team has scored more goals while the player is on the ice than the player's team."""
+    """Plus/minus is the player's plus/minus rating. A positive number means the player's team has scored more goals
+       while the player is on the ice than the opposing team. A negative number means the opposing team has scored more
+       goals while the player is on the ice than the player's team."""
     plus_minus: int
 
     """Penalties is the number of penalties the player has taken."""
@@ -76,5 +79,6 @@ class SkaterStats:
     """Power play time on ice is the total amount of time the player has spent on the ice during power plays."""
     power_play_toi: timedelta
 
-    """Short handed time on ice is the total amount of time the player has spent on the ice during short handed situations."""
+    """Short handed time on ice is the total amount of time the player has spent on the ice during short handed
+       situations."""
     short_handed_toi: timedelta

@@ -16,6 +16,8 @@ class Game:
     home_team_score: int
     season: int
 
+    _base_url
+
     @property
     def game_time(self):
         return self.start_time_utc.strftime("%I:%M %p")
@@ -28,3 +30,10 @@ class Game:
 
     def __eq__(self, other):
         return self.game_id == other.game_id
+    
+    def __hash__(self):
+        return hash(self.game_id)
+    
+    def _get(self):
+        """Get the game information."""
+        
