@@ -16,7 +16,7 @@ class Game:
     home_team_score: int
     season: int
 
-    _base_url
+    venue: str
 
     @property
     def game_time(self):
@@ -37,3 +37,19 @@ class Game:
     def _get(self):
         """Get the game information."""
         
+    @classmethod
+    def from_dict(cls, data: dict):
+        return cls(
+            game_id=data.get("game_id"),
+            game_date=data.get("game_date"),
+            start_time_utc=data.get("start_time_utc"),
+            game_state=data.get("game_state"),
+            away_team_abbrev=data.get("away_team_abbrev"),
+            away_team_id=data.get("away_team_id"),
+            away_team_score=data.get("away_team_score"),
+            home_team_abbrev=data.get("home_team_abbrev"),
+            home_team_id=data.get("home_team_id"),
+            home_team_score=data.get("home_team_score"),
+            season=data.get("season"),
+            venue=data.get("venue")
+        )

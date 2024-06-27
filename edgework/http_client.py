@@ -21,7 +21,8 @@ class SyncHttpClient(AbstractHttpClient):
 
     def get(self, path: str, params: dict = {}) -> httpx.Response:
         with httpx.Client(follow_redirects=True) as client:
-            return client.get(f"{self.API__BASE_URL}/{self.API_VERSION}/{path}", params=params)
+            print(f"{self.WEB_BASE_URL}/{self.API_VERSION}/{path}")
+            return client.get(f"{self.WEB_BASE_URL}/{self.API_VERSION}/{path}", params=params)
 
 
 class AsyncHttpClient(AbstractHttpClient):
