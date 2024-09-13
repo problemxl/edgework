@@ -19,6 +19,16 @@ class PeriodTime:
     def total_seconds(self):
         return self.minutes * 60 + self.seconds
 
+    @property
+    def timedelta(self):
+        return timedelta(minutes=self.minutes, seconds=self.seconds)
+
+    def __sub__(self, other):
+        if isinstance(other, PeriodTime):
+            return self.timedelta - other.timedelta
+
+        if isinstance(other, timedelta):
+            return self.timedelta - other
 
 @dataclass
 class Shift:

@@ -36,14 +36,13 @@ class Schedule:
     @classmethod
     def from_dict(cls, data: dict) -> "Schedule":
         return cls(
-            # next_start_date=datetime.fromisoformat(data["nextStartDate"]),
-            previous_start_date=datetime.fromisoformat(data["previousStartDate"]),
-            games=data.get("games", []),
-            pre_season_start_date=datetime.fromisoformat(data["preSeasonStartDate"]),
-            regular_season_start_date=datetime.fromisoformat(data["regularSeasonStartDate"]),
-            regular_season_end_date=datetime.fromisoformat(data["regularSeasonEndDate"]),
-            playoff_end_date=datetime.fromisoformat(data["playoffEndDate"]),
-            number_of_games=data["numberOfGames"],
+            previous_start_date=datetime.fromisoformat(data["previousStartDate"]) if data["previousStartDate"] else None,
+            games=data.get("games") if data.get("games") is not None else [game for day in data.get("gameWeek") for game in day["games"]],
+            pre_season_start_date=datetime.fromisoformat(data["preSeasonStartDate"]) if data.get("preSeasonStartDate") is not None else None,
+            regular_season_start_date=datetime.fromisoformat(data["regularSeasonStartDate"]) if data.get("regularSeasonStartDate") is not None else None,
+            regular_season_end_date=datetime.fromisoformat(data["regularSeasonEndDate"]) if data.get("regularSeasonEndDate") is not None else None,
+            playoff_end_date=datetime.fromisoformat(data["playoffEndDate"]) if data.get("playoffEndDate") is not None else None,
+            number_of_games=data["numberOfGames"] if data.get("numberOfGames") is not None else 0,
         )        
 
     @classmethod
@@ -53,10 +52,9 @@ class Schedule:
         res = await client.get(path)
         data = res.json()
         return Schedule(
-            next_start_date=datetime.fromisoformat(data["nextStartDate"]),
             previous_start_date=datetime.fromisoformat(data["previousStartDate"]),
-            games=data["gameWeek"],
-            pre_season_start_date=datetime.fromisoformat(data["preSeasonStartDate"]),
+            games=[game for day in data.get("gameWeek") for game in day["games"]],
+            pre_season_start_date=datetime.fromisoformat(data.get("preSeasonStartDate")),
             regular_season_start_date=datetime.fromisoformat(data["regularSeasonStartDate"]),
             regular_season_end_date=datetime.fromisoformat(data["regularSeasonEndDate"]),
             playoff_end_date=datetime.fromisoformat(data["playoffEndDate"]),

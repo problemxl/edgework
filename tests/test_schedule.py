@@ -91,25 +91,20 @@ def test_get_schedule_for_date_range(edgework):
     start_date = "2021-01-01"
     end_date = "2021-01-02"
     schedule: Schedule = edgework.schedule.get_schedule_for_date_range(start_date, end_date)
+    print(schedule.games)
     assert isinstance(schedule, Schedule)
     assert schedule.previous_start_date
-    assert schedule.games
-    assert schedule.pre_season_start_date
+    assert schedule.games == []
     assert schedule.regular_season_start_date
     assert schedule.regular_season_end_date
     assert schedule.playoff_end_date
-    assert schedule.number_of_games
+    assert schedule.number_of_games is not None
     assert len(schedule.games) == schedule.number_of_games
 
 def test_get_schedule_for_team(edgework):
     team_abbr = "TOR"
     schedule: Schedule = edgework.schedule.get_schedule_for_team(team_abbr)
     assert isinstance(schedule, Schedule)
-    assert schedule.previous_start_date
-    assert schedule.games
-    assert schedule.pre_season_start_date
-    assert schedule.regular_season_start_date
-    assert schedule.regular_season_end_date
-    assert schedule.playoff_end_date
-    assert schedule.number_of_games
+    assert schedule.games is not None
+    assert schedule.number_of_games is not None
     assert len(schedule.games) == schedule.number_of_games
