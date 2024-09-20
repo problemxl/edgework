@@ -1,7 +1,10 @@
+import threading
 from abc import ABC, abstractmethod
+
 import httpx
 
-class AbstractHttpClient(ABC):
+
+class HttpClient(ABC):
     WEB_BASE_URL: str = "https://api-web.nhle.com"
     API_BASE_URL: str = "https://api.nhle.com"
     API_VERSION: str = "v1"
@@ -11,21 +14,37 @@ class AbstractHttpClient(ABC):
         pass
 
     @abstractmethod
-    def get(self, path: str, params: dict):
+    def get(self, path: str, params: dict, web: bool) -> httpx.Response:
         pass
 
 
-class SyncHttpClient(AbstractHttpClient):
+class SyncHttpClient(HttpClient):
+    _instance = None
+    _lock = threading.Lock()
+
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            with cls._lock:
+                if not cls._instance:
+                    cls._instance = super(SyncHttpClient, cls).__new__(cls)
+        return cls._instance
+
     def __init__(self):
-        self.client = httpx.Client()
+        if not hasattr(self, 'client'):
+            self.client = httpx.Client()
 
-    def get(self, path: str, params: dict = {}) -> httpx.Response:
-        with httpx.Client(follow_redirects=True) as client:
-            # print(f"{self.WEB_BASE_URL}/{self.API_VERSION}/{path}")
-            return client.get(f"{self.WEB_BASE_URL}/{self.API_VERSION}/{path}", params=params)
+    def get(self, path: str, params=None, web=True) -> httpx.Response:
+        if params is None:
+            params = {}
+        if web:
+            return self.client.get(f"{self.WEB_BASE_URL}/{self.API_VERSION}/{path}", params=params)
+        return self.client.get(f"{self.API_BASE_URL}/stats/{path}", params=params)
+
+    def __del__(self):
+        self.client.close()
 
 
-class AsyncHttpClient(AbstractHttpClient):
+class AsyncHttpClient(HttpClient):
     def __init__(self):
         self.client = httpx.AsyncClient()
 

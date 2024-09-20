@@ -12,7 +12,9 @@ class PeriodTime:
             raise ValueError("Time cannot be negative")
         if self.seconds >= 60:
             raise ValueError("Seconds must be less than 60")
-        if self.minutes >= 20:
+        if self.minutes > 20:
+            raise ValueError("Minutes must be less than 20")
+        if self.minutes == 20 and self.seconds > 0:
             raise ValueError("Minutes must be less than 20")
 
     @property
@@ -30,12 +32,13 @@ class PeriodTime:
         if isinstance(other, timedelta):
             return self.timedelta - other
 
+
 @dataclass
 class Shift:
     """
     Shift dataclass to store shift information.
 
-    A shift is a period of time where a player is on the ice.
+    A shift is a period of time when a player is on the ice.
     """
 
     """Shift ID is a unique identifier for the shift."""
@@ -47,8 +50,11 @@ class Shift:
     """Player ID is the unique identifier for the player on the shift."""
     player_id: int
 
-    """Player name is the name of the player on the shift."""
-    player_name: str
+    """The first name of the player on the shift."""
+    first_name: str
+
+    """The last name of the player on the shift."""
+    last_name: str
 
     """Period is the period of the game the shift is in."""
     period: int
@@ -65,26 +71,38 @@ class Shift:
     """Shift number is the order of the shift in the game."""
     shift_number: int
 
+    """Team id is the team the player is on."""
+    team_id: int
+
+    """The team the player is on."""
+    team_abbrev: str
+
     def __init__(
         self,
         shift_id: int,
         game_id: int,
         player_id: int,
-        player_name: str,
+            first_name: str,
+            last_name: str,
         period: int,
         shift_start: str,
         shift_end: str,
         shift_number: int,
+            team_id: int,
+            team_abbrev: str,
     ):
         self.shift_id = shift_id
         self.game_id = game_id
         self.player_id = player_id
-        self.player_name = player_name
+        self.first_name = first_name
+        self.last_name = last_name
         self.period = period
         self.shift_start = PeriodTime(shift_start)
         self.shift_end = PeriodTime(shift_end)
         self.duration = timedelta(seconds=self.shift_end.total_seconds - self.shift_start.total_seconds)
         self.shift_number = shift_number
+        self.team_id = team_id
+        self.team_abbrev = team_abbrev
 
     @property
     def shift_length(self):
@@ -98,3 +116,25 @@ class Shift:
 
     def __eq__(self, other):
         return self.shift_id == other.shift_id
+
+    @classmethod
+    def from_api(cls, data):
+        """
+
+        :param data:
+        :return:
+        """
+        d = {
+            "shift_id": data["id"],
+            "game_id": data["gameId"],
+            "player_id": data["playerId"],
+            "first_name": data["firstName"],
+            "last_name": data["lastName"],
+            "period": data["period"],
+            "shift_start": data["startTime"],
+            "shift_end": data["endTime"],
+            "shift_number": data["shiftNumber"],
+            "team_id": data["teamId"],
+            "team_abbrev": data["teamAbbrev"],
+        }
+        return cls(**d)

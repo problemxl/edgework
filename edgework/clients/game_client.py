@@ -1,9 +1,12 @@
 from datetime import datetime
-from httpx import Client
+
+from edgework.http_client import HttpClient
 from edgework.models.game import Game
+from edgework.models.shift import Shift
+
 
 class GameClient:
-    def __init__(self, client: Client):
+    def __init__(self, client: HttpClient):
         self._client = client
 
     def get_game(self, game_id: int) -> Game:
@@ -25,4 +28,10 @@ class GameClient:
             "venue": data.get("venue").get("default")
         }
 
-        return Game.from_dict(game_dict)
+        return Game.from_dict(game_dict, self._client)
+
+    def get_shifts(self, game_id: int) -> list[Shift]:
+        response = self._client.get(f"/rest/en/shiftcharts?cayenneExp=gameId={game_id}")
+        data = response.json()["data"]
+        shifts = [Shift.from_api(d) for d in data]
+        return shifts
