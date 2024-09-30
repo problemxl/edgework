@@ -37,8 +37,14 @@ class SyncHttpClient(HttpClient):
         if params is None:
             params = {}
         if web:
-            return self.client.get(f"{self.WEB_BASE_URL}/{self.API_VERSION}/{path}", params=params)
-        return self.client.get(f"{self.API_BASE_URL}/stats/{path}", params=params)
+            return self.client.get(f"{self.WEB_BASE_URL}/{self.API_VERSION}/{path}", params=params,
+                                   follow_redirects=True)
+        return self.client.get(f"{self.API_BASE_URL}/stats/{path}", params=params, follow_redirects=True)
+
+    def get_raw(self, url: str, params=None) -> httpx.Response:
+        if params is None:
+            params = {}
+        return self.client.get(url, params=params, follow_redirects=True)
 
     def __del__(self):
         self.client.close()

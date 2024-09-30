@@ -1,10 +1,9 @@
-from datetime import datetime, timedelta
 import re
-from enum import nonmember
-from pprint import pprint
+from datetime import datetime, timedelta
 
 from edgework.http_client import SyncHttpClient
 from edgework.models.schedule import Schedule
+
 
 class ScheduleClient:
     def __init__(self, client: SyncHttpClient):
@@ -12,15 +11,15 @@ class ScheduleClient:
 
     def get_schedule(self) -> Schedule:
         response = self._client.get('schedule/now')
-        
+        data = response.json()
         schedule_dict = {
-            "previousStartDate": response.json()["previousStartDate"],
-            "games": [game for day in response.json()["gameWeek"] for game in day["games"]],
-            "preSeasonStartDate": response.json()["preSeasonStartDate"],
-            "regularSeasonStartDate": response.json()["regularSeasonStartDate"],
-            "regularSeasonEndDate": response.json()["regularSeasonEndDate"],
-            "playoffEndDate": response.json()["playoffEndDate"],
-            "numberOfGames": response.json()["numberOfGames"]
+            "previousStartDate": data["previousStartDate"],
+            "games": [game for day in data["gameWeek"] for game in day["games"]],
+            "preSeasonStartDate": data["preSeasonStartDate"],
+            "regularSeasonStartDate": data["regularSeasonStartDate"],
+            "regularSeasonEndDate": data["regularSeasonEndDate"],
+            "playoffEndDate": data["playoffEndDate"],
+            "numberOfGames": data["numberOfGames"]
         }
         return Schedule.from_dict(schedule_dict)
     

@@ -2,6 +2,7 @@ from datetime import datetime
 
 from edgework.http_client import HttpClient
 from edgework.models.game import Game
+from edgework.models.game_events import GameEvent
 from edgework.models.shift import Shift
 
 
@@ -35,3 +36,8 @@ class GameClient:
         data = response.json()["data"]
         shifts = [Shift.from_api(d) for d in data]
         return shifts
+
+    def get_play_by_play(self, game_id: int) -> list[Shift]:
+        response = self._client.get(f"gamecenter/{game_id}/play-by-play")
+        data = response.json()
+        plays = [GameEvent]
