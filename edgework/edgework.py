@@ -11,3 +11,5 @@ class Edgework:
         self.schedule: ScheduleClient = ScheduleClient(self._client)
         self.game: GameClient = GameClient(self._client)
         self.standings: StandingClient = StandingClient(self._client)
+
+
