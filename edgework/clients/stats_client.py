@@ -1,6 +1,7 @@
 from edgework.http_client import HttpClient
 from edgework.models.player_stats import SkaterStats
-
+from edgework.models.team_stats import TeamStats
+from edgework.models.goalie_stats import GoalieStats
 from edgework.utilities import dict_camel_to_snake
 
 
@@ -86,7 +87,7 @@ class StatsClient:
 
     def get_goalies_stats(
             self,
-            report: str,
+            report: str = "summary",
             aggregate: bool,
             game: bool,
             limit: int,
@@ -106,7 +107,47 @@ class StatsClient:
         skater_stats_dict = [dict_camel_to_snake(d) for d in data]
         return [SkaterStats(**d) for d in skater_stats_dict]
 
-    def get_team_stats(self, season: int):
+    def get_team_stats(
+            self,
+            report: str = "summary",
+            aggregate: bool,
+            game: bool,
+            limit: int,
+            start: int,
+            sort: str,
+            season: int,
+    ) -> list[TeamStats]:
+
         response = self._client.get(f"en/team/stats?cayenneExp=seasonId={season}")
         data = response.json()["data"]
-        return data
+        team_stats_dict = [dict_camel_to_snake(d) for d in data]
+        return [TeamStats(**d) for d in team_stats_dict]
+
+
+    def get_goalie_stats(
+            self,
+            report: str = "summary",
+            aggregate: bool,
+            game: bool,
+            limit: int,
+            start: int,
+            sort: str,
+            season: int,
+    ) -> list[GoalieStats]:
+        """
+        Get goalie stats for a given season.
+        """
+        if report not in self.goalie_reports:
+            raise ValueError(
+                f"Invalid report: {report}, must be one of {', '.join(self.goalie_reports)}"
+            )
+
+        response = self._client.get(
+            f"en/goalie/{report}?isAggregate={aggregate}&isGame={game}&limit={limit}&start={start}&sort={sort}&cayenneExp=seasonId={season}"
+        )
+
+        data = response.json()["data"]
+        goalie_stats_dict = [dict_camel_to_snake(d) for d in data]
+
+        return [GoalieStats(**d) for d in goalie_stats_dict]
+

@@ -89,9 +89,34 @@ class SkaterStats:
 @dataclass
 class GoalieStats:
     """
-
+    GoalieStats dataclass to store goalie statistics.
     """
-
+    assists: int
+    game_date: datetime
+    game_id: int
+    games_played: int
+    games_started: int
+    goalie_full_name: str
+    goals: int
+    goals_against: int
+    goals_against_average: float
+    home_road: str
+    last_name: str
+    losses: int
+    opponent_team_abbrev: str
+    ot_losses: int
+    penalty_minutes: int
+    player_id: int
+    points: int
+    save_pct: Optional[float]
+    saves: int
+    shoots_catches: str
+    shots_against: int
+    shutouts: int
+    team_abbrev: str
+    ties: None
+    time_on_ice: int
+    wins: int
 
 @dataclass
 class TeamStats:
