@@ -1,5 +1,7 @@
 from dataclasses import dataclass
-from datetime import timedelta
+from datetime import datetime, timedelta
+
+from typing import Optional
 
 
 @dataclass
@@ -83,14 +85,13 @@ class SkaterStats:
        situations."""
     short_handed_toi: timedelta
 
-    
-
 
 @dataclass
 class GoalieStats:
     """
     GoalieStats dataclass to store goalie statistics.
     """
+
     assists: int
     game_date: datetime
     game_id: int
@@ -117,6 +118,7 @@ class GoalieStats:
     ties: None
     time_on_ice: int
     wins: int
+
 
 @dataclass
 class TeamStats:

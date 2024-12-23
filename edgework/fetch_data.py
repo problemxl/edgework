@@ -1,10 +1,7 @@
 import asyncio
-import json
 import pickle
 import os
-import sys
 
-import aiohttp
 from aiohttp import ClientSession
 from nhlpy import NHLClient
 
@@ -13,12 +10,6 @@ from loguru import logger
 cache_dir = os.path.join(os.path.dirname(__file__), ".cache")
 if not os.path.exists(cache_dir):
     os.makedirs(cache_dir)
-
-DATABASE_HOST = os.environ.get("DATABASE_HOST", "localhost")
-DATABASE_USER = os.environ.get("DATABASE_USER", "edgework")
-DATABASE_PASSWORD = os.environ.get("DATABASE_PASSWORD", "edgework")
-DATABASE_NAME = os.environ.get("DATABASE_NAME", "edgework")
-DATABASE_PORT = os.environ.get("DATABASE_PORT", 5432)
 
 
 class NHLDataGatherer:
@@ -88,7 +79,8 @@ class NHLDataGatherer:
             os.path.join(cache_dir, f"schedules_{season}_{team_abbrev}.pkl")
         ):
             with open(
-                os.path.join(cache_dir, f"schedules_{season}_{team_abbrev}.pkl"), "rb"
+                os.path.join(cache_dir, f"schedules_{
+                             season}_{team_abbrev}.pkl"), "rb"
             ) as f:
                 return pickle.load(f)
 
@@ -96,7 +88,8 @@ class NHLDataGatherer:
 
         if cache:
             with open(
-                os.path.join(cache_dir, f"schedules_{season}_{team_abbrev}.pkl"), "wb"
+                os.path.join(cache_dir, f"schedules_{
+                             season}_{team_abbrev}.pkl"), "wb"
             ) as f:
                 pickle.dump(schedule, f)
         return schedule
@@ -224,7 +217,8 @@ class NHLDataGatherer:
             with open(os.path.join(cache_dir, f"team_stats_{season}.pkl"), "rb") as f:
                 return pickle.load(f)
 
-        team_api_url = f"https://api.nhle.com/stats/rest/en/team/summary?isAggregate=false&isGame=false&start=00&limit=100&factCayenneExp=gamesPlayed%3E=1&cayenneExp=gameTypeId=2%20and%20seasonId%3C={season}%20and%20seasonId%3E={season}"
+        team_api_url = f"https://api.nhle.com/stats/rest/en/team/summary?isAggregate=false&isGame=false&start=00&limit=100&factCayenneExp=gamesPlayed%3E=1&cayenneExp=gameTypeId=2%20and%20seasonId%3C={
+            season}%20and%20seasonId%3E={season}"
 
         async with ClientSession() as session:
             team_stats = await self._fetch_url(session, team_api_url)
@@ -255,7 +249,8 @@ class NHLDataGatherer:
                 player_landing_url = (
                     f"https://api-web.nhle.com/v1/player/{player_id}/landing"
                 )
-                fetch_tasks.append(self._fetch_url(session, player_landing_url))
+                fetch_tasks.append(self._fetch_url(
+                    session, player_landing_url))
 
             player_landings = await asyncio.gather(*fetch_tasks)
 
@@ -278,7 +273,8 @@ class NHLDataGatherer:
             with open(os.path.join(cache_dir, f"skater_stats_{season}.pkl"), "rb") as f:
                 return pickle.load(f)
 
-        skater_api_url = f"https://api.nhle.com/stats/rest/en/skater/summary?isAggregate=false&isGame=false&start=0&limit=100&factCayenneExp=gamesPlayed%3E=1&cayenneExp=gameTypeId=2%20and%20seasonId%3C={season}%20and%20seasonId%3E={season}"
+        skater_api_url = f"https://api.nhle.com/stats/rest/en/skater/summary?isAggregate=false&isGame=false&start=0&limit=100&factCayenneExp=gamesPlayed%3E=1&cayenneExp=gameTypeId=2%20and%20seasonId%3C={
+            season}%20and%20seasonId%3E={season}"
 
         async with ClientSession() as session:
             skater_stats: list[dict] = await self._fetch_url(session, skater_api_url)
@@ -290,7 +286,39 @@ class NHLDataGatherer:
         return skater_stats
 
     async def get_goalie_stats(self, season: int, cache: bool = False) -> list[dict]:
-        pass
+        """
+        Gets all goalie stats for a given season
+
+        :param season: The season to get the stats for
+        :param cache: Whether or not to cache the data
+        :return: All goalie stats
+        """
+        logger.info("Fetching goalie stats | cache={cache}")
+
+        logger.trace(
+
+
+        if cache and os.path.exists(os.path.join(cache_dir, "goalie_stats.pkl")):
+            logger.trace("Loading goalie stats from cache")
+            with open(os.path.join(cache_dir, "goalie_stats.pkl"), "rb") as f:
+                return pickle.load(f)
+
+        goalie_stats=[]
+
+        goalie_funcs=[]
+
+        async with ClientSession() as session:
+            goalie_funcs.append(self._fetch_url(session, f"https://api.nhle.com/stats/rest/en/goalie/summary?isAggregate=false&isGame=false&start=0&limit=100&factCayenneExp=gamesPlayed%3E=1&cayenneExp=gameTypeId=2%20and%20seasonId%3C={season}%20and%20seasonId%3E={season}")
+
+        if cache:
+   f"Checking cache | cache={cache} | file exists={
+       os.path.exists(os.path.join(cache_dir, 'goalie_stats.pkl'))}"
+        )
+   f"Checking cache | cache={cache} | file exists={
+       os.path.exists(os.path.join(cache_dir, 'goalie_stats.pkl'))}"
+        )
+
+    async def get_all_player_stats(self, cache: bool = False) -> list[dict]:
 
     async def get_all_player_stats(self, cache: bool = False) -> list[dict]:
         """
@@ -301,13 +329,13 @@ class NHLDataGatherer:
         """
         logger.info("Fetching player stats | cache={cache}")
 
-        logger.trace(
+                os.path.exists(os.path.join(cache_dir, 'player_stats.pkl'))}"        logger.trace(
             f"Checking cache | cache={cache} | file exists={os.path.exists(os.path.join(cache_dir, 'player_stats.pkl'))}"
         )
         if cache and os.path.exists(os.path.join(cache_dir, "player_stats.pkl")):
             logger.trace("Loading player stats from cache")
             with open(os.path.join(cache_dir, "player_stats.pkl"), "rb") as f:
-                return pickle.load(f)
+                retu=pickle.load(f)
 
         player_stats = []
         for season in self.seasons:
@@ -320,7 +348,7 @@ class NHLDataGatherer:
 
         return player_stats
 
-    async def get_shift_data(
+=    async def get_shift_data(
         self, game_ids: list[int], cache: bool = False
     ) -> list[dict]:
         """
@@ -331,23 +359,24 @@ class NHLDataGatherer:
         """
         logger.info("Fetching shift data | cache={cache}")
 
-        logger.trace(
+
+                os.path.exists(os.path.join(cache_dir, 'shift_data.pkl'))}"        logger.trace(
             f"Checking cache | cache={cache} | file exists={os.path.exists(os.path.join(cache_dir, 'shift_data.pkl'))}"
         )
         if cache and os.path.exists(os.path.join(cache_dir, "shift_data.pkl")):
             logger.trace("Loading shift data from cache")
             with open(os.path.join(cache_dir, "shift_data.pkl"), "rb") as f:
-                return pickle.load(f)
-
-        shift_data = []
+                re=[]
+        fetch_tasks=        shift_data = []
         fetch_tasks = []
-        async with ClientSession() as session:
-            logger.trace(f"Building fetch tasks | # of game_ids={len(game_ids)}")
-            for game_id in game_ids:
+
+                         len(game_ids)}")        async with ClientSession() as session:
+            logger.trace(=f"https://api.nhle.com/stats/rest/en/shiftcharts?cayenneExp=gameId={
+                    game_id}"            for game_id in game_ids:
                 shift_url = f"https://api.nhle.com/stats/rest/en/shiftcharts?cayenneExp=gameId={game_id}"
                 fetch_tasks.append(self._fetch_url(session, shift_url))
 
-            logger.trace("Gathering tasks | # of tasks={len(fetch_tasks)}")
+=            logger.trace("Gathering tasks | # of tasks={len(fetch_tasks)}")
             shift_data = await asyncio.gather(*fetch_tasks)
 
         logger.trace(f"Shift data fetched | # of games={len(shift_data)}")
@@ -371,4 +400,5 @@ class NHLDataGatherer:
                 return pickle.load(f)
         else:
             logger.trace("Teams not cached")
+            raise FileNotFoundError("Teams not cached")
             raise FileNotFoundError("Teams not cached")
