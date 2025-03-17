@@ -64,18 +64,36 @@ class PlayerClient:
         return landing_to_dict(data)
 
     def get_all_players(self) -> list[Player]:
-        response = self._client.get('https://search.d3.nhle.com/api/v1/search/player?culture=en-us&limit=25000&q=*')
+        response = self._client.get_raw('https://search.d3.nhle.com/api/v1/search/player?culture=en-us&limit=25000&q=*')
         data = response.json()
         return [Player(**api_to_dict(player)) for player in data]
 
     def get_all_active_players(self) -> list[Player]:
-        response = self._client.get(
-            'https://search.d3.nhle.com/api/v1/search/player?culture=en-us&limit=25000&q=*&active=true')
+        params = {
+            "culture": "en-us",
+            "limit": 25000,
+            "q": "*",
+            "active": True
+        }
+
+
+        response = self._client.get_raw(
+            'https://search.d3.nhle.com/api/v1/search/player', params=params)
         data = response.json()
+        for player in data:
+            print(player)
+        print(data)
         return [Player(**api_to_dict(player)) for player in data]
 
     def get_all_inactive_players(self) -> list[Player]:
-        response = self._client.get(
+        params = {
+            "culture": "en-us",
+            "limit": 25000,
+            "q": "*",
+            "active": False
+        }
+        response = self._client.get_raw(
             'https://search.d3.nhle.com/api/v1/search/player?culture=en-us&limit=25000&q=*&active=false')
         data = response.json()
+        
         return [Player(**api_to_dict(player)) for player in data]

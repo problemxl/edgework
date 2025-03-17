@@ -1,21 +1,43 @@
-from dataclasses import dataclass
 from datetime import timedelta
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
-class PeriodTime:
-    minutes: int
-    seconds: int
+class PeriodTime(BaseModel):
+    minutes: int = Field(description="Minutes in the period time")
+    seconds: int = Field(description="Seconds in the period time")
 
-    def __init__(self, time_str):
-        self.minutes, self.seconds = map(int, time_str.split(":"))
-        if self.minutes < 0 or self.seconds < 0:
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.validate
+
+    @classmethod
+    def validate(cls, v):
+        if isinstance(v, str):
+            minutes, seconds = map(int, v.split(":"))
+            return cls(minutes=minutes, seconds=seconds)
+        return v
+
+    @field_validator('minutes')
+    def validate_minutes(cls, v):
+        if v < 0:
             raise ValueError("Time cannot be negative")
-        if self.seconds >= 60:
-            raise ValueError("Seconds must be less than 60")
-        if self.minutes > 20:
+        if v > 20:
             raise ValueError("Minutes must be less than 20")
+        return v
+
+    @field_validator('seconds')
+    def validate_seconds(cls, v):
+        if v < 0:
+            raise ValueError("Time cannot be negative")
+        if v >= 60:
+            raise ValueError("Seconds must be less than 60")
+        return v
+
+    @model_validator(mode='after')
+    def validate_time(self):
         if self.minutes == 20 and self.seconds > 0:
             raise ValueError("Minutes must be less than 20")
+        return self
 
     @property
     def total_seconds(self):
@@ -33,76 +55,30 @@ class PeriodTime:
             return self.timedelta - other
 
 
-@dataclass
-class Shift:
+class Shift(BaseModel):
     """
-    Shift dataclass to store shift information.
+    Shift model to store shift information.
 
     A shift is a period of time when a player is on the ice.
     """
+    shift_id: int = Field(description="Unique identifier for the shift")
+    game_id: int = Field(description="Unique identifier for the game the shift is in")
+    player_id: int = Field(description="Unique identifier for the player on the shift")
+    first_name: str = Field(description="The first name of the player on the shift")
+    last_name: str = Field(description="The last name of the player on the shift")
+    period: int = Field(description="Period of the game the shift is in")
+    shift_start: PeriodTime = Field(description="Time the shift started")
+    shift_end: PeriodTime = Field(description="Time the shift ended")
+    shift_number: int = Field(description="Order of the shift in the game")
+    team_id: int = Field(description="Team the player is on")
+    team_abbrev: str = Field(description="Abbreviation of the team the player is on")
+    
+    class Config:
+        arbitrary_types_allowed = True
 
-    """Shift ID is a unique identifier for the shift."""
-    shift_id: int
-
-    """Game ID is the unique identifier for the game the shift is in."""
-    game_id: int
-
-    """Player ID is the unique identifier for the player on the shift."""
-    player_id: int
-
-    """The first name of the player on the shift."""
-    first_name: str
-
-    """The last name of the player on the shift."""
-    last_name: str
-
-    """Period is the period of the game the shift is in."""
-    period: int
-
-    """Shift start is the time the shift started."""
-    shift_start: PeriodTime
-
-    """Shift end is the time the shift ended."""
-    shift_end: PeriodTime
-
-    """Duration is the length of the shift."""
-    duration: timedelta
-
-    """Shift number is the order of the shift in the game."""
-    shift_number: int
-
-    """Team id is the team the player is on."""
-    team_id: int
-
-    """The team the player is on."""
-    team_abbrev: str
-
-    def __init__(
-        self,
-        shift_id: int,
-        game_id: int,
-        player_id: int,
-            first_name: str,
-            last_name: str,
-        period: int,
-        shift_start: str,
-        shift_end: str,
-        shift_number: int,
-            team_id: int,
-            team_abbrev: str,
-    ):
-        self.shift_id = shift_id
-        self.game_id = game_id
-        self.player_id = player_id
-        self.first_name = first_name
-        self.last_name = last_name
-        self.period = period
-        self.shift_start = PeriodTime(shift_start)
-        self.shift_end = PeriodTime(shift_end)
-        self.duration = timedelta(seconds=self.shift_end.total_seconds - self.shift_start.total_seconds)
-        self.shift_number = shift_number
-        self.team_id = team_id
-        self.team_abbrev = team_abbrev
+    @property
+    def duration(self) -> timedelta:
+        return timedelta(seconds=self.shift_end.total_seconds - self.shift_start.total_seconds)
 
     @property
     def shift_length(self):
@@ -120,21 +96,21 @@ class Shift:
     @classmethod
     def from_api(cls, data):
         """
-
-        :param data:
-        :return:
+        Create a Shift object from API data.
+        
+        :param data: API data dictionary
+        :return: Shift object
         """
-        d = {
-            "shift_id": data["id"],
-            "game_id": data["gameId"],
-            "player_id": data["playerId"],
-            "first_name": data["firstName"],
-            "last_name": data["lastName"],
-            "period": data["period"],
-            "shift_start": data["startTime"],
-            "shift_end": data["endTime"],
-            "shift_number": data["shiftNumber"],
-            "team_id": data["teamId"],
-            "team_abbrev": data["teamAbbrev"],
-        }
-        return cls(**d)
+        return cls(
+            shift_id=data["id"],
+            game_id=data["gameId"],
+            player_id=data["playerId"],
+            first_name=data["firstName"],
+            last_name=data["lastName"],
+            period=data["period"],
+            shift_start=data["startTime"],
+            shift_end=data["endTime"],
+            shift_number=data["shiftNumber"],
+            team_id=data["teamId"],
+            team_abbrev=data["teamAbbrev"],
+        )

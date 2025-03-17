@@ -19,6 +19,7 @@ dependencies = [
     "loguru<1.0.0,>=0.7.2",
     "nhl-api-py<3.0.0,>=2.1.5",
     "httpx<1.0.0,>=0.27.0",
+    "pydantic>=2.10.6",
 ]
 name = "edgework"
 version = "0.1.0"

@@ -1,115 +1,96 @@
-from dataclasses import dataclass
+from pydantic import BaseModel, Field
 from datetime import datetime
+from typing import List, Dict
 
 
-@dataclass
-class Seeding:
-    """
-    Seeding dataclass to store seeding information.
-
-    Attributes:
-        clinch_indicator (str): The clinch indicator.
-        conference_abbrev (str): The conference abbreviation.
-        conference_home_sequence (int): The conference home sequence.
-
-
-    """
-    conference_abbrev: str
-    conference_home_sequence: int
-    conference_l10_sequence: int
-    conference_name: str
-    conference_road_sequence: int
-    conference_sequence: int
-    date: datetime
-    division_abbrev: str
-    division_home_sequence: int
-    division_l10_sequence: int
-    division_name: str
-    division_road_sequence: int
-    division_sequence: int
-    game_type_id: int
-    games_played: int
-    goal_differential: int
-    goal_differential_pctg: float
-    goal_against: int
-    goal_for: int
-    goals_for_pctg: float
-    home_games_played: int
-    home_goal_differential: int
-    home_goals_against: int
-    home_goals_for: int
-    home_losses: int
-    home_ot_losses: int
-    home_points: int
-    home_regulation_plus_ot_wins: int
-    home_regulation_wins: int
-    home_ties: int
-    home_wins: int
-    l10_games_played: int
-    l10_goal_differential: int
-    l10_goals_against: int
-    l10_goals_for: int
-    l10_losses: int
-    l10_ot_losses: int
-    l10_points: int
-    l10_regulation_plus_ot_wins: int
-    l10_regulation_wins: int
-    l10_ties: int
-    l10_wins: int
-    league_home_sequence: int
-    league_l10_sequence: int
-    league_road_sequence: int
-    league_sequence: int
-    losses: int
-    ot_losses: int
-    place_name: dict
-    point_pctg: float
-    points: int
-    regulation_plus_ot_win_pctg: float
-    regulation_plus_ot_wins: int
-    regulation_win_pctg: float
-    regulation_wins: int
-    road_games_played: int
-    road_goal_differential: int
-    road_goals_against: int
-    road_goals_for: int
-    road_losses: int
-    road_ot_losses: int
-    road_points: int
-    road_regulation_plus_ot_wins: int
-    road_regulation_wins: int
-    road_ties: int
-    road_wins: int
-    season_id: int
-    shootout_losses: int
-    shootout_wins: int
-    streak_code: str
-    streak_count: int
-    team_name: dict
-    team_common_name: dict
-    team_abbrev: dict
-    team_logo: str
-    ties: int
-    waivers_sequence: int
-    wildcard_sequence: int
-    win_pctg: float
-    wins: int
-    clinch_indicator: str = ""
+class Seeding(BaseModel):
+    conference_abbrev: str = Field(description="Conference abbreviation")
+    conference_home_sequence: int = Field(description="Conference home sequence")
+    conference_l10_sequence: int = Field(description="Conference last 10 games sequence")
+    conference_name: str = Field(description="Conference name")
+    conference_road_sequence: int = Field(description="Conference road sequence")
+    conference_sequence: int = Field(description="Conference sequence")
+    date: datetime = Field(description="Date of the seeding")
+    division_abbrev: str = Field(description="Division abbreviation")
+    division_home_sequence: int = Field(description="Division home sequence")
+    division_l10_sequence: int = Field(description="Division last 10 games sequence")
+    division_name: str = Field(description="Division name")
+    division_road_sequence: int = Field(description="Division road sequence")
+    division_sequence: int = Field(description="Division sequence")
+    game_type_id: int = Field(description="Game type ID")
+    games_played: int = Field(description="Number of games played")
+    goal_differential: int = Field(description="Goal differential")
+    goal_differential_pctg: float = Field(description="Goal differential percentage")
+    goal_against: int = Field(description="Goals against")
+    goal_for: int = Field(description="Goals for")
+    goals_for_pctg: float = Field(description="Goals for percentage")
+    home_games_played: int = Field(description="Number of home games played")
+    home_goal_differential: int = Field(description="Home goal differential")
+    home_goals_against: int = Field(description="Home goals against")
+    home_goals_for: int = Field(description="Home goals for")
+    home_losses: int = Field(description="Home losses")
+    home_ot_losses: int = Field(description="Home overtime losses")
+    home_points: int = Field(description="Home points")
+    home_regulation_plus_ot_wins: int = Field(description="Home regulation plus overtime wins")
+    home_regulation_wins: int = Field(description="Home regulation wins")
+    home_ties: int = Field(description="Home ties")
+    home_wins: int = Field(description="Home wins")
+    l10_games_played: int = Field(description="Last 10 games played")
+    l10_goal_differential: int = Field(description="Last 10 games goal differential")
+    l10_goals_against: int = Field(description="Last 10 games goals against")
+    l10_goals_for: int = Field(description="Last 10 games goals for")
+    l10_losses: int = Field(description="Last 10 games losses")
+    l10_ot_losses: int = Field(description="Last 10 games overtime losses")
+    l10_points: int = Field(description="Last 10 games points")
+    l10_regulation_plus_ot_wins: int = Field(description="Last 10 games regulation plus overtime wins")
+    l10_regulation_wins: int = Field(description="Last 10 games regulation wins")
+    l10_ties: int = Field(description="Last 10 games ties")
+    l10_wins: int = Field(description="Last 10 games wins")
+    league_home_sequence: int = Field(description="League home sequence")
+    league_l10_sequence: int = Field(description="League last 10 games sequence")
+    league_road_sequence: int = Field(description="League road sequence")
+    league_sequence: int = Field(description="League sequence")
+    losses: int = Field(description="Total losses")
+    ot_losses: int = Field(description="Overtime losses")
+    place_name: Dict = Field(description="Place name")
+    point_pctg: float = Field(description="Point percentage")
+    points: int = Field(description="Total points")
+    regulation_plus_ot_win_pctg: float = Field(description="Regulation plus overtime win percentage")
+    regulation_plus_ot_wins: int = Field(description="Regulation plus overtime wins")
+    regulation_win_pctg: float = Field(description="Regulation win percentage")
+    regulation_wins: int = Field(description="Regulation wins")
+    road_games_played: int = Field(description="Road games played")
+    road_goal_differential: int = Field(description="Road goal differential")
+    road_goals_against: int = Field(description="Road goals against")
+    road_goals_for: int = Field(description="Road goals for")
+    road_losses: int = Field(description="Road losses")
+    road_ot_losses: int = Field(description="Road overtime losses")
+    road_points: int = Field(description="Road points")
+    road_regulation_plus_ot_wins: int = Field(description="Road regulation plus overtime wins")
+    road_regulation_wins: int = Field(description="Road regulation wins")
+    road_ties: int = Field(description="Road ties")
+    road_wins: int = Field(description="Road wins")
+    season_id: int = Field(description="Season ID")
+    shootout_losses: int = Field(description="Shootout losses")
+    shootout_wins: int = Field(description="Shootout wins")
+    streak_code: str = Field(description="Streak code")
+    streak_count: int = Field(description="Streak count")
+    team_name: Dict = Field(description="Team name")
+    team_common_name: Dict = Field(description="Team common name")
+    team_abbrev: Dict = Field(description="Team abbreviation")
+    team_logo: str = Field(description="Team logo URL")
+    ties: int = Field(description="Total ties")
+    waivers_sequence: int = Field(description="Waivers sequence")
+    wildcard_sequence: int = Field(description="Wildcard sequence")
+    win_pctg: float = Field(description="Win percentage")
+    wins: int = Field(description="Total wins")
+    clinch_indicator: str = Field(description="Clinch indicator", default="")
 
 
-@dataclass
-class Standings:
-    """
-    Standings dataclass to store standings information.
-
-    Attributes:
-    season (int): The season the standings are for.
-    standings (list[dict]): A list of standings for the season.
-    """
-
-    date: datetime
-    seedings: list[Seeding]
-    season: int = -1
+class Standings(BaseModel):
+    date: datetime = Field(description="Date of the standings")
+    seedings: List[Seeding] = Field(description="List of seedings")
+    season: int = Field(description="Season", default=-1)
 
     @property
     def east_standings(self):

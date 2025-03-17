@@ -1,34 +1,14 @@
-from dataclasses import dataclass
 from datetime import datetime
+from typing import List
 
+from pydantic import BaseModel, Field
 
-@dataclass
-class Term:
-    """
-    Term dataclass to store term information.
+class Term(BaseModel):
+    id: int = Field(description="Unique identifier for the term")
+    abbreviation: str = Field(description="Abbreviated form of the term")
+    definition: str = Field(description="Full definition of the term")
+    first_season: int = Field(description="First season this term was used")
+    last_updated: datetime = Field(description="When this term was last updated")
 
-    Attributes:
-    id (int): The ID of the term.
-    abbreviation (str): The abbreviation of the term.
-    definition (str): The definition of the term.
-    first_season (int): The first season the term was used.
-    last_updated (datetime): The last time the term was updated.
-    """
-
-    id: int
-    abbreviation: str
-    definition: str
-    first_season: int
-    last_updated: datetime
-
-
-@dataclass
-class Glossary:
-    """
-    Glossary dataclass to store glossary information.
-
-    Attributes:
-    terms (lists[Term]): A list of terms in the glossary.
-    """
-
-    terms: list[Term]
+class Glossary(BaseModel):
+    terms: List[Term] = Field(description="List of terminology entries")

@@ -1,11 +1,10 @@
-from dataclasses import dataclass
+from pydantic import BaseModel, Field
 
 
-@dataclass
-class Team:
-    id: int
-    abbreviation: str
-    name: str
+class Team(BaseModel):
+    id: int = Field(description="Unique identifier for the team")
+    abbreviation: str = Field(description="Abbreviated form of the team name")
+    name: str = Field(description="Full name of the team")
 
     def __str__(self):
         return self.name

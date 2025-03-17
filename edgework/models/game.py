@@ -1,27 +1,28 @@
-from dataclasses import dataclass, field
 from datetime import datetime
+from typing import List, Optional
+
+from pydantic import BaseModel, Field, PrivateAttr
 
 from edgework.http_client import HttpClient
 from edgework.models.shift import Shift
 
+class Game(BaseModel):
+    game_id: int = Field(description="Unique identifier for the game")
+    game_date: datetime = Field(description="Date the game was played")
+    start_time_utc: datetime = Field(description="Start time of the game in UTC")
+    game_state: str = Field(description="Current state of the game")
+    away_team_abbrev: str = Field(description="Abbreviation of the away team")
+    away_team_id: int = Field(description="Unique identifier for the away team")
+    away_team_score: int = Field(description="Current score of the away team")
+    home_team_abbrev: str = Field(description="Abbreviation of the home team")
+    home_team_id: int = Field(description="Unique identifier for the home team")
+    home_team_score: int = Field(description="Current score of the home team")
+    season: int = Field(description="Season the game is part of")
+    venue: str = Field(description="Venue where the game is played")
 
-@dataclass
-class Game:
-    game_id: int
-    game_date: datetime
-    start_time_utc: datetime
-    game_state: str
-    away_team_abbrev: str
-    away_team_id: int
-    away_team_score: int
-    home_team_abbrev: str
-    home_team_id: int
-    home_team_score: int
-    season: int
-    venue: str
-
-    _shifts: list[Shift] = field(default_factory=list)
-    _client: HttpClient = field(default=None, repr=False, compare=False)
+    # Private attributes
+    _shifts: List[Shift] = PrivateAttr(default_factory=list)
+    _client: Optional[HttpClient] = PrivateAttr(default=None)
 
     @property
     def game_time(self):
@@ -34,7 +35,8 @@ class Game:
         return str(self)
 
     def __eq__(self, other):
-        return self.game_id == other.game_id
+        # Compare using game_id only
+        return self.game_id == getattr(other, 'game_id', None)
 
     def __hash__(self):
         return hash(self.game_id)
@@ -44,37 +46,23 @@ class Game:
         pass
 
     @property
-    def shifts(self) -> list[Shift]:
+    def shifts(self) -> List[Shift]:
         if not self._shifts:
             self._shifts = self._get_shifts()
         return self._shifts
 
     @classmethod
     def from_dict(cls, data: dict, client: HttpClient):
-        return cls(
-            game_id=data.get("game_id"),
-            game_date=data.get("game_date"),
-            start_time_utc=data.get("start_time_utc"),
-            game_state=data.get("game_state"),
-            away_team_abbrev=data.get("away_team_abbrev"),
-            away_team_id=data.get("away_team_id"),
-            away_team_score=data.get("away_team_score"),
-            home_team_abbrev=data.get("home_team_abbrev"),
-            home_team_id=data.get("home_team_id"),
-            home_team_score=data.get("home_team_score"),
-            season=data.get("season"),
-            venue=data.get("venue"),
-            _client=client,
-        )
+        game = cls(**data)
+        game._client = client
+        return game
 
     @classmethod
     def from_api(cls, data: dict, client: HttpClient):
         game_dict = {
             "game_id": data.get("id"),
             "game_date": datetime.strptime(data.get("gameDate"), "%Y-%m-%d"),
-            "start_time_utc": datetime.strptime(
-                data.get("startTimeUTC"), "%Y-%m-%dT%H:%M:%SZ"
-            ),
+            "start_time_utc": datetime.strptime(data.get("startTimeUTC"), "%Y-%m-%dT%H:%M:%SZ"),
             "game_state": data.get("gameState"),
             "away_team_abbrev": data.get("awayTeam").get("abbrev"),
             "away_team_id": data.get("awayTeam").get("id"),

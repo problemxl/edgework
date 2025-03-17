@@ -112,6 +112,6 @@ d = {
     "wins": 55
 }
 
-for key, value in dict_camel_to_snake(d).items():
-    # print key: type of value
-    print(f"{key}: {type(value).__name__}")
+# for key, value in dict_camel_to_snake(d).items():
+#     # print key: type of value
+#     print(f"{key}: {type(value).__name__}")
