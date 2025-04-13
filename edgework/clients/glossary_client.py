@@ -9,4 +9,4 @@ class GlossaryClient:
     def get_glossary(self) -> Glossary:
         response = self._client.get("stats/rest/en/glossary", web=False)
         terms = [Term(**term) for term in response.json()["data"]]
-        return Glossary(terms)
+        return Glossary(terms=terms)

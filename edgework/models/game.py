@@ -1,28 +1,53 @@
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel, Field, PrivateAttr
-
+from edgework.models.base import BaseNHLModel
 from edgework.http_client import HttpClient
 from edgework.models.shift import Shift
 
-class Game(BaseModel):
-    game_id: int = Field(description="Unique identifier for the game")
-    game_date: datetime = Field(description="Date the game was played")
-    start_time_utc: datetime = Field(description="Start time of the game in UTC")
-    game_state: str = Field(description="Current state of the game")
-    away_team_abbrev: str = Field(description="Abbreviation of the away team")
-    away_team_id: int = Field(description="Unique identifier for the away team")
-    away_team_score: int = Field(description="Current score of the away team")
-    home_team_abbrev: str = Field(description="Abbreviation of the home team")
-    home_team_id: int = Field(description="Unique identifier for the home team")
-    home_team_score: int = Field(description="Current score of the home team")
-    season: int = Field(description="Season the game is part of")
-    venue: str = Field(description="Venue where the game is played")
-
-    # Private attributes
-    _shifts: List[Shift] = PrivateAttr(default_factory=list)
-    _client: Optional[HttpClient] = PrivateAttr(default=None)
+class Game(BaseNHLModel):
+    """Game model to store game information."""
+    
+    def __init__(self, edgework_client, obj_id=None, game_id=None, game_date=None, 
+                 start_time_utc=None, game_state=None, away_team_abbrev=None, 
+                 away_team_id=None, away_team_score=None, home_team_abbrev=None,
+                 home_team_id=None, home_team_score=None, season=None, venue=None):
+        """
+        Initialize a Game object.
+        
+        Args:
+            edgework_client: The Edgework client
+            obj_id: The ID of the game object
+            game_id: Unique identifier for the game
+            game_date: Date the game was played
+            start_time_utc: Start time of the game in UTC
+            game_state: Current state of the game
+            away_team_abbrev: Abbreviation of the away team
+            away_team_id: Unique identifier for the away team
+            away_team_score: Current score of the away team
+            home_team_abbrev: Abbreviation of the home team
+            home_team_id: Unique identifier for the home team
+            home_team_score: Current score of the home team
+            season: Season the game is part of
+            venue: Venue where the game is played
+        """
+        super().__init__(edgework_client, obj_id)
+        self.game_id = game_id
+        self.game_date = game_date
+        self.start_time_utc = start_time_utc
+        self.game_state = game_state
+        self.away_team_abbrev = away_team_abbrev
+        self.away_team_id = away_team_id
+        self.away_team_score = away_team_score
+        self.home_team_abbrev = home_team_abbrev
+        self.home_team_id = home_team_id
+        self.home_team_score = home_team_score
+        self.season = season
+        self.venue = venue
+        
+        # Private attributes (now regular attributes)
+        self._shifts = []
+        self._client = None
 
     @property
     def game_time(self):
@@ -49,6 +74,7 @@ class Game(BaseModel):
     def shifts(self) -> List[Shift]:
         if not self._shifts:
             self._shifts = self._get_shifts()
+        return self._shifts
         return self._shifts
 
     @classmethod

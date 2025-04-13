@@ -1,3 +1,4 @@
+from datetime import datetime
 from unittest.mock import Mock
 
 import pytest
@@ -39,15 +40,17 @@ def test_get_glossary(glossary_client, mock_http_client):
     mock_http_client.get.return_value = mock_response
 
     glossary = glossary_client.get_glossary()
+    for term in glossary.terms:
+        term.last_updated = term.last_updated.replace(tzinfo=None)
     assert isinstance(glossary, Glossary)
     assert len(glossary.terms) == 2
     assert glossary.terms[0].id == 1
     assert glossary.terms[0].abbreviation == "G"
     assert glossary.terms[0].definition == "Goals"
     assert glossary.terms[0].first_season == 1917
-    assert glossary.terms[0].last_updated == "2023-01-01T00:00:00Z"
+    assert glossary.terms[0].last_updated == datetime(2023, 1, 1, 0, 0, 0)
     assert glossary.terms[1].id == 2
     assert glossary.terms[1].abbreviation == "A"
     assert glossary.terms[1].definition == "Assists"
     assert glossary.terms[1].first_season == 1917
-    assert glossary.terms[1].last_updated == "2023-01-01T00:00:00Z"
+    assert glossary.terms[1].last_updated == datetime(2023, 1, 1, 0, 0, 0)
