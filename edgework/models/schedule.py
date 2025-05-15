@@ -7,31 +7,20 @@ from edgework.http_client import AsyncHttpClient
 class Schedule(BaseNHLModel):
     """Schedule model to store schedule information."""
     
-    def __init__(self, edgework_client, obj_id=None, previous_start_date=None, games=None,
-                 pre_season_start_date=None, regular_season_start_date=None, 
-                 regular_season_end_date=None, playoff_end_date=None, number_of_games=0):
+    def __init__(self, edgework_client, obj_id=None, **kwargs):
         """
-        Initialize a Schedule object.
+        Initialize a Schedule object with dynamic attributes.
         
         Args:
             edgework_client: The Edgework client
             obj_id: The ID of the schedule
-            previous_start_date: Start date of the previous period
-            games: List of games in the schedule
-            pre_season_start_date: Start date of the pre-season
-            regular_season_start_date: Start date of the regular season
-            regular_season_end_date: End date of the regular season
-            playoff_end_date: End date of the playoffs
-            number_of_games: Total number of games in the schedule
+            **kwargs: Dynamic attributes for schedule properties
         """
         super().__init__(edgework_client, obj_id)
-        self.previous_start_date = previous_start_date
-        self.games = games or []
-        self.pre_season_start_date = pre_season_start_date
-        self.regular_season_start_date = regular_season_start_date
-        self.regular_season_end_date = regular_season_end_date
-        self.playoff_end_date = playoff_end_date
-        self.number_of_games = number_of_games
+        self._data = kwargs
+        # Initialize empty games list if not provided
+        if 'games' not in self._data:
+            self._data['games'] = []
     
     @classmethod
     def from_dict(cls, edgework_client, data: dict) -> "Schedule":

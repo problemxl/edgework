@@ -31,18 +31,17 @@ class Player(BaseNHLModel):
         """
         super().__init__(edgework_client, obj_id)
         
-        # Core identifier - prefer player_id over obj_id 
-        self.player_id = player_id or obj_id
+        # Core identifier - prefer player_id over obj_id
+        player_id = player_id or obj_id
         
-        # Initialize cache for API data
+        # Initialize data dictionary for dynamic attributes
+        self._data = kwargs.copy()
+        self._data['player_id'] = player_id
+        
+        # Initialize cache for specialized data
         self._raw_data = {}  # Raw API response (camelCase)
-        self._data = {}      # Converted to snake_case
         self._game_logs = {}
         self._stats = {}
-        
-        # Store any kwargs as attributes
-        for key, value in kwargs.items():
-            setattr(self, key, value)
         
         # Set up HTTP client
         if hasattr(edgework_client, 'http_client'):

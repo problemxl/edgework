@@ -1,48 +1,22 @@
 from datetime import datetime
 from edgework.models.base import BaseNHLModel
+from edgework.endpoints import API_PATH
 
 class Draftee(BaseNHLModel):
     """
     This class represents a NHL draftee.
     """
-    def __init__(self, edgework_client, obj_id=None, first_name=None, last_name=None, 
-                 position=None, shoots_catches=None, height=None, weight=None,
-                 last_amateur_team=None, last_amateur_league=None, birth_date=None,
-                 birth_city=None, birth_state=None, birth_country=None, rank=None):
+    def __init__(self, edgework_client, obj_id=None, **kwargs):
         """
-        Initialize a Draftee object.
+        Initialize a Draftee object with dynamic attributes.
         
         Args:
             edgework_client: The Edgework client
             obj_id: The ID of the draftee
-            first_name: The first name of the draftee
-            last_name: The last name of the draftee
-            position: The position of the draftee. 'C', 'LW', 'RW', 'D', 'G'
-            shoots_catches: The hand the draftee shoots/catches with. 'L', 'R'
-            height: The height of the draftee. Units are in inches
-            weight: The weight of the draftee. Units are in pounds
-            last_amateur_team: The last amateur team of the draftee
-            last_amateur_league: The last amateur league of the draftee
-            birth_date: The birth date of the draftee
-            birth_city: The birth city of the draftee
-            birth_state: The birth state of the draftee
-            birth_country: The birth country of the draftee
-            rank: The rank of the draftee
+            **kwargs: Dynamic attributes for draftee properties
         """
         super().__init__(edgework_client, obj_id)
-        self.first_name = first_name
-        self.last_name = last_name
-        self.position = position
-        self.shoots_catches = shoots_catches
-        self.height = height
-        self.weight = weight
-        self.last_amateur_team = last_amateur_team
-        self.last_amateur_league = last_amateur_league
-        self.birth_date = birth_date
-        self.birth_city = birth_city
-        self.birth_state = birth_state
-        self.birth_country = birth_country
-        self.rank = rank
+        self._data = kwargs
         
     def fetch_data(self):
         """
@@ -55,25 +29,17 @@ class DraftRanking(BaseNHLModel):
     """
     This class represents a NHL draft ranking.
     """
-    def __init__(self, edgework_client, obj_id=None, year=None, category_id=None,
-                 category=None, draftees=None):
+    def __init__(self, edgework_client, obj_id=None, **kwargs):
         """
-        Initialize a DraftRanking object.
+        Initialize a DraftRanking object with dynamic attributes.
         
         Args:
             edgework_client: The Edgework client
             obj_id: The ID of the draft ranking
-            year: The year of the draft
-            category_id: The category id of the draft
-            category: The category of the draft. 'north-american-skater', 'north-american-goalie', 
-                      'international-skater', 'international-goalie'
-            draftees: The draftees in the draft ranking
+            **kwargs: Dynamic attributes for draft ranking properties
         """
         super().__init__(edgework_client, obj_id)
-        self.year = year
-        self.category_id = category_id
-        self.category = category
-        self.draftees = draftees or []
+        self._data = kwargs
     
     def fetch_data(self):
         """
@@ -86,24 +52,65 @@ class Draft(BaseNHLModel):
     """
     This class represents a NHL draft.
     """
-    def __init__(self, edgework_client, obj_id=None, year=None, rounds=None):
+    def __init__(self, edgework_client, obj_id=None, **kwargs):
         """
-        Initialize a Draft object.
+        Initialize a Draft object with dynamic attributes.
         
         Args:
             edgework_client: The Edgework client
             obj_id: The ID of the draft
-            year: The year of the draft
-            rounds: The rounds in the draft
+            **kwargs: Dynamic attributes for draft properties
         """
         super().__init__(edgework_client, obj_id)
-        self.year = year
-        self.rounds = rounds or []
+        self._data = kwargs
     
     def fetch_data(self):
         """
         Fetch the data for the draft.
+        
+        This method retrieves draft data from the NHL API. If a year/season is specified
+        in the _data dictionary, it fetches data for that specific season. Otherwise,
+        it fetches the most recent draft data.
+        
+        Returns:
+            self: Returns the Draft object with fetched data
         """
-        # Implementation depends on how data is fetched from the API
-        pass
-    
+        if not hasattr(self.edgework_client, 'http_client'):
+            raise ValueError("Edgework client must have http_client attribute")
+            
+        http_client = self.edgework_client.http_client
+        
+        
+        
+        # Determine if we're fetching for a specific season or the current draft
+        if 'year' in self._data:
+            season = str(self._data['year'])
+            # Use the draft_picks endpoint with season and 'all' for the round parameter
+            path = API_PATH['draft_picks'].format(season=season, round='all')
+        else:
+            # If no year specified, get the current draft
+            path = API_PATH['draft_picks_now']
+        
+        # Make the API request
+        response = http_client.get(path)
+        
+        if response.status_code != 200:
+            raise Exception(f"Failed to fetch draft data: HTTP {response.status_code}")
+            
+        # Parse the response data
+        draft_data = response.json()
+        
+        # Update the _data dictionary with the fetched data
+        # If specific fields are needed, they can be extracted here
+        self._data.update(draft_data)
+        
+        # Update year from the response if not already set
+        if 'year' not in self._data and 'draftYear' in draft_data:
+            self._data['year'] = draft_data['draftYear']
+            
+        # If rounds information exists, process it
+        if 'rounds' in draft_data:
+            self._data['rounds'] = draft_data['rounds']
+        
+        self._fetched = True
+        return self

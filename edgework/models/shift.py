@@ -5,19 +5,22 @@ from edgework.models.base import BaseNHLModel
 class PeriodTime(BaseNHLModel):
     """PeriodTime model to store period time information."""
     
-    def __init__(self, edgework_client=None, obj_id=None, minutes=0, seconds=0):
+    def __init__(self, edgework_client=None, obj_id=None, **kwargs):
         """
-        Initialize a PeriodTime object.
+        Initialize a PeriodTime object with dynamic attributes.
         
         Args:
             edgework_client: The Edgework client
             obj_id: The ID of the period time
-            minutes: Minutes in the period time
-            seconds: Seconds in the period time
+            **kwargs: Dynamic attributes for period time properties
         """
         super().__init__(edgework_client, obj_id)
-        self.minutes = minutes
-        self.seconds = seconds
+        self._data = kwargs
+        # Set defaults if not provided
+        if 'minutes' not in self._data:
+            self._data['minutes'] = 0
+        if 'seconds' not in self._data:
+            self._data['seconds'] = 0
         self.validate()
         
     @classmethod
@@ -79,39 +82,17 @@ class Shift(BaseNHLModel):
 
     A shift is a period of time when a player is on the ice.
     """
-    def __init__(self, edgework_client, obj_id=None, shift_id=None, game_id=None, player_id=None,
-                 first_name=None, last_name=None, period=None, shift_start=None, shift_end=None,
-                 shift_number=None, team_id=None, team_abbrev=None):
+    def __init__(self, edgework_client, obj_id=None, **kwargs):
         """
-        Initialize a Shift object.
+        Initialize a Shift object with dynamic attributes.
         
         Args:
             edgework_client: The Edgework client
             obj_id: The ID of the shift object
-            shift_id: Unique identifier for the shift
-            game_id: Unique identifier for the game the shift is in
-            player_id: Unique identifier for the player on the shift
-            first_name: The first name of the player on the shift
-            last_name: The last name of the player on the shift
-            period: Period of the game the shift is in
-            shift_start: Time the shift started
-            shift_end: Time the shift ended
-            shift_number: Order of the shift in the game
-            team_id: Team the player is on
-            team_abbrev: Abbreviation of the team the player is on
+            **kwargs: Dynamic attributes for shift properties
         """
         super().__init__(edgework_client, obj_id)
-        self.shift_id = shift_id
-        self.game_id = game_id
-        self.player_id = player_id
-        self.first_name = first_name
-        self.last_name = last_name
-        self.period = period
-        self.shift_start = shift_start
-        self.shift_end = shift_end
-        self.shift_number = shift_number
-        self.team_id = team_id
-        self.team_abbrev = team_abbrev
+        self._data = kwargs
 
     @property
     def duration(self) -> timedelta:

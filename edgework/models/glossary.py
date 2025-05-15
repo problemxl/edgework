@@ -5,26 +5,17 @@ from edgework.models.base import BaseNHLModel
 class Term(BaseNHLModel):
     """Term model to store terminology information."""
     
-    def __init__(self, edgework_client, obj_id=None, id=None, abbreviation=None, 
-                 definition=None, first_season=None, last_updated=None):
+    def __init__(self, edgework_client, obj_id=None, **kwargs):
         """
-        Initialize a Term object.
+        Initialize a Term object with dynamic attributes.
         
         Args:
             edgework_client: The Edgework client
             obj_id: The ID of the term object
-            id: Unique identifier for the term
-            abbreviation: Abbreviated form of the term
-            definition: Full definition of the term
-            first_season: First season this term was used
-            last_updated: When this term was last updated
+            **kwargs: Dynamic attributes for term properties
         """
         super().__init__(edgework_client, obj_id)
-        self.id = id
-        self.abbreviation = abbreviation
-        self.definition = definition
-        self.first_season = first_season
-        self.last_updated = last_updated
+        self._data = kwargs
         
     def fetch_data(self):
         """
@@ -34,7 +25,7 @@ class Term(BaseNHLModel):
         pass
 
 class Glossary(BaseNHLModel):
-    """Glossary model to store terminology entries."""
+    """Glossary model to store terminology entries."""    
     
     def __init__(self, edgework_client, obj_id=None, terms=None):
         """

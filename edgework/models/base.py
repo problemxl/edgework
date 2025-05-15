@@ -1,13 +1,17 @@
-from edgework.edgework import Edgework
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from edgework.edgework import Edgework
 
 
 class BaseNHLModel:
     """
     Base class for all NHL models.
     """
-    def __init__(self, edgework_client: Edgework, obj_id: int = None):
+    def __init__(self, edgework_client: 'Edgework', obj_id: int = None):
         
-        self.edgework_client: Edgework = edgework_client
+        self._client: 'Edgework' = edgework_client
         self.obj_id: int = obj_id
         self._fetched: bool = False
 
@@ -46,7 +50,7 @@ class BaseNHLModel:
 
 
         print(f"Attribute '{name}' not found directly, attempting lazy load...")
-        self._fetch_if_needed() # Ensure core data is fetched
+        self._fetch_if_not_fetched() # Ensure core data is fetched
 
         # --- Dynamic Part ---
         # After fetching, look for 'name' as a key in the _data dictionary

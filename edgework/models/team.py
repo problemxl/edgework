@@ -5,29 +5,32 @@ from edgework.models.player import Player
 class Roster(BaseNHLModel):
     """Roster model to store a team's roster information."""
     
-    def __init__(self, edgework_client, obj_id=None, players=None):
+    def __init__(self, edgework_client, obj_id=None, **kwargs):
         """
-        Initialize a Roster object.
+        Initialize a Roster object with dynamic attributes.
         
         Args:
             edgework_client: The Edgework client
             obj_id: The ID of the roster
-            players: List of players on the roster
+            **kwargs: Dynamic attributes for roster properties
         """
         super().__init__(edgework_client, obj_id)
-        self.players = players or []
+        self._data = kwargs
+        # Initialize empty players list if not provided
+        if 'players' not in self._data:
+            self._data['players'] = []
 
     @property
     def forwards(self):
-        return [p for p in self.players if p.position == "C" or p.position == "LW" or p.position == "RW"]
+        return [p for p in self._data['players'] if p.position == "C" or p.position == "LW" or p.position == "RW"]
     
     @property
     def defensemen(self):
-        return [p for p in self.players if p.position == "D"]
+        return [p for p in self._data['players'] if p.position == "D"]
     
     @property
     def goalies(self):
-        return [p for p in self.players if p.position == "G"]
+        return [p for p in self._data['players'] if p.position == "G"]
     
     def fetch_data(self):
         """
@@ -37,28 +40,22 @@ class Roster(BaseNHLModel):
         pass
             
 
+
 class Team(BaseNHLModel):
-    """Team model to store team information."""
+    """Team model to store team information."""    
     
-    def __init__(self, edgework_client, obj_id=None, id=None, abbreviation=None, 
-                 name=None, roster=None):
+    def __init__(self, edgework_client, obj_id=None, **kwargs):
         """
-        Initialize a Team object.
+        Initialize a Team object with dynamic attributes.
         
         Args:
             edgework_client: The Edgework client
             obj_id: The ID of the team object
-            id: Unique identifier for the team
-            abbreviation: Abbreviated form of the team name
-            name: Full name of the team
-            roster: Roster of players on the team
+            **kwargs: Dynamic attributes for team properties
         """
         super().__init__(edgework_client, obj_id)
-        self.id = id
-        self.abbreviation = abbreviation
-        self.name = name
-        self.roster = roster
-    
+        self._data = kwargs
+
     def __str__(self):
         return self.name
 

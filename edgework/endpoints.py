@@ -1,4 +1,4 @@
-from const import API_VERSION
+from .const import API_VERSION
 
 API_PATH: dict = {
     # Player endpoints
