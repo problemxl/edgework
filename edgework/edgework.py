@@ -24,8 +24,11 @@ class Edgework:
         self,
         season: str,
         report: str = "summary",
-        sort: list[dict[str, str]] = [{"property": "points", "direction": "DESC"}],
+        sort: str | list[str] = "points",
+        direction: str | list[str] = "DESC",
+        aggregate: bool = False,
         limit: int = 10,
+        game_type: int = 2,
     ):
         """
         Fetch skater stats for a given season.
@@ -48,7 +51,7 @@ class Edgework:
             )
 
         self.skaters.fetch_data(
-            report=report, season=converted_season, sort=sort, limit=limit
+            report=report, season=converted_season, sort=sort, direction=direction, limit=limit, aggregate=aggregate, game_type=game_type
         )
         return self.skaters
 

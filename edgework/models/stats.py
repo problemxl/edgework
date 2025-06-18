@@ -1,10 +1,10 @@
 from datetime import datetime, timedelta
 import json
+from urllib.parse import urlencode
 from edgework.models.base import BaseNHLModel
 from edgework.utilities import dict_camel_to_snake
 
 # Development imports
-from icecream import ic
 
 
 class StatEntity(BaseNHLModel):
@@ -102,8 +102,10 @@ class SkaterStats(BaseNHLModel):
             "sort": sort_dict,
             "cayenneExp": cayenne_exp,
         }
+        query_string = urlencode(params)
+        full_path = f"{url_path}?{query_string}"
 
-        response = self._client.get(path=url_path, params=params, web=False)
+        response = self._client.get(path=full_path, params=None, web=False)
 
         if response.status_code != 200:
             raise Exception(
@@ -202,7 +204,9 @@ class GoalieStats(BaseNHLModel):
             "sort": sort_dict,
             "cayenneExp": cayenne_exp,
         }
-        response = self._client.get(path=url_path, params=params, web=False)
+        query_string = urlencode(params)
+        full_path = f"{url_path}?{query_string}"
+        response = self._client.get(path=full_path, params=None, web=False)
         data = response.json()["data"]
 
         if data:
@@ -293,13 +297,11 @@ class TeamStats(BaseNHLModel):
             "limit": limit,
             "start": start,
             "sort": sort_dict,
-            "cayenneExp": cayenne_exp,
-        }
-
-        response = self._client.get(path=url_path, params=params, web=False)
-
         data = response.json().get("data", [])
-        if not data:
+        if data:
+            data = [dict_camel_to_snake(d) for d in data]
+            self.teams = [StatEntity(self._client, data=team) for team in data]
+            self._data = data
             raise Exception(
                 f"Failed to fetch team stats: {response.status_code} {response.text}"
             )
