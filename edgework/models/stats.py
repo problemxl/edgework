@@ -297,7 +297,13 @@ class TeamStats(BaseNHLModel):
             "limit": limit,
             "start": start,
             "sort": sort_dict,
+            "cayenneExp": cayenne_exp,
+        }
+        query_string = urlencode(params)
+        full_path = f"{url_path}?{query_string}"
+        response = self._client.get(path=full_path, params=None, web=False)
         data = response.json().get("data", [])
+    
         if data:
             data = [dict_camel_to_snake(d) for d in data]
             self.teams = [StatEntity(self._client, data=team) for team in data]
