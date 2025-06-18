@@ -48,14 +48,11 @@ class BaseNHLModel:
             # without triggering infinite loops.
              raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'")
 
-
-        print(f"Attribute '{name}' not found directly, attempting lazy load...")
         self._fetch_if_not_fetched() # Ensure core data is fetched
 
         # --- Dynamic Part ---
         # After fetching, look for 'name' as a key in the _data dictionary
         if name in self._data:
-            print(f"Found '{name}' in fetched _data.")
             return self._data[name]
         # --------------------
         else:
