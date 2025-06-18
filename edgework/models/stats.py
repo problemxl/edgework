@@ -304,6 +304,6 @@ class TeamStats(BaseNHLModel):
                 f"Failed to fetch team stats: {response.status_code} {response.text}"
             )
         data = [dict_camel_to_snake(d) for d in data]
+        self.teams = [StatEntity(self._client, data=team) for team in data]
         if data:
             self._data = data
-            self.teams = [StatEntity(self._client, data=team) for team in data]
