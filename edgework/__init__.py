@@ -1,3 +1,7 @@
-# ...existing code...
+"""Edgework NHL API Client - Version 0.2.0"""
+
+__version__ = "0.2.0"
+
 from .edgework import Edgework
-# ...existing code...
+
+__all__ = ["Edgework", "__version__"]
