@@ -22,7 +22,7 @@ class TestEdgeworkInitialization:
         edgework = Edgework()
         
         # Verify HTTP client was created with default user agent
-        mock_http_client.assert_called_once_with(user_agent="EdgeworkClient/1.0")
+        mock_http_client.assert_called_once_with(user_agent="EdgeworkClient/2.0")
         
         # Verify stats models were initialized
         assert isinstance(edgework.skaters, SkaterStats)

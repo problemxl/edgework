@@ -44,13 +44,13 @@ def _validate_season_format(season: str) -> int:
 
 
 class Edgework:
-    def __init__(self, user_agent: str = "EdgeworkClient/1.0"):
+    def __init__(self, user_agent: str = "EdgeworkClient/0.2.0"):
         """
         Initializes the Edgework API client.
 
         Args:
             user_agent (str, optional): The User-Agent string to use for requests.
-                                        Defaults to "EdgeworkClient/1.0".
+                                        Defaults to "EdgeworkClient/2.0".
         """
         self._client = SyncHttpClient(user_agent=user_agent)
 
