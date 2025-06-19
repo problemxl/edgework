@@ -103,6 +103,7 @@ jobs:
       - name: Publish package to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
+          repository-url: https://upload.pypi.org/legacy/
           # For trusted publishing (OIDC), no token is needed here if PyPI project is configured.
           # The 'repository-url' defaults to PyPI, so it's not strictly needed.
           # To use an API token instead (less secure):
