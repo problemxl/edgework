@@ -7,7 +7,7 @@ from typing import Dict, Any, Optional
 class HttpClient:
     """Base HTTP client for NHL API requests."""
     
-    def __init__(self, user_agent: str = "EdgeworkClient/2.0"):
+    def __init__(self, user_agent: str = "EdgeworkClient/0.2.1"):
         """
         Initialize the HTTP client.
         

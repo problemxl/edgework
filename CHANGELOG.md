@@ -5,6 +5,18 @@ All notable changes to the Edgework project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2025-06-19
+
+### Fixed
+- **Critical**: Fixed player client HTTP method causing 400 Bad Request errors
+- Corrected `get()` to `get_raw()` for NHL search API endpoints in PlayerClient
+- Added missing `datetime` import in player_client.py
+- Ensured all 21 player attributes are properly mapped from NHL search API
+- Fixed data type conversions for player_id and team_id fields
+
+### Changed
+- Updated User-Agent to EdgeworkClient/0.2.1
+
 ## [0.2.0] - 2025-06-19
 
 ### Added
