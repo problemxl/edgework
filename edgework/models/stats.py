@@ -7,6 +7,149 @@ from edgework.utilities import dict_camel_to_snake
 # Development imports
 
 
+def validate_sort_direction(sort: str | list[str], direction: str | list[str]) -> dict | list[dict]:
+    """
+    Validates and formats the sort and direction parameters.
+    
+    Makes sure that:
+    - If both are strings, they are valid and compatible.
+    - If both are lists, they are of the same length and contain valid values.
+    - If one is a string and the other is a list, raises an error.
+    - If both are empty, raises an error.
+    - If the direction is not "ASC" or "DESC", raises an error. 
+    - Returns a dictionary or list of dictionaries representing the sort criteria.
+
+    Args:
+        sort (str | list[str]): The field(s) to sort by.
+        direction (str | list[str]): The direction(s) to sort (e.g., "ASC", "DESC").
+    
+    Returns:
+        dict | list[dict]: A dictionary or list of dictionaries representing the sort criteria.
+    """
+    if isinstance(sort, str) and isinstance(direction, str):
+        if direction not in ["ASC", "DESC"]:
+            raise ValueError("Direction must be either 'ASC' or 'DESC'.")
+        return {"property": sort, "direction": direction}
+    elif isinstance(sort, list) and isinstance(direction, list):
+        if len(sort) != len(direction):
+            raise ValueError("Sort and direction lists must be of the same length.")
+        if any(not isinstance(s, str) for s in sort):
+            raise ValueError("Sort must be a string or a list of strings.")
+        if any(not isinstance(d, str) for d in direction):
+            raise ValueError("Direction must be a string or a list of strings.")
+        if len(sort) == 0 or len(direction) == 0:
+            raise ValueError("Sort and direction lists cannot be empty.")
+        if any(d not in ["ASC", "DESC"] for d in direction):
+            raise ValueError("Direction must be either 'ASC' or 'DESC'.")
+        return [{"property": s, "direction": d} for s, d in zip(sort, direction)]
+    else:
+        raise ValueError(
+            "Sort and direction must be either both strings or both lists."
+        )
+
+
+def validate_season(season: int | None) -> int:
+    """
+    Validates and returns a proper season value.
+    
+    Args:
+        season (int | None): The season to validate (e.g., 20232024) or None for current season.
+    
+    Returns:
+        int: A valid season value.
+    """
+    if season is None:
+        # Auto-calculate current season based on date
+        current_date = datetime.now()
+        if current_date.month >= 7:  # NHL season starts in October, but prep starts in July
+            return current_date.year * 10000 + (current_date.year + 1)
+        else:
+            return (current_date.year - 1) * 10000 + current_date.year
+    
+    if not isinstance(season, int):
+        raise ValueError("Season must be an integer (e.g., 20232024) or None.")
+    
+    # Basic validation for season format (should be 8 digits, like 20232024)
+    if season < 19171918 or season > 21002101:  # NHL started 1917-18, reasonable upper bound
+        raise ValueError("Season must be in format YYYYZZZZ (e.g., 20232024) and within valid NHL history.")
+    
+    # Check that it follows the correct year pattern (second year should be first year + 1)
+    first_year = season // 10000
+    second_year = season % 10000
+    if second_year != first_year + 1:
+        raise ValueError("Season must follow format YYYYZZZZ where ZZZZ = YYYY + 1 (e.g., 20232024).")
+    
+    return season
+
+
+def validate_game_type(game_type: int | None) -> str:
+    """
+    Validates game type and returns the appropriate cayenne expression part.
+    
+    Args:
+        game_type (int | None): The game type (2 for regular season, 3 for playoffs, None for all).
+    
+    Returns:
+        str: The game type part of the cayenne expression.
+    """
+    if game_type is None:
+        return ""
+    
+    if not isinstance(game_type, int):
+        raise ValueError("Game type must be an integer or None.")
+    
+    if game_type not in [2, 3]:
+        raise ValueError("Game type must be either 2 (regular season) or 3 (playoffs).")
+    
+    return f" and gameTypeId={game_type}"
+
+
+def validate_report_type(report: str, valid_reports: list[str]) -> str:
+    """
+    Validates that the report type is valid for the given context.
+    
+    Args:
+        report (str): The report type to validate.
+        valid_reports (list[str]): List of valid report types.
+    
+    Returns:
+        str: The validated report type.
+    """
+    if not isinstance(report, str):
+        raise ValueError("Report must be a string.")
+    
+    if report not in valid_reports:
+        raise ValueError(f"Report must be one of: {', '.join(valid_reports)}")
+    
+    return report
+
+
+def validate_limit_and_start(limit: int, start: int) -> tuple[int, int]:
+    """
+    Validates limit and start parameters.
+    
+    Args:
+        limit (int): The limit value (-1 for all, or positive integer).
+        start (int): The start value (non-negative integer).
+    
+    Returns:
+        tuple[int, int]: Validated limit and start values.
+    """
+    if not isinstance(limit, int):
+        raise ValueError("Limit must be an integer.")
+    
+    if not isinstance(start, int):
+        raise ValueError("Start must be an integer.")
+    
+    if limit != -1 and limit <= 0:
+        raise ValueError("Limit must be -1 (for all) or a positive integer.")
+    
+    if start < 0:
+        raise ValueError("Start must be a non-negative integer.")
+    
+    return limit, start
+
+
 class StatEntity(BaseNHLModel):
     """
     PlayerStats model to store player statistics.
@@ -56,42 +199,26 @@ class SkaterStats(BaseNHLModel):
             limit: Number of results to return (-1 for all)
             start: Starting index for results
             sort: Field to sort by
+            direction: Direction to sort (e.g. "DESC", "ASC")
+            game_type: Type of game (e.g. 2 for regular season, 3 for playoffs)
         """
-        if not season:
-            if datetime.now().month >= 7:
-                season = datetime.now().year * 10000 + (datetime.now().year + 1)
-            else:
-                season = (datetime.now().year - 1) * 10000 + datetime.now().year
+        # Validate inputs using helper functions
+        valid_skater_reports = ["summary", "bios", "faceoffpercentages", "faceoffwins", "goalsForAgainst", 
+                               "realtime", "penalties", "penaltyDetails", "penaltyKill", "penaltyShots", 
+                               "powerPlay", "puckPossessions", "summaryshooting", "percentages", "scoringRates", 
+                               "scoringpergame", "shootout", "shottype", "timeonice"]
         
-        if isinstance(sort, str) and isinstance(direction, str):
-            sort_dict = {"property": sort, "direction": direction}
-        elif (
-            isinstance(sort, list)
-            and isinstance(direction, list)
-            and len(sort) == len(direction)
-        ):
-            if not all(isinstance(s, str) for s in sort) or not all(
-                isinstance(d, str) for d in direction
-            ):
-                raise ValueError("Sort and direction must be lists of strings.")
-            sort_dict = [
-                {"property": s, "direction": d} for s, d in zip(sort, direction)
-            ]
-        else:
-            raise ValueError(
-                "Sort and direction must be either both strings or both lists."
-            )
+        report = validate_report_type(report, valid_skater_reports)
+        season = validate_season(season)
+        limit, start = validate_limit_and_start(limit, start)
+        sort_dict = validate_sort_direction(sort, direction)
+        game_type_exp = validate_game_type(game_type)
 
-        if game_type is not None:
-            if game_type not in [2, 3]:
-                raise ValueError(
-                    "game_type must be either 2 (regular season) or 3 (playoffs)."
-                )
-            cayenne_exp = f"seasonId={season} and gameTypeId={game_type}"
-        else:
-            cayenne_exp = f"seasonId={season}"
+        # Build cayenne expression
+        cayenne_exp = f"seasonId={season}{game_type_exp}"
 
-        sort_dict = json.dumps(sort_dict)
+        # Convert sort_dict to JSON
+        sort_json = json.dumps(sort_dict)
 
         url_path = f"en/skater/{report}"
         params = {
@@ -99,7 +226,7 @@ class SkaterStats(BaseNHLModel):
             "isGame": game,
             "limit": limit,
             "start": start,
-            "sort": sort_dict,
+            "sort": sort_json,
             "cayenneExp": cayenne_exp,
         }
         query_string = urlencode(params)
@@ -162,51 +289,41 @@ class GoalieStats(BaseNHLModel):
             direction: Direction to sort (e.g. "DESC", "ASC")
             game_type: Type of game (e.g. 2 for regular season, 3 for playoffs)
         """
-        if not season:
-            season = datetime.now().year * 10000 + (datetime.now().year + 1)
+        # Validate inputs using helper functions
+        valid_goalie_reports = ["summary", "advanced", "bios", "savesByStrength", "startedVsRelieved", 
+                               "daysrest", "shootout", "penaltyShots", "savePercentageByGametate"]
+        
+        report = validate_report_type(report, valid_goalie_reports)
+        season = validate_season(season)
+        limit, start = validate_limit_and_start(limit, start)
+        sort_dict = validate_sort_direction(sort, direction)
+        game_type_exp = validate_game_type(game_type)
 
-        if isinstance(sort, str) and isinstance(direction, str):
-            sort_dict = {"property": sort, "direction": direction}
-        elif (
-            isinstance(sort, list)
-            and isinstance(direction, list)
-            and len(sort) == len(direction)
-        ):
-            if not all(isinstance(s, str) for s in sort) or not all(
-                isinstance(d, str) for d in direction
-            ):
-                raise ValueError("Sort and direction must be lists of strings.")
-            sort_dict = [
-                {"property": s, "direction": d} for s, d in zip(sort, direction)
-            ]
-        else:
-            raise ValueError(
-                "Sort and direction must be either both strings or both lists."
-            )
+        # Build cayenne expression
+        cayenne_exp = f"seasonId={season}{game_type_exp}"
 
-        if game_type is not None:
-            if game_type not in [2, 3]:
-                raise ValueError(
-                    "game_type must be either 2 (regular season) or 3 (playoffs)."
-                )
-            cayenne_exp = f"seasonId={season} and gameTypeId={game_type}"
-        else:
-            cayenne_exp = f"seasonId={season}"
-
-        sort_dict = json.dumps(sort_dict)
+        # Convert sort_dict to JSON
+        sort_json = json.dumps(sort_dict)
+        
         url_path = f"en/goalie/{report}"
-
         params = {
             "isAggregate": aggregate,
             "isGame": game,
             "limit": limit,
             "start": start,
-            "sort": sort_dict,
+            "sort": sort_json,
             "cayenneExp": cayenne_exp,
         }
         query_string = urlencode(params)
         full_path = f"{url_path}?{query_string}"
+        
         response = self._client.get(path=full_path, params=None, web=False)
+        
+        if response.status_code != 200:
+            raise Exception(
+                f"Failed to fetch goalie stats: {response.status_code} {response.text}"
+            )
+        
         data = response.json()["data"]
 
         if data:
@@ -254,41 +371,23 @@ class TeamStats(BaseNHLModel):
             direction: Direction to sort (e.g. "DESC", "ASC"). Default is "DESC".
             game_type: Type of game (e.g. 2 for regular season, 3 for playoffs). Default is 2.
         """
-        if not season:
-            season = datetime.now().year * 10000 + (datetime.now().year + 1)
+        # Validate inputs using helper functions
+        valid_team_reports = ["summary", "faceoffpercentages", "faceoffwins", "goalsForAgainst", 
+                             "realtime", "penalties", "penaltyDetails", "penaltyKill", "powerPlay", 
+                             "puckPossessions", "summaryshooting", "percentages", "scoringRates", 
+                             "scoringpergame", "shootout", "shottype", "timeonice"]
+        
+        report = validate_report_type(report, valid_team_reports)
+        season = validate_season(season)
+        limit, start = validate_limit_and_start(limit, start)
+        sort_dict = validate_sort_direction(sort, direction)
+        game_type_exp = validate_game_type(game_type)
 
-        if isinstance(sort, str) and isinstance(direction, str):
-            sort_dict = {"property": sort, "direction": direction}
+        # Build cayenne expression
+        cayenne_exp = f"seasonId={season}{game_type_exp}"
 
-        elif (
-            isinstance(sort, list)
-            and isinstance(direction, list)
-            and len(sort) == len(direction)
-        ):
-            if not all(isinstance(s, str) for s in sort) or not all(
-                isinstance(d, str) for d in direction
-            ):
-                raise ValueError("Sort and direction must be lists of strings.")
-            if not all(d in ["ASC", "DESC"] for d in direction):
-                raise ValueError("Direction must be either 'ASC' or 'DESC'.")
-            sort_dict = [
-                {"property": s, "direction": d} for s, d in zip(sort, direction)
-            ]
-        else:
-            raise ValueError(
-                "Sort and direction must be either both strings or both lists of the same length."
-            )
-
-        if game_type is not None:
-            if game_type not in [2, 3]:
-                raise ValueError(
-                    "game_type must be either 2 (regular season) or 3 (playoffs)."
-                )
-            cayenne_exp = f"seasonId={season} and gameTypeId={game_type}"
-        else:
-            cayenne_exp = f"seasonId={season}"
-
-        sort_dict = json.dumps(sort_dict)
+        # Convert sort_dict to JSON
+        sort_json = json.dumps(sort_dict)
 
         url_path = f"en/team/{report}"
         params = {
@@ -296,22 +395,23 @@ class TeamStats(BaseNHLModel):
             "isGame": game,
             "limit": limit,
             "start": start,
-            "sort": sort_dict,
+            "sort": sort_json,
             "cayenneExp": cayenne_exp,
         }
         query_string = urlencode(params)
         full_path = f"{url_path}?{query_string}"
+        
         response = self._client.get(path=full_path, params=None, web=False)
+        
+        if response.status_code != 200:
+            raise Exception(
+                f"Failed to fetch team stats: {response.status_code} {response.text}"
+            )
+        
         data = response.json().get("data", [])
     
         if data:
             data = [dict_camel_to_snake(d) for d in data]
             self.teams = [StatEntity(self._client, data=team) for team in data]
             self._data = data
-            raise Exception(
-                f"Failed to fetch team stats: {response.status_code} {response.text}"
-            )
-        data = [dict_camel_to_snake(d) for d in data]
-        self.teams = [StatEntity(self._client, data=team) for team in data]
-        if data:
-            self._data = data
+

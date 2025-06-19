@@ -1,48 +1,66 @@
-from abc import ABC, abstractmethod
+"""HTTP client for making requests to NHL APIs."""
 
 import httpx
+from typing import Dict, Any, Optional
 
 
-class HttpClient(ABC):
-    WEB_BASE_URL: str = "https://api-web.nhle.com"
-    API_BASE_URL: str = "https://api.nhle.com"
-    API_VERSION: str = "v1"
-
-    @abstractmethod
-    def __init__(self):
-        pass
-
-    @abstractmethod
-    def get(self, path: str, params: dict, web: bool) -> httpx.Response:
-        pass
+class HttpClient:
+    """Base HTTP client for NHL API requests."""
+    
+    def __init__(self, user_agent: str = "EdgeworkClient/2.0"):
+        """
+        Initialize the HTTP client.
+        
+        Args:
+            user_agent: User agent string for requests
+        """
+        self._user_agent = user_agent
+        self._base_url = "https://api-web.nhle.com/v1/"
+        self._stats_base_url = "https://api.nhle.com/stats/rest/en/"
+        
+    def get(self, endpoint: str, params: Optional[Dict[str, Any]] = None, web: bool = False) -> httpx.Response:
+        """
+        Make a GET request to an NHL API endpoint.
+        
+        Args:
+            endpoint: API endpoint (without base URL)
+            params: Optional query parameters
+            web: If True, use the web API base URL
+            
+        Returns:
+            httpx.Response object
+        """
+        if web:
+            url = f"{self._base_url}{endpoint}"
+        else:
+            url = f"{self._stats_base_url}{endpoint}"
+            
+        headers = {"User-Agent": self._user_agent}
+        
+        with httpx.Client() as client:
+            response = client.get(url, params=params, headers=headers)
+            response.raise_for_status()
+            return response
+    
+    def get_raw(self, url: str, params: Optional[Dict[str, Any]] = None) -> httpx.Response:
+        """
+        Make a GET request to a raw URL.
+        
+        Args:
+            url: Full URL to request
+            params: Optional query parameters
+            
+        Returns:
+            httpx.Response object
+        """
+        headers = {"User-Agent": self._user_agent}
+        
+        with httpx.Client() as client:
+            response = client.get(url, params=params, headers=headers)
+            response.raise_for_status()
+            return response
 
 
 class SyncHttpClient(HttpClient):
-    def __init__(self, user_agent: str = "EdgeworkClient/1.0"):
-        self.client = httpx.Client(
-            headers={"User-Agent": user_agent},
-            follow_redirects=True
-        )
-
-    def get(self, path: str, params=None, web=True) -> httpx.Response:        
-        url_to_request: str
-        # Ensure path is relative and doesn't cause double slashes
-        relative_path = path.lstrip('/')
-        if web:
-            url_to_request = f"{self.WEB_BASE_URL}/{self.API_VERSION}/{relative_path}"
-        else:
-            url_to_request = f"{self.API_BASE_URL}/stats/rest/{relative_path}"
-        
-        if params is None:
-            params = {}
-        return self.client.get(url_to_request, params=params, follow_redirects=True)
-
-    def get_raw(self, url: str, params=None) -> httpx.Response:
-        if params is None:
-            params = {}
-        return self.client.get(url, params=params, follow_redirects=True)
-
-    def close(self):
-        """Closes the underlying HTTPX client."""
-        if hasattr(self, 'client') and self.client is not None:
-            self.client.close()
+    """Synchronous HTTP client - alias for backward compatibility."""
+    pass
