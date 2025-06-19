@@ -1,7 +1,9 @@
 from edgework.http_client import SyncHttpClient
 
 # Import the SkaterStats model
+from edgework.models.player import Player
 from edgework.models.stats import SkaterStats, GoalieStats, TeamStats
+from edgework.clients.player_client import PlayerClient
 
 
 class Edgework:
@@ -19,6 +21,26 @@ class Edgework:
         self.skaters = SkaterStats(edgework_client=self._client)
         self.goalies = GoalieStats(edgework_client=self._client)
         self.teams = TeamStats(edgework_client=self._client)
+          # Initialize client handlers
+        self._player_client = PlayerClient(client=self._client)
+
+    def players(
+        self, active_only: bool = True) -> list[Player]:
+        """
+        Fetch a list of players.
+        
+        Args:
+            active_only (bool): If True, fetch only active players. 
+                               If False, fetch all players (active and inactive).
+                               Defaults to True.
+                               
+        Returns:
+            list[Player]: A list of Player objects.
+        """
+        if active_only:
+            return self._player_client.get_all_active_players()
+        else:
+            return self._player_client.get_all_players()
 
     def skater_stats(
         self,
@@ -35,7 +57,9 @@ class Edgework:
         Args:
             season (str): The season to fetch stats for (e.g., "2024-2025").
             report (str): The type of report to fetch (e.g., "summary", "detailed").
-            sort (str): The field to sort the results by (e.g., "points", "goals").
+            sort (str | list[str]): The field to sort the results by (e.g., "points", "goals").
+            direction (str | list[str]): The direction to sort the results (e.g., "DESC", "ASC").
+            aggregate (bool): Whether to aggregate the stats. Defaults to False.
             limit (int): The maximum number of results to return.
 
         Returns:

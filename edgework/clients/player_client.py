@@ -7,9 +7,9 @@ from edgework.models.player import Player
 def api_to_dict(data: dict) -> dict:
     slug = f"{data.get('name').replace(' ', '-').lower()}-{data.get('playerId')}"
     return {
-        "player_id": data.get("playerId"),
-        "first_name": data.get("name").split(" ")[0],
-        "last_name": data.get("name").split(" ")[1],
+        "player_id": int(data.get("playerId")) if data.get("playerId") else None,
+        "first_name": data.get("name").split(" ")[0] if data.get("name") else "",
+        "last_name": data.get("name").split(" ")[1] if data.get("name") and len(data.get("name").split(" ")) > 1 else "",
         "player_slug": slug,
         "sweater_number": data.get("sweaterNumber"),
         "birth_date": data.get("birthDate"),
@@ -27,7 +27,7 @@ def api_to_dict(data: dict) -> dict:
 
 def landing_to_dict(data: dict) -> dict:
     return {
-        "player_id": data.get("playerId"),
+        "player_id": int(data.get("playerId")) if data.get("playerId") else None,
         "player_slug": data.get("playerSlug"),
         "birth_city": data.get("birthCity", {}).get("default"),
         "birth_country": data.get("birthCountry"),
@@ -76,13 +76,9 @@ class PlayerClient:
             "active": True
         }
 
-
         response = self._client.get_raw(
             'https://search.d3.nhle.com/api/v1/search/player', params=params)
         data = response.json()
-        for player in data:
-            print(player)
-        print(data)
         return [Player(**api_to_dict(player)) for player in data]
 
     def get_all_inactive_players(self) -> list[Player]:
