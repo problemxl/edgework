@@ -125,50 +125,34 @@ class Roster(BaseNHLModel):
             self._players.append(player)
 
     @property
-    def players(self) -> List[Player]:
-        """Get all players in the roster."""
-        self._fetch_if_not_fetched()
-        return self._players
-
-    @property
-    def forwards(self) -> List[Player]:
-        """Get all forwards (C, LW, RW) in the roster."""
-        return [p for p in self.players if p.position in ["C", "L", "R", "LW", "RW"]]
+    def forwards(self) -> list[Player]:
+        """
+        Get the forwards from the roster.
+        
+        Returns:
+            list[Player]: List of forwards in the roster.
+        """
+        return [p for p in self._data['players'] if p.position == "C" or p.position == "LW" or p.position == "RW"]
     
     @property
-    def defensemen(self) -> List[Player]:
-        """Get all defensemen in the roster."""
-        return [p for p in self.players if p.position == "D"]
+    def defensemen(self):
+        """
+        Get the defensemen from the roster.
+        
+        Returns:
+            list[Player]: List of defensemen in the roster.
+        """
+        return [p for p in self._data['players'] if p.position == "D"]
     
     @property
-    def goalies(self) -> List[Player]:
-        """Get all goalies in the roster.""" 
-        return [p for p in self.players if p.position == "G"]
-
-    @property
-    def centers(self) -> List[Player]:
-        """Get all centers in the roster."""
-        return [p for p in self.players if p.position == "C"]
-
-    @property
-    def wingers(self) -> List[Player]:
-        """Get all wingers (LW, RW) in the roster."""
-        return [p for p in self.players if p.position in ["L", "R", "LW", "RW"]]
-
-    def get_player_by_number(self, number: int) -> Optional[Player]:
-        """Get a player by their sweater number."""
-        for player in self.players:
-            if player.sweater_number == number:
-                return player
-        return None
-
-    def get_player_by_name(self, name: str) -> Optional[Player]:
-        """Get a player by their name (case insensitive)."""
-        name = name.lower()
-        for player in self.players:
-            if name in player.full_name.lower():
-                return player
-        return None
+    def goalies(self):
+        """
+        Get the goalies from the roster.
+        
+        Returns:
+            list[Player]: List of goalies in the roster.
+        """
+        return [p for p in self._data['players'] if p.position == "G"]
     
     def fetch_data(self):
         """

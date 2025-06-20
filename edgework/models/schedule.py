@@ -43,31 +43,38 @@ class Schedule(BaseNHLModel):
         # Initialize empty games list if not provided
         if 'games' not in self._data:
             self._data['games'] = []
-            
-        # Mark as fetched if we have data
-        if kwargs:
-            self._fetched = True
 
-    def __str__(self):
-        """String representation showing schedule summary."""
-        num_games = self._data.get('number_of_games', 0)
-        start_date = self._data.get('regular_season_start_date')
-        end_date = self._data.get('regular_season_end_date')
         
-        if start_date and end_date:
-            if isinstance(start_date, str):
-                start_date = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
-            if isinstance(end_date, str):
-                end_date = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
-            return f"Schedule ({num_games} games): {start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}"
-        elif num_games:
-            return f"Schedule ({num_games} games)"
-        else:
-            return "Schedule"
-
-    def __repr__(self):
-        """Developer representation of the Schedule object."""
-        return f"Schedule(games={len(self._data.get('games', []))})"
+    
+    @classmethod
+    def from_dict(cls, edgework_client, data: dict) -> "Schedule":
+        """
+        Create a Schedule object from a dictionary.
+        
+        Args:
+            edgework_client: The Edgework client
+            data: Dictionary containing schedule data
+            
+        Returns:
+            Schedule: A Schedule object
+        """
+        previous = datetime.fromisoformat(data["previousStartDate"]) if data.get("previousStartDate") else None
+        games = data.get("games") or [game for day in data.get("gameWeek", []) for game in day.get("games", [])]
+        pre_season = datetime.fromisoformat(data["preSeasonStartDate"]) if data.get("preSeasonStartDate") else None
+        reg_start = datetime.fromisoformat(data["regularSeasonStartDate"]) if data.get("regularSeasonStartDate") else None
+        reg_end = datetime.fromisoformat(data["regularSeasonEndDate"]) if data.get("regularSeasonEndDate") else None
+        playoff = datetime.fromisoformat(data["playoffEndDate"]) if data.get("playoffEndDate") else None
+        number_of_games = data.get("numberOfGames") or 0
+        return cls(
+            edgework_client=edgework_client,
+            previous_start_date=previous,
+            games=games,
+            pre_season_start_date=pre_season,
+            regular_season_start_date=reg_start,
+            regular_season_end_date=reg_end,
+            playoff_end_date=playoff,
+            number_of_games=number_of_games,
+        )
 
     @classmethod
     def from_dict(cls, edgework_client, data: dict) -> "Schedule":
