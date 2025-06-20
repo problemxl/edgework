@@ -2,8 +2,10 @@ from edgework.http_client import SyncHttpClient
 
 # Import the SkaterStats model
 from edgework.models.player import Player
+from edgework.models.team import Team, Roster
 from edgework.models.stats import SkaterStats, GoalieStats, TeamStats
 from edgework.clients.player_client import PlayerClient
+from edgework.clients.team_client import TeamClient
 import re
 
 
@@ -61,6 +63,7 @@ class Edgework:
 
         # Initialize client handlers
         self._player_client = PlayerClient(http_client=self._client)
+        self._team_client = TeamClient(client=self._client)
 
     def players(
         self, active_only: bool = True) -> list[Player]:
@@ -178,6 +181,94 @@ class Edgework:
             game=game,
         )
         return self.teams
+
+    def get_teams(self) -> list[Team]:
+        """
+        Fetch a list of all NHL teams.
+        
+        Returns:
+            list[Team]: A list of Team objects.
+        """
+        return self._team_client.get_teams()
+
+    def get_roster(self, team_code: str, season: str = None) -> Roster:
+        """
+        Fetch a roster for a specific team.
+        
+        Args:
+            team_code (str): The team code (e.g., 'TOR', 'NYR').
+            season (str, optional): The season in format "YYYY-YYYY" (e.g., "2023-2024").
+                                   If None, gets current roster.
+        
+        Returns:
+            Roster: A Roster object containing the team's players.
+        """
+        converted_season = None
+        if season:
+            converted_season = _validate_season_format(season)
+        
+        return self._team_client.get_roster(team_code, converted_season)
+
+    def get_team_stats(self, team_code: str, season: str = None, game_type: int = 2):
+        """
+        Get team statistics.
+        
+        Args:
+            team_code (str): The team code (e.g., 'TOR', 'NYR').
+            season (str, optional): The season in format "YYYY-YYYY" (e.g., "2023-2024").
+                                   If None, gets current season stats.
+            game_type (int): Game type (2 for regular season, 3 for playoffs). Default is 2.
+        
+        Returns:
+            dict: Team statistics data.
+        """
+        converted_season = None
+        if season:
+            converted_season = _validate_season_format(season)
+        
+        return self._team_client.get_team_stats(team_code, converted_season, game_type)
+
+    def get_team_schedule(self, team_code: str, season: str = None):
+        """
+        Get team schedule.
+        
+        Args:
+            team_code (str): The team code (e.g., 'TOR', 'NYR').
+            season (str, optional): The season in format "YYYY-YYYY" (e.g., "2023-2024").
+                                   If None, gets current season schedule.
+        
+        Returns:
+            dict: Team schedule data.
+        """
+        converted_season = None
+        if season:
+            converted_season = _validate_season_format(season)
+        
+        return self._team_client.get_team_schedule(team_code, converted_season)
+
+    def get_team_prospects(self, team_code: str):
+        """
+        Get team prospects.
+        
+        Args:
+            team_code (str): The team code (e.g., 'TOR', 'NYR').
+        
+        Returns:
+            dict: Team prospects data.
+        """
+        return self._team_client.get_team_prospects(team_code)
+
+    def get_team_scoreboard(self, team_code: str):
+        """
+        Get team scoreboard.
+        
+        Args:
+            team_code (str): The team code (e.g., 'TOR', 'NYR').
+        
+        Returns:
+            dict: Team scoreboard data.
+        """
+        return self._team_client.get_scoreboard(team_code)
 
     def close(self):
         """Closes the underlying HTTP client session."""

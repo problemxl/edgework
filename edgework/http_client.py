@@ -18,7 +18,7 @@ class HttpClient:
         self._user_agent = user_agent
         self._base_url = "https://api-web.nhle.com/v1/"
         self._stats_base_url = "https://api.nhle.com/stats/rest/en/"
-        self._client = httpx.Client(headers={"User-Agent": self._user_agent})
+        self._client = httpx.Client(headers={"User-Agent": self._user_agent}, follow_redirects=True)
 
     def get(self, endpoint: str, path: Optional[str] = None, params: Optional[Dict[str, Any]] = None, web: bool = False) -> httpx.Response:
         """
