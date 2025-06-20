@@ -4,8 +4,10 @@ from edgework.http_client import SyncHttpClient
 from edgework.models.player import Player
 from edgework.models.team import Team, Roster
 from edgework.models.stats import SkaterStats, GoalieStats, TeamStats
+from edgework.models.schedule import Schedule
 from edgework.clients.player_client import PlayerClient
 from edgework.clients.team_client import TeamClient
+from edgework.clients.schedule_client import ScheduleClient
 import re
 
 
@@ -64,6 +66,7 @@ class Edgework:
         # Initialize client handlers
         self._player_client = PlayerClient(http_client=self._client)
         self._team_client = TeamClient(client=self._client)
+        self._schedule_client = ScheduleClient(client=self._client)
 
     def players(
         self, active_only: bool = True) -> list[Player]:
@@ -269,6 +272,98 @@ class Edgework:
             dict: Team scoreboard data.
         """
         return self._team_client.get_scoreboard(team_code)
+
+    # Schedule methods
+    def get_schedule(self) -> Schedule:
+        """
+        Get the current NHL schedule.
+        
+        Returns:
+            Schedule: Current NHL schedule with games and season information.
+        """
+        return self._schedule_client.get_schedule()
+
+    def get_schedule_for_date(self, date: str) -> Schedule:
+        """
+        Get the NHL schedule for a specific date.
+        
+        Args:
+            date (str): The date in format 'YYYY-MM-DD'.
+        
+        Returns:
+            Schedule: NHL schedule for the specified date.
+        """
+        return self._schedule_client.get_schedule_for_date(date)
+
+    def get_schedule_for_date_range(self, start_date: str, end_date: str) -> Schedule:
+        """
+        Get the NHL schedule for a date range.
+        
+        Args:
+            start_date (str): The start date in format 'YYYY-MM-DD'.
+            end_date (str): The end date in format 'YYYY-MM-DD'.
+        
+        Returns:
+            Schedule: NHL schedule for the specified date range.
+        """
+        return self._schedule_client.get_schedule_for_date_range(start_date, end_date)
+
+    def get_team_schedule_full(self, team_abbr: str) -> Schedule:
+        """
+        Get the full season schedule for a specific team.
+        
+        Args:
+            team_abbr (str): The team abbreviation (e.g., 'TOR', 'NYR').
+        
+        Returns:
+            Schedule: Full season schedule for the specified team.
+        """
+        return self._schedule_client.get_schedule_for_team(team_abbr)
+
+    def get_team_schedule_week(self, team_abbr: str) -> Schedule:
+        """
+        Get the weekly schedule for a specific team.
+        
+        Args:
+            team_abbr (str): The team abbreviation (e.g., 'TOR', 'NYR').
+        
+        Returns:
+            Schedule: Weekly schedule for the specified team.
+        """
+        return self._schedule_client.get_schedule_for_team_for_week(team_abbr)
+
+    def get_team_schedule_month(self, team_abbr: str) -> Schedule:
+        """
+        Get the monthly schedule for a specific team.
+        
+        Args:
+            team_abbr (str): The team abbreviation (e.g., 'TOR', 'NYR').
+        
+        Returns:
+            Schedule: Monthly schedule for the specified team.
+        """
+        return self._schedule_client.get_schedule_for_team_for_month(team_abbr)
+
+    def get_schedule_calendar(self) -> dict:
+        """
+        Get the current NHL schedule calendar.
+        
+        Returns:
+            dict: Schedule calendar showing available dates with games.
+        """
+        return self._schedule_client.get_schedule_calendar()
+
+    def get_schedule_calendar_for_date(self, date: str) -> dict:
+        """
+        Get the NHL schedule calendar for a specific date.
+        
+        Args:
+            date (str): The date in format 'YYYY-MM-DD'.
+        
+        Returns:
+            dict: Schedule calendar for the specified date.
+        """
+        return self._schedule_client.get_schedule_calendar_for_date(date)
 
     def close(self):
         """Closes the underlying HTTP client session."""
