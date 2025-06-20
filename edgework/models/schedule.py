@@ -21,9 +21,21 @@ class Schedule(BaseNHLModel):
         # Initialize empty games list if not provided
         if 'games' not in self._data:
             self._data['games'] = []
+
+        
     
     @classmethod
     def from_dict(cls, edgework_client, data: dict) -> "Schedule":
+        """
+        Create a Schedule object from a dictionary.
+        
+        Args:
+            edgework_client: The Edgework client
+            data: Dictionary containing schedule data
+            
+        Returns:
+            Schedule: A Schedule object
+        """
         previous = datetime.fromisoformat(data["previousStartDate"]) if data.get("previousStartDate") else None
         games = data.get("games") or [game for day in data.get("gameWeek", []) for game in day.get("games", [])]
         pre_season = datetime.fromisoformat(data["preSeasonStartDate"]) if data.get("preSeasonStartDate") else None
