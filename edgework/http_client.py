@@ -2,12 +2,13 @@
 
 import httpx
 from typing import Dict, Any, Optional
+from . import __version__
 
 
 class HttpClient:
     """Base HTTP client for NHL API requests."""
     
-    def __init__(self, user_agent: str = "EdgeworkClient/0.2.1"):
+    def __init__(self, user_agent: str = f"EdgeworkClient/{__version__}"):
         """
         Initialize the HTTP client.
         
@@ -17,30 +18,26 @@ class HttpClient:
         self._user_agent = user_agent
         self._base_url = "https://api-web.nhle.com/v1/"
         self._stats_base_url = "https://api.nhle.com/stats/rest/en/"
-        
-    def get(self, endpoint: str, params: Optional[Dict[str, Any]] = None, web: bool = False) -> httpx.Response:
+        self._client = httpx.Client(headers={"User-Agent": self._user_agent})
+
+    def get(self, endpoint: str, path: Optional[str] = None, params: Optional[Dict[str, Any]] = None, web: bool = False) -> httpx.Response:
         """
         Make a GET request to an NHL API endpoint.
         
         Args:
             endpoint: API endpoint (without base URL)
+            path: Optional full path to override endpoint
             params: Optional query parameters
             web: If True, use the web API base URL
             
         Returns:
             httpx.Response object
         """
-        if web:
-            url = f"{self._base_url}{endpoint}"
-        else:
-            url = f"{self._stats_base_url}{endpoint}"
-            
-        headers = {"User-Agent": self._user_agent}
-        
-        with httpx.Client() as client:
-            response = client.get(url, params=params, headers=headers)
-            response.raise_for_status()
-            return response
+        url = f"{self._base_url if web else self._stats_base_url}{path or endpoint}"
+
+        response = self._client.get(url, params=params)
+        response.raise_for_status()
+        return response
     
     def get_raw(self, url: str, params: Optional[Dict[str, Any]] = None) -> httpx.Response:
         """
@@ -53,12 +50,37 @@ class HttpClient:
         Returns:
             httpx.Response object
         """
-        headers = {"User-Agent": self._user_agent}
+        response = self._client.get(url, params=params)
+        response.raise_for_status()
+        return response
+
+    def get_with_path(self, path: str, params: Optional[Dict[str, Any]] = None, web: bool = False) -> httpx.Response:
+        """
+        Make a GET request using a full path.
         
-        with httpx.Client() as client:
-            response = client.get(url, params=params, headers=headers)
-            response.raise_for_status()
-            return response
+        Args:
+            path: Full path including query parameters
+            params: Optional query parameters
+            web: If True, use the web API base URL
+            
+        Returns:
+            httpx.Response object
+        """
+        url = f"{self._base_url if web else self._stats_base_url}{path}"
+
+        response = self._client.get(url, params=params)
+        response.raise_for_status()
+        return response
+
+    def close(self):
+        """Close the HTTP client."""
+        self._client.close()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
 
 
 class SyncHttpClient(HttpClient):

@@ -44,7 +44,7 @@ def _validate_season_format(season: str) -> int:
 
 
 class Edgework:
-    def __init__(self, user_agent: str = "EdgeworkClient/0.2.0"):
+    def __init__(self, user_agent: str = "EdgeworkClient/2.0"):
         """
         Initializes the Edgework API client.
 
@@ -58,9 +58,9 @@ class Edgework:
         self.skaters = SkaterStats(edgework_client=self._client)
         self.goalies = GoalieStats(edgework_client=self._client)
         self.teams = TeamStats(edgework_client=self._client)
-        
+
         # Initialize client handlers
-        self._player_client = PlayerClient(client=self._client)
+        self._player_client = PlayerClient(http_client=self._client)
 
     def players(
         self, active_only: bool = True) -> list[Player]:
@@ -76,7 +76,7 @@ class Edgework:
             list[Player]: A list of Player objects.
         """
         if active_only:
-            return self._player_client.get_all_active_players()
+            return self._player_client.get_active_players()
         else:
             return self._player_client.get_all_players()
 

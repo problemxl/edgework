@@ -220,26 +220,36 @@ class SkaterStats(BaseNHLModel):
         # Convert sort_dict to JSON
         sort_json = json.dumps(sort_dict)
 
-        url_path = f"en/skater/{report}"
+        # Fix encoding issue by handling sort_dict correctly
+        if isinstance(sort_dict, dict):
+            sort_param = sort_dict["property"]
+        elif isinstance(sort_dict, list):
+            sort_param = ",".join([item["property"] for item in sort_dict])
+        else:
+            raise ValueError("Invalid sort_dict format. Must be a dict or list of dicts.")
+
+        url_path = f"skater/{report}"
         params = {
             "isAggregate": aggregate,
             "isGame": game,
             "limit": limit,
             "start": start,
-            "sort": sort_json,
+            "sort": sort_param,  # Fixed sort parameter
             "cayenneExp": cayenne_exp,
         }
-        query_string = urlencode(params)
+        query_string = urlencode(params, safe='=')
         full_path = f"{url_path}?{query_string}"
 
-        response = self._client.get(path=full_path, params=None, web=False)
+        response = self._client.get(endpoint='stats', path=full_path, params=None, web=False)
 
         if response.status_code != 200:
             raise Exception(
                 f"Failed to fetch skater stats: {response.status_code} {response.text}"
             )
 
-        data = response.json()["data"]
+        data = response.json().get("data")
+        if data is None:
+            raise KeyError("Missing 'data' key in API response")
 
         # Convert camelCase to snake_case and update data
         if data:
@@ -298,6 +308,12 @@ class GoalieStats(BaseNHLModel):
         limit, start = validate_limit_and_start(limit, start)
         sort_dict = validate_sort_direction(sort, direction)
         game_type_exp = validate_game_type(game_type)
+        if isinstance(sort_dict, dict):
+            sort_param = sort_dict["property"]
+        elif isinstance(sort_dict, list):
+            sort_param = ",".join([item["property"] for item in sort_dict])
+        else:
+            raise ValueError("Invalid sort_dict format. Must be a dict or list of dicts.")
 
         # Build cayenne expression
         cayenne_exp = f"seasonId={season}{game_type_exp}"
@@ -305,27 +321,30 @@ class GoalieStats(BaseNHLModel):
         # Convert sort_dict to JSON
         sort_json = json.dumps(sort_dict)
         
-        url_path = f"en/goalie/{report}"
+        url_path = f"goalie/{report}"
         params = {
             "isAggregate": aggregate,
             "isGame": game,
             "limit": limit,
             "start": start,
-            "sort": sort_json,
+            "sort": sort_param,  # Fixed sort parameter
             "cayenneExp": cayenne_exp,
         }
-        query_string = urlencode(params)
+        query_string = urlencode(params, safe='=')
         full_path = f"{url_path}?{query_string}"
-        
-        response = self._client.get(path=full_path, params=None, web=False)
-        
+
+        response = self._client.get(endpoint='stats', path=full_path, params=None, web=False)
+
         if response.status_code != 200:
             raise Exception(
                 f"Failed to fetch goalie stats: {response.status_code} {response.text}"
             )
-        
-        data = response.json()["data"]
 
+        data = response.json().get("data")
+        if data is None:
+            raise KeyError("Missing 'data' key in API response")
+
+        # Convert camelCase to snake_case and update data
         if data:
             self._data = data
             self.players = [
@@ -382,34 +401,40 @@ class TeamStats(BaseNHLModel):
         limit, start = validate_limit_and_start(limit, start)
         sort_dict = validate_sort_direction(sort, direction)
         game_type_exp = validate_game_type(game_type)
+        if isinstance(sort_dict, dict):
+            sort_param = sort_dict["property"]
+        elif isinstance(sort_dict, list):
+            sort_param = ",".join([item["property"] for item in sort_dict])
+        else:
+            raise ValueError("Invalid sort_dict format. Must be a dict or list of dicts.")
 
         # Build cayenne expression
-        cayenne_exp = f"seasonId={season}{game_type_exp}"
+        cayenne_exp = f"seasonId={season}"  # Removed gameTypeId from cayenneExp
 
         # Convert sort_dict to JSON
         sort_json = json.dumps(sort_dict)
-
-        url_path = f"en/team/{report}"
         params = {
             "isAggregate": aggregate,
             "isGame": game,
             "limit": limit,
             "start": start,
-            "sort": sort_json,
+            "sort": sort_param,  # Fixed sort parameter
             "cayenneExp": cayenne_exp,
         }
-        query_string = urlencode(params)
-        full_path = f"{url_path}?{query_string}"
-        
-        response = self._client.get(path=full_path, params=None, web=False)
-        
+        query_string = urlencode(params, safe='=')
+        full_path = f"team/{report}?{query_string}"
+
+        response = self._client.get(endpoint='stats', path=full_path, params=None, web=False)
+
         if response.status_code != 200:
             raise Exception(
                 f"Failed to fetch team stats: {response.status_code} {response.text}"
             )
-        
-        data = response.json().get("data", [])
-    
+
+        data = response.json().get("data")
+        if data is None:
+            raise KeyError("Missing 'data' key in API response")
+
         if data:
             data = [dict_camel_to_snake(d) for d in data]
             self.teams = [StatEntity(self._client, data=team) for team in data]

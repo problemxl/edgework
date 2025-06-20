@@ -103,7 +103,8 @@ class TestSkaterStats:
         
         # Verify the API call
         mock_client.get.assert_called_once_with(
-            path="en/skater/summary?isAggregate=False&isGame=True&limit=-1&start=0&sort=points&cayenneExp=seasonId=20232024",
+            endpoint='stats',
+            path="skater/summary?isAggregate=False&isGame=True&limit=-1&start=0&sort=points&cayenneExp=seasonId=20232024",
             params=None,
             web=False
         )
@@ -126,7 +127,8 @@ class TestSkaterStats:
             
             # Verify the API call used current season
             mock_client.get.assert_called_once_with(
-                path="en/skater/summary?isAggregate=False&isGame=True&limit=-1&start=0&sort=points&cayenneExp=seasonId=20232024",
+                endpoint='stats',
+                path="skater/summary?isAggregate=False&isGame=True&limit=-1&start=0&sort=points&cayenneExp=seasonId=20232024",
                 params=None,
                 web=False
             )
@@ -170,7 +172,8 @@ class TestSkaterStats:
             sort="goals"
         )
         mock_client.get.assert_called_once_with(
-            path="en/skater/bios?isAggregate=True&isGame=False&limit=10&start=5&sort=goals&cayenneExp=seasonId=20222023",
+            endpoint='stats',
+            path="skater/bios?isAggregate=True&isGame=False&limit=10&start=5&sort=goals&cayenneExp=seasonId=20222023",
             params=None,
             web=False
         )
@@ -211,7 +214,8 @@ class TestGoalieStats:
         
         # Verify the API call
         mock_client.get.assert_called_once_with(
-            path="en/goalie/summary?isAggregate=False&isGame=True&limit=-1&start=0&sort=wins&cayenneExp=seasonId=20232024",
+            endpoint='stats',
+            path="goalie/summary?isAggregate=False&isGame=True&limit=-1&start=0&sort=wins&cayenneExp=seasonId=20232024",
             params=None,
             web=False
         )
@@ -239,7 +243,8 @@ class TestGoalieStats:
             
             expected_season = 20222023 # Corrected: 2022 * 10000 + (2022 + 1)
             mock_client.get.assert_called_once_with(
-                path=f"en/goalie/summary?isAggregate=False&isGame=True&limit=-1&start=0&sort=wins&cayenneExp=seasonId={expected_season}",
+                endpoint='stats',
+                path=f"goalie/summary?isAggregate=False&isGame=True&limit=-1&start=0&sort=wins&cayenneExp=seasonId={expected_season}",
                 params=None,
                 web=False
             )
@@ -306,7 +311,8 @@ class TestTeamStats:
         
         # Verify the API call
         mock_client.get.assert_called_once_with(
-            path="en/team/summary?isAggregate=False&isGame=True&limit=-1&start=0&sort=wins&cayenneExp=seasonId=20232024",
+            endpoint='stats',
+            path="team/summary?isAggregate=False&isGame=True&limit=-1&start=0&sort=wins&cayenneExp=seasonId=20232024",
             params=None,
             web=False
         )
@@ -333,11 +339,12 @@ class TestTeamStats:
         stats = TeamStats(mock_client, obj_id=10)
         with patch('edgework.models.stats.datetime') as mock_datetime:
             mock_datetime.now.return_value = datetime(2024, 1, 1) # Year is 2024
-            stats.fetch_data(report="powerplay") # Default sort is "wins"
+            stats.fetch_data(report="powerPlay") # Default sort is "wins"
             
-            expected_season = 20242025 # Corrected: 2024 * 10000 + (2024 + 1)
+            expected_season = 20232024 # Corrected: (2024-1) * 10000 + 2024 since January < 7
             mock_client.get.assert_called_once_with(
-                path=f"en/team/powerplay?isAggregate=False&isGame=True&limit=-1&start=0&sort=wins&cayenneExp=seasonId={expected_season}",
+                endpoint='stats',
+                path=f"team/powerPlay?isAggregate=False&isGame=True&limit=-1&start=0&sort=wins&cayenneExp=seasonId={expected_season}",
                 params=None,
                 web=False
             )
