@@ -20,6 +20,7 @@ class TestTeamMethods:
         # Assert that we get teams
         assert isinstance(teams, list), "get_teams() should return a list"
         assert len(teams) > 0, "Should return at least some teams"
+        assert len(teams) == 32, "Should return exactly 32 teams"
 
         # Check that all returned items are Team objects
         for team in teams:
