@@ -41,7 +41,7 @@ class ScheduleClient:
 
         Parameters
         ----------
-        start_date : str
+        start_date : strtac
             The start date for which to get the schedule. Should be in the format of 'YYYY-MM-DD'.
         end_date : str
             The end date for which to get the schedule. Should be in the format of 'YYYY-MM-DD'.

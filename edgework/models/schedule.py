@@ -31,14 +31,13 @@ class Schedule(BaseNHLModel):
     def __init__(self, edgework_client, obj_id=None, **kwargs):
         """
         Initialize a Schedule object with dynamic attributes.
-        
-        Args:
+          Args:
             edgework_client: The Edgework client
             obj_id: The ID of the schedule (optional)
             **kwargs: Dynamic attributes for schedule properties
         """
         super().__init__(edgework_client, obj_id)
-        self._data = kwargs
+        self._data = kwargs.copy()  # Create a copy to avoid modifying original kwargs
         self._games_objects: List[Game] = []
         
         # Initialize empty games list if not provided
@@ -129,8 +128,7 @@ class Schedule(BaseNHLModel):
         This method would be called if the schedule needs to be refreshed from the API.
         """
         if not self._client:
-            raise ValueError("No client available to fetch schedule data")
-          # For now, schedule data is typically loaded when created
+            raise ValueError("No client available to fetch schedule data")          # For now, schedule data is typically loaded when created
         # If specific schedule fetching is needed, it would be implemented here
         pass
 
@@ -151,16 +149,33 @@ class Schedule(BaseNHLModel):
                 if self._client:
                     game = Game.from_api(game_data, self._client.http_client)
                     self._games_objects.append(game)
-        return self._games_objects    @property
+        return self._games_objects
+
+    @property
     def games_today(self) -> List['Game']:
         """
-        Get games scheduled for today.
-        
-        Returns:
+        Get games scheduled for today.        Returns:
             List[Game]: List of games scheduled for today
         """
         today = datetime.now().date()
-        return [game for game in self.games if game._data.get('game_date', '').date() == today]
+        result = []
+        for game in self.games:
+            game_date = game._data.get('game_date')
+            if game_date:
+                # Handle both datetime and date objects
+                if hasattr(game_date, 'date'):
+                    # It's a datetime object
+                    game_date_obj = game_date.date()
+                elif hasattr(game_date, 'year'):
+                    # It's already a date object
+                    game_date_obj = game_date
+                else:
+                    # Skip if it's neither
+                    continue
+                    
+                if game_date_obj == today:
+                    result.append(game)
+        return result
 
     @property
     def upcoming_games(self) -> List['Game']:
