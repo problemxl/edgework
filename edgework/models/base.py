@@ -41,13 +41,6 @@ class BaseNHLModel:
         it triggers lazy loading and then looks for the attribute name as a
         key in the internal _data dictionary.
         """
-        # Prevent recursion for internal attributes or known methods/properties
-        # Important: Check against self.__class__.__dict__ for methods etc.
-        if name.startswith('_') or name in self.__dict__ or name in self.__class__.__dict__:
-            # This allows accessing self.id, self._nhl, self._data, self._fetched, get_game_log etc.
-            # without triggering infinite loops.
-             raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'")
-
         self._fetch_if_not_fetched() # Ensure core data is fetched
 
         # --- Dynamic Part ---
@@ -57,4 +50,4 @@ class BaseNHLModel:
         # --------------------
         else:
             # If still not found after fetching, raise the original error
-            raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}' after fetch, not found in API response keys.")
+            raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'")
