@@ -30,7 +30,7 @@ class TestEdgeworkInitialization:
         assert isinstance(edgework.teams, TeamStats)
         
         # Verify player client was initialized
-        mock_player_client.assert_called_once_with(client=mock_client_instance)
+        mock_player_client.assert_called_once_with(http_client=mock_client_instance)
 
     @patch('edgework.edgework.SyncHttpClient')
     @patch('edgework.edgework.PlayerClient')
@@ -74,22 +74,22 @@ class TestEdgeworkPlayers:
     def test_players_active_only_default(self):
         """Test players method with default active_only=True."""
         mock_players = [Mock(spec=Player), Mock(spec=Player)]
-        self.mock_player_client_instance.get_all_active_players.return_value = mock_players
+        self.mock_player_client_instance.get_active_players.return_value = mock_players
         
         result = self.edgework.players()
         
-        self.mock_player_client_instance.get_all_active_players.assert_called_once()
+        self.mock_player_client_instance.get_active_players.assert_called_once()
         self.mock_player_client_instance.get_all_players.assert_not_called()
         assert result == mock_players
 
     def test_players_active_only_explicit_true(self):
         """Test players method with explicit active_only=True."""
         mock_players = [Mock(spec=Player), Mock(spec=Player)]
-        self.mock_player_client_instance.get_all_active_players.return_value = mock_players
+        self.mock_player_client_instance.get_active_players.return_value = mock_players
         
         result = self.edgework.players(active_only=True)
         
-        self.mock_player_client_instance.get_all_active_players.assert_called_once()
+        self.mock_player_client_instance.get_active_players.assert_called_once()
         self.mock_player_client_instance.get_all_players.assert_not_called()
         assert result == mock_players
 
@@ -101,13 +101,13 @@ class TestEdgeworkPlayers:
         result = self.edgework.players(active_only=False)
         
         self.mock_player_client_instance.get_all_players.assert_called_once()
-        self.mock_player_client_instance.get_all_active_players.assert_not_called()
+        self.mock_player_client_instance.get_active_players.assert_not_called()
         assert result == mock_players
 
     def test_players_return_type(self):
         """Test that players method returns a list."""
         mock_players = []
-        self.mock_player_client_instance.get_all_active_players.return_value = mock_players
+        self.mock_player_client_instance.get_active_players.return_value = mock_players
         
         result = self.edgework.players()
         
@@ -444,7 +444,7 @@ class TestEdgeworkIntegration:
         
         # Test players method
         mock_players = [Mock(spec=Player)]
-        mock_player_client_instance.get_all_active_players.return_value = mock_players
+        mock_player_client_instance.get_active_players.return_value = mock_players
         players_result = edgework.players()
         
         # Test skater_stats method

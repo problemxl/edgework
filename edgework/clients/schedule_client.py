@@ -10,18 +10,10 @@ class ScheduleClient:
         self._client = client
 
     def get_schedule(self) -> Schedule:
+        """Get the current schedule."""
         response = self._client.get('schedule/now')
         data = response.json()
-        schedule_dict = {
-            "previousStartDate": data["previousStartDate"],
-            "games": [game for day in data["gameWeek"] for game in day["games"]],
-            "preSeasonStartDate": data["preSeasonStartDate"],
-            "regularSeasonStartDate": data["regularSeasonStartDate"],
-            "regularSeasonEndDate": data["regularSeasonEndDate"],
-            "playoffEndDate": data["playoffEndDate"],
-            "numberOfGames": data["numberOfGames"]
-        }
-        return Schedule.from_dict(schedule_dict)
+        return Schedule.from_api(None, data)
     
     def get_schedule_for_date(self, date: str) -> Schedule:
         """Get the schedule for the given date.
@@ -41,23 +33,15 @@ class ScheduleClient:
             raise ValueError("Invalid date format. Should be in the format of 'YYYY-MM-DD'.")
         
         response = self._client.get(f'schedule/{date}')
-        schedule_dict = {
-            "previousStartDate": response.json()["previousStartDate"],
-            "games": [game for day in response.json()["gameWeek"] for game in day["games"]],
-            "preSeasonStartDate": response.json()["preSeasonStartDate"],
-            "regularSeasonStartDate": response.json()["regularSeasonStartDate"],
-            "regularSeasonEndDate": response.json()["regularSeasonEndDate"],
-            "playoffEndDate": response.json()["playoffEndDate"],
-            "numberOfGames": response.json()["numberOfGames"]
-        }
-        return Schedule.from_dict(schedule_dict)
+        data = response.json()
+        return Schedule.from_api(None, data)
     
     def get_schedule_for_date_range(self, start_date: str, end_date: str) -> Schedule:
         """Get the schedule for the given date range.
 
         Parameters
         ----------
-        start_date : str
+        start_date : strtac
             The start date for which to get the schedule. Should be in the format of 'YYYY-MM-DD'.
         end_date : str
             The end date for which to get the schedule. Should be in the format of 'YYYY-MM-DD'.
@@ -78,29 +62,43 @@ class ScheduleClient:
 
         if start_dt > end_dt:
             raise ValueError("Start date cannot be after end date.")
+            
         games = []
-        d = {
+        schedule_data = {
             "previousStartDate": None,
             "games": [],
-            "pre_season_start_date": None,
+            "preSeasonStartDate": None,
             "regularSeasonStartDate": None,
             "regularSeasonEndDate": None,
             "playoffEndDate": None,
-            "numberOfGames": None
+            "numberOfGames": 0
         }
+        
         for i in range((end_dt - start_dt).days + 1):
             date = start_dt + timedelta(days=i)
             response = self._client.get(f'schedule/{date.strftime("%Y-%m-%d")}')
             data = response.json()
-            games += [game for day in data.get("gameWeek") for game in day["games"]]
-            if d["previousStartDate"] is None:
-                d["previousStartDate"] = data.get("previousStartDate")
-            d["regularSeasonStartDate"] = data.get("regularSeasonStartDate")
-        d["regularSeasonEndDate"] = data.get("regularSeasonEndDate")
-        d["playoffEndDate"] = data.get("playoffEndDate")
-        d["numberOfGames"] = len(games)
-        d["games"] = games
-        return Schedule.from_dict(d)
+            
+            # Extract games from this day
+            day_games = [game for day in data.get("gameWeek", []) for game in day.get("games", [])]
+            games.extend(day_games)
+            
+            # Set metadata from first day
+            if i == 0:
+                schedule_data["previousStartDate"] = data.get("previousStartDate")
+                schedule_data["preSeasonStartDate"] = data.get("preSeasonStartDate")
+            
+            # Update season dates
+            if data.get("regularSeasonStartDate"):
+                schedule_data["regularSeasonStartDate"] = data.get("regularSeasonStartDate")
+            if data.get("regularSeasonEndDate"):
+                schedule_data["regularSeasonEndDate"] = data.get("regularSeasonEndDate")
+            if data.get("playoffEndDate"):
+                schedule_data["playoffEndDate"] = data.get("playoffEndDate")
+        
+        schedule_data["numberOfGames"] = len(games)
+        schedule_data["games"] = games
+        return Schedule.from_api(None, schedule_data)
     
     def get_schedule_for_team(self, team_abbr: str) -> Schedule:
         """Get the schedule for the given team.
@@ -117,16 +115,7 @@ class ScheduleClient:
         """
         response = self._client.get(f'club-schedule-season/{team_abbr}/now')
         data = response.json()
-        schedule_dict = {
-            "previousStartDate": None,
-            "games": data.get("games"),
-            "preSeasonStartDate": None,
-            "regularSeasonStartDate": None,
-            "regularSeasonEndDate": None,
-            "playoffEndDate": None,
-            "numberOfGames": len(data.get("games"))
-        }
-        return Schedule.from_dict(schedule_dict)
+        return Schedule.from_api(None, data)
     
     def get_schedule_for_team_for_week(self, team_abbr: str) -> Schedule:
         """Get the schedule for the given team for the current week.
@@ -141,8 +130,9 @@ class ScheduleClient:
         Schedule
             
         """
-        response = self._client.get(f'schedule/club-schedule/{team_abbr}/now')
-        return Schedule.from_dict(response.json())
+        response = self._client.get(f'club-schedule/{team_abbr}/week/now')
+        data = response.json()
+        return Schedule.from_api(None, data)
     
     def get_schedule_for_team_for_month(self, team_abbr: str) -> Schedule:
         """Get the schedule for the given team for the current month.
@@ -157,5 +147,37 @@ class ScheduleClient:
         Schedule
             
         """
-        response = self._client.get(f'schedule/club-schedule/{team_abbr}/now')
-        return Schedule.from_dict(response.json())
+        response = self._client.get(f'club-schedule/{team_abbr}/month/now')
+        data = response.json()
+        return Schedule.from_api(None, data)
+
+    def get_schedule_calendar(self) -> dict:
+        """Get the current schedule calendar.
+        
+        Returns
+        -------
+        dict
+            Schedule calendar data showing available dates with games.
+        """
+        response = self._client.get('schedule-calendar/now')
+        return response.json()
+
+    def get_schedule_calendar_for_date(self, date: str) -> dict:
+        """Get the schedule calendar for a specific date.
+
+        Parameters
+        ----------
+        date : str
+            The date for which to get the schedule calendar. Should be in the format of 'YYYY-MM-DD'.
+
+        Returns
+        -------
+        dict
+            Schedule calendar data for the specified date.
+        """
+        # Validate the date format
+        if not re.match(r"^\d{4}-\d{2}-\d{2}$", date):
+            raise ValueError("Invalid date format. Should be in the format of 'YYYY-MM-DD'.")
+        
+        response = self._client.get(f'schedule-calendar/{date}')
+        return response.json()
