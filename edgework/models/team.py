@@ -125,6 +125,46 @@ class Roster(BaseNHLModel):
             self._players.append(player)
 
     @property
+    def players(self) -> List[Player]:
+        """
+        Get all players in the roster.
+        
+        Returns:
+            List[Player]: List of all players in the roster.
+        """
+        return self._players
+
+    def get_player_by_number(self, sweater_number: int) -> Optional[Player]:
+        """
+        Get a player by their sweater number.
+        
+        Args:
+            sweater_number: The player's sweater number
+            
+        Returns:
+            Player: The player with the given number, or None if not found.
+        """
+        for player in self._players:
+            if player.sweater_number == sweater_number:
+                return player
+        return None
+
+    def get_player_by_name(self, name: str) -> Optional[Player]:
+        """
+        Get a player by their full name.
+        
+        Args:
+            name: The player's full name
+            
+        Returns:
+            Player: The player with the given name, or None if not found.
+        """
+        for player in self._players:
+            if player.full_name == name:
+                return player
+        return None
+
+    @property
     def forwards(self) -> list[Player]:
         """
         Get the forwards from the roster.
