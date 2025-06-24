@@ -132,27 +132,27 @@ class Roster(BaseNHLModel):
         Returns:
             list[Player]: List of forwards in the roster.
         """
-        return [p for p in self._data['players'] if p.position == "C" or p.position == "LW" or p.position == "RW"]
+        return [p for p in self._players if p.position in {"C", "LW", "RW"}]
     
     @property
-    def defensemen(self):
+    def defensemen(self) -> list[Player]:
         """
         Get the defensemen from the roster.
         
         Returns:
             list[Player]: List of defensemen in the roster.
         """
-        return [p for p in self._data['players'] if p.position == "D"]
+        return [p for p in self._players if p.position == "D"]
     
     @property
-    def goalies(self):
+    def goalies(self) -> list[Player]:
         """
         Get the goalies from the roster.
         
         Returns:
             list[Player]: List of goalies in the roster.
         """
-        return [p for p in self._data['players'] if p.position == "G"]
+        return [p for p in self._players if p.position == "G"]
     
     def fetch_data(self):
         """
