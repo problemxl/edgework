@@ -1,7 +1,7 @@
 # Edgework - NHL API Client
 
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/problemxl/edgework/blob/main/LICENSE)
 [![Documentation](https://img.shields.io/badge/docs-mkdocs-blue.svg)](https://problemxl.github.io/edgework/)
 
 A Python client library for interacting with NHL APIs, providing easy access to player statistics, team information, schedules, and more.
