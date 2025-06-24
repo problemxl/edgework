@@ -43,6 +43,10 @@ class Schedule(BaseNHLModel):
         # Initialize empty games list if not provided
         if 'games' not in self._data:
             self._data['games'] = []
+            
+        # Set _fetched to True if we have any data
+        if kwargs:
+            self._fetched = True
 
         
     
@@ -204,3 +208,59 @@ class Schedule(BaseNHLModel):
             List[Game]: List of completed games
         """
         return [game for game in self.games if game._data.get('game_state') in ['OFF', 'FINAL']]
+
+    def __str__(self) -> str:
+        """
+        Return a human-readable string representation of the schedule.
+        
+        Returns:
+            str: String representation of the schedule
+        """
+        # Get number of games
+        num_games = self._data.get('number_of_games')
+        
+        # Get start and end dates
+        start_date = self._data.get('regular_season_start_date')
+        end_date = self._data.get('regular_season_end_date')
+        
+        # Format the string representation
+        if num_games is not None and num_games > 0:
+            result = f"Schedule ({num_games} games)"
+            
+            # Add date range if both dates are available
+            if start_date and end_date:
+                # Handle both string and datetime objects
+                if isinstance(start_date, str):
+                    try:
+                        start_date = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
+                    except (ValueError, TypeError):
+                        pass
+                        
+                if isinstance(end_date, str):
+                    try:
+                        end_date = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
+                    except (ValueError, TypeError):
+                        pass
+                
+                # Format dates if they are datetime objects
+                if hasattr(start_date, 'strftime') and hasattr(end_date, 'strftime'):
+                    start_str = start_date.strftime('%Y-%m-%d')
+                    end_str = end_date.strftime('%Y-%m-%d')
+                    result += f": {start_str} to {end_str}"
+            
+            return result
+        else:
+            return "Schedule"
+    
+    def __repr__(self) -> str:
+        """
+        Return a detailed string representation of the schedule.
+        
+        Returns:
+            str: Detailed representation of the schedule
+        """
+        games = self._data.get('games', [])
+        if games:
+            return f"Schedule(games={len(games)})"
+        else:
+            return f"Schedule(id={self.obj_id})"
