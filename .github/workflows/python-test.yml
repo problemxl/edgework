@@ -16,14 +16,12 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
+    - name: Install PDM
+      run: python -m pip install --upgrade pip && pip install pdm
+    - name: Install dependencies with PDM
+      run: pdm install -G:all
     - name: Run tests
-      run: |
-        pip install pytest pytest-cov pytest-asyncio pytest-vcr
-        pytest --cov=kalista tests/
+      run: pdm run pytest --cov=kalista tests/
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4.0.1
       with:
