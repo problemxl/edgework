@@ -71,14 +71,13 @@ class StatsClient:
         limit: int,
         start: int,
         sort: str,
-        season: int,
-    ) -> list[SkaterStats]:
+        season: int,    ) -> list[SkaterStats]:
         if report not in self.skate_reports:
             raise ValueError(f"Invalid report: {report}")
 
         response = self._client.get(
-            f"en/skater/{report}?isAggregate={aggregate}&isGame={game}&limit={
-                limit}&start={start}&sort={sort}&cayenneExp=seasonId={season}"
+            f"en/skater/{report}?isAggregate={aggregate}&isGame={game}&limit="
+            f"{limit}&start={start}&sort={sort}&cayenneExp=seasonId={season}"
         )
 
         data = response.json()["data"]
@@ -96,14 +95,15 @@ class StatsClient:
         start: int = 0,
         sort: str = "wins",
     ) -> list[GoalieStats]:
-        if report not in self.goalie_reports:
-            raise ValueError(
-                f"Invalid report: {report}, must be one of {
-                    ', '.join(self.goalie_reports)}"
+        if report not in self.goalie_reports:            raise ValueError(
+                f"Invalid report: {report}, must be one of "
+                f"{', '.join(self.goalie_reports)}"
             )
 
-        url_path = f"en/goalie/{report}?isAggregate={aggregate}&isGame={game}&limit={
-            limit}&start={start}&sort={sort}&cayenneExp=seasonId={season}"
+        url_path = (
+            f"en/goalie/{report}?isAggregate={aggregate}&isGame={game}&limit="
+            f"{limit}&start={start}&sort={sort}&cayenneExp=seasonId={season}"
+        )
         response = self._client.get(path=url_path, params=None, web=False)
         data = response.json()["data"]
 
@@ -160,14 +160,15 @@ class StatsClient:
             The field to sort by. Default is 'wins'.
         """
 
-        if report not in self.team_reports:
-            raise ValueError(
-                f"Invalid report: {report}, must be one of {
-                    ', '.join(self.team_reports)}"
+        if report not in self.team_reports:            raise ValueError(
+                f"Invalid report: {report}, must be one of "
+                f"{', '.join(self.team_reports)}"
             )
 
-        url_path = f"en/team/{report}?isAggregate={aggregate}&isGame={game}&limit={
-            limit}&start={start}&sort={sort}&cayenneExp=seasonId={season}"
+        url_path = (
+            f"en/team/{report}?isAggregate={aggregate}&isGame={game}&limit="
+            f"{limit}&start={start}&sort={sort}&cayenneExp=seasonId={season}"
+        )
         response = self._client.get(path=url_path, params=None, web=False)
         data = response.json()["data"]
 
