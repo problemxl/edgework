@@ -24,8 +24,14 @@ class Player(BaseNHLModel):
         # Mark as fetched since we're initializing with data
         self._fetched = True
 
-    def __str__(self):
-        """String representation showing player name and number."""
+    def __str__(self) -> str:
+        """String representation showing player name and number.
+        
+        Returns:
+            str: Formatted string with player name, number, and team abbreviation.
+                Examples: "#97 Connor McDavid (EDM)", "Connor McDavid (EDM)", 
+                "#97 Connor McDavid", or "Connor McDavid".
+        """
         first_name = self._data.get('first_name', '')
         last_name = self._data.get('last_name', '')
         sweater_number = self._data.get('sweater_number')
@@ -42,24 +48,47 @@ class Player(BaseNHLModel):
             return name
 
     def __repr__(self):
-        """Developer representation of the Player object."""
+        """Developer representation of the Player object.
+        
+        Returns:
+            str: Developer-friendly string representation showing the player ID.
+                Example: "Player(id=8478402)".
+        """
         player_id = self._data.get('player_id', self.obj_id)
         return f"Player(id={player_id})"
 
-    def __eq__(self, other):
-        """Compare players by their player_id."""
+    def __eq__(self, other) -> bool:
+        """Compare players by their player_id.
+        
+        Args:
+            other: The other object to compare with.
+            
+        Returns:
+            bool: True if both objects are Player instances with the same player_id,
+                False otherwise.
+        """
         if isinstance(other, Player):
             return self._data.get('player_id') == other._data.get('player_id')
         return False
 
     def __hash__(self):
-        """Hash based on player_id for use in sets and dicts."""
+        """Hash based on player_id for use in sets and dicts.
+        
+        Returns:
+            int: Hash value based on the player_id.
+        """
         return hash(self._data.get('player_id'))
         
     def fetch_data(self):
-        """
-        Fetch the data for the player from the API.
+        """Fetch the data for the player from the API.
+        
         Note: This would require the player_id and client to be set.
+        Currently not implemented as players are typically created with all data
+        from the search API.
+        
+        Raises:
+            ValueError: If no client is available to fetch player data.
+            ValueError: If no player ID is available to fetch data.
         """
         if not self._client:
             raise ValueError("No client available to fetch player data")
@@ -67,24 +96,38 @@ class Player(BaseNHLModel):
             raise ValueError("No player ID available to fetch data")
         
         # This would be implemented if we need to fetch individual player details
-        # For now, players are typically created with all data from the search API
-        pass
+        # For now, players are typically created with all data from the search API        pass
 
     @property
     def full_name(self):
-        """Get the player's full name."""
+        """Get the player's full name.
+        
+        Returns:
+            str: The player's full name (first name + last name).
+                Example: "Connor McDavid".
+        """
         first_name = self._data.get('first_name', '')
         last_name = self._data.get('last_name', '')
         return f"{first_name} {last_name}".strip()
 
     @property
     def name(self):
-        """Alias for full_name."""
-        return self.full_name
-
+        """Alias for full_name.
+        
+        Returns:
+            str: The player's full name (first name + last name).
+                Example: "Connor McDavid".
+        """
+        return self.full_name    
+    
     @property
     def age(self):
-        """Calculate player's age from birth_date."""
+        """Calculate player's age from birth_date.
+        
+        Returns:
+            int | None: The player's age in years, or None if birth_date is not available
+                or cannot be parsed.
+        """
         birth_date = self._data.get('birth_date')
         if birth_date:
             if isinstance(birth_date, str):
