@@ -11,6 +11,15 @@ build-backend = "pdm.backend"
 [tool.flake8]
 max-line-length = 120
 
+[tool.pytest.ini_options]
+markers = [
+    "live_api: marks tests as live API tests that make real HTTP requests (may be slow)"
+]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
 [project]
 authors = [{ name = "problemxl", email = "email@email.com" }]
 requires-python = "<4.0,>=3.11"
