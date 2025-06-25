@@ -349,7 +349,7 @@ class TestEdgeworkContextManager:
         
         # Should not raise an exception
         with Edgework() as edgework:
-            pass
+            assert isinstance(edgework, Edgework)
 
     @patch('edgework.edgework.SyncHttpClient')
     @patch('edgework.edgework.PlayerClient')

@@ -39,7 +39,7 @@ class Game(BaseNHLModel):
 
     def _get(self):
         """Get the game information."""
-        pass
+        raise NotImplementedError("Use from_api or from_dict to create Game instances")
 
     @property
     def shifts(self) -> List[Shift]:

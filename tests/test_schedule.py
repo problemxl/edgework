@@ -365,4 +365,4 @@ class TestScheduleIntegration:
         # This would test actual client integration
         # schedule = self.client.get_schedule()
         # assert isinstance(schedule, Schedule)
-        pass
+        

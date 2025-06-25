@@ -97,6 +97,8 @@ class Player(BaseNHLModel):
         
         # This would be implemented if we need to fetch individual player details
         # For now, players are typically created with all data from the search API        pass
+        raise NotImplementedError("fetch_data() is not implemented for Player model")
+
 
     @property
     def full_name(self):

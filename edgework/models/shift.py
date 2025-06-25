@@ -73,7 +73,7 @@ class PeriodTime(BaseNHLModel):
         Fetch the data for the period time.
         """
         # Implementation depends on how data is fetched from the API
-        pass
+        raise NotImplementedError("fetch_data() must be implemented in subclasses")
 
 
 class Shift(BaseNHLModel):
@@ -115,8 +115,7 @@ class Shift(BaseNHLModel):
         Fetch the data for the shift.
         """
         # Implementation depends on how data is fetched from the API
-        pass
-        return str(self)
+        raise NotImplementedError("fetch_data() must be implemented in subclasses")
 
     def __eq__(self, other):
         return self.shift_id == other.shift_id
