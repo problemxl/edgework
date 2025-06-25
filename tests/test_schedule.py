@@ -200,8 +200,9 @@ class TestSchedule:
         """Test fetch_data with client."""
         schedule = Schedule(self.mock_client)
         
-        # Should not raise an error but also doesn't do anything currently
-        schedule.fetch_data()
+        # Should raise NotImplementedError since fetch_data is not implemented
+        with pytest.raises(NotImplementedError):
+            schedule.fetch_data()
 
     @patch('edgework.models.game.Game')
     def test_games_property_with_client(self, mock_game_class):

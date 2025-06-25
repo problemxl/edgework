@@ -2,18 +2,18 @@ import pytest
 from datetime import datetime
 from unittest.mock import Mock, patch
 from edgework.models.stats import SkaterStats, GoalieStats, TeamStats
-from edgework.http_client import SyncHttpClient
+from edgework.http_client import HttpClient
 
 
 @pytest.fixture
 def mock_client():
-    client = Mock(spec=SyncHttpClient)
+    client = Mock(spec=HttpClient)
     return client
 
 
 @pytest.fixture
 def real_client():
-    return SyncHttpClient()
+    return HttpClient()
 
 
 @pytest.fixture
@@ -186,7 +186,7 @@ class TestSkaterStats:
         )
 
     @pytest.fixture(autouse=True)
-    def test_fetch_data_live(self, real_client: SyncHttpClient):
+    def test_fetch_data_live(self, real_client: HttpClient):
         stats = SkaterStats(real_client, obj_id=8478402) # Connor McDavid
         stats.fetch_data(season=20232024) # Use a recent season
 
@@ -278,7 +278,7 @@ class TestGoalieStats:
         with pytest.raises(KeyError):
             stats.fetch_data(report="summary", season=20232024)
 
-    def test_fetch_data_live(self, real_client: SyncHttpClient):
+    def test_fetch_data_live(self, real_client: HttpClient):
         stats = GoalieStats(real_client, obj_id=0)  # Connor Hellebuyck
         stats.fetch_data(season=20232024)  # Use a recent season
 
@@ -381,7 +381,7 @@ class TestTeamStats:
             stats.fetch_data(report="summary", season=20232024)
         assert "'data'" in str(exc_info.value)
 
-    def test_fetch_data_live(self, real_client: SyncHttpClient):
+    def test_fetch_data_live(self, real_client: HttpClient):
         stats = TeamStats(real_client, obj_id=10)  # Toronto Maple Leafs
         stats.fetch_data(season=20232024)  # Use a recent season
 

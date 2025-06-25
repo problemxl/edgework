@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from typing import List, Optional
-from edgework.http_client import SyncHttpClient
+from edgework.http_client import HttpClient
 from edgework.models.player import Player
 
 
@@ -85,7 +85,7 @@ def landing_to_dict(data: dict) -> dict:
 class PlayerClient:
     """Client for fetching player data."""
     
-    def __init__(self, http_client: SyncHttpClient):
+    def __init__(self, http_client: HttpClient):
         """
         Initialize the player client.
         

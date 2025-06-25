@@ -1,4 +1,4 @@
-from edgework.http_client import SyncHttpClient
+from edgework.http_client import HttpClient
 
 # Import the SkaterStats model
 from edgework.models.player import Player
@@ -56,7 +56,7 @@ class Edgework:
             user_agent (str, optional): The User-Agent string to use for requests.
                                         Defaults to "EdgeworkClient/2.0".
         """
-        self._client = SyncHttpClient(user_agent=user_agent)
+        self._client = HttpClient(user_agent=user_agent)
 
         # Initialize model handlers, passing the shared HTTP client
         self.skaters = SkaterStats(edgework_client=self._client)
