@@ -79,6 +79,8 @@ def mock_team_response():
 
 
 class TestSkaterStats:
+
+    @pytest.fixture(autouse=True)
     def test_init(self, mock_client: Mock):
         # Test with obj_id and no kwargs
         stats1 = SkaterStats(mock_client, obj_id=8478402)
@@ -96,6 +98,7 @@ class TestSkaterStats:
         assert stats2._data["key"] == "value"
         assert stats2._data["another_key"] == 123
 
+    @pytest.fixture(autouse=True)
     def test_fetch_data(self, mock_client: Mock, mock_skater_response: Mock):
         mock_client.get.return_value = mock_skater_response
         
@@ -118,6 +121,7 @@ class TestSkaterStats:
         assert player.goals == 40
         assert player.assists == 60
 
+    @pytest.fixture(autouse=True)
     def test_fetch_data_default_season(self, mock_client: Mock, mock_skater_response: Mock):
         mock_client.get.return_value = mock_skater_response
         
@@ -133,7 +137,7 @@ class TestSkaterStats:
                 params=None,
                 web=False
             )
-
+    @pytest.fixture(autouse=True)
     def test_fetch_data_empty_response(self, mock_client: Mock):
         mock_response = Mock()
         mock_response.status_code = 200
@@ -149,6 +153,7 @@ class TestSkaterStats:
         # Verify data wasn't updated since response was empty, or rather, it remains what it was
         assert stats._data == initial_data
 
+    @pytest.fixture(autouse=True)
     def test_fetch_data_key_error_if_data_key_missing(self, mock_client: Mock):
         mock_response = Mock()
         mock_response.status_code = 200 # Status code is fine, but data key is missing
@@ -160,6 +165,7 @@ class TestSkaterStats:
             stats.fetch_data(report="summary", season=20232024)
         assert "'data'" in str(exc_info.value)
 
+    @pytest.fixture(autouse=True)
     def test_fetch_data_with_all_params(self, mock_client: Mock, mock_skater_response: Mock):
         mock_client.get.return_value = mock_skater_response
         stats = SkaterStats(mock_client, obj_id=8478402)
@@ -179,6 +185,7 @@ class TestSkaterStats:
             web=False
         )
 
+    @pytest.fixture(autouse=True)
     def test_fetch_data_live(self, real_client: SyncHttpClient):
         stats = SkaterStats(real_client, obj_id=8478402) # Connor McDavid
         stats.fetch_data(season=20232024) # Use a recent season
@@ -197,6 +204,8 @@ class TestSkaterStats:
 
 
 class TestGoalieStats:
+
+    @pytest.fixture(autouse=True)
     def test_init(self, mock_client: Mock):
         stats1 = GoalieStats(mock_client, obj_id=8478402)
         assert stats1._client == mock_client

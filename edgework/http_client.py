@@ -85,4 +85,5 @@ class HttpClient:
 
 class SyncHttpClient(HttpClient):
     """Synchronous HTTP client - alias for backward compatibility."""
-    pass
+    raise NotImplementedError("SyncHttpClient is deprecated, use HttpClient instead.")
+w
