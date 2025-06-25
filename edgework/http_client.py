@@ -3,6 +3,8 @@
 import httpx
 from typing import Dict, Any, Optional
 from . import __version__
+from edgework.const import BASE_API_URL, STATS_API_URL
+
 
 
 class HttpClient:
@@ -16,8 +18,6 @@ class HttpClient:
             user_agent: User agent string for requests
         """
         self._user_agent = user_agent
-        self._base_url = "https://api-web.nhle.com/v1/"
-        self._stats_base_url = "https://api.nhle.com/stats/rest/en/"
         self._client = httpx.Client(headers={"User-Agent": self._user_agent}, follow_redirects=True)
 
     def get(self, endpoint: str, path: Optional[str] = None, params: Optional[Dict[str, Any]] = None, web: bool = False) -> httpx.Response:
@@ -33,7 +33,7 @@ class HttpClient:
         Returns:
             httpx.Response object
         """
-        url = f"{self._base_url if web else self._stats_base_url}{path or endpoint}"
+        url = f"{BASE_API_URL if web else STATS_API_URL}{path or endpoint}"
 
         response = self._client.get(url, params=params)
         response.raise_for_status()
@@ -66,7 +66,7 @@ class HttpClient:
         Returns:
             httpx.Response object
         """
-        url = f"{self._base_url if web else self._stats_base_url}{path}"
+        url = f"{BASE_API_URL if web else STATS_API_URL}{path}"
 
         response = self._client.get(url, params=params)
         response.raise_for_status()
