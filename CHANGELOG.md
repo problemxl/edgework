@@ -5,6 +5,27 @@ All notable changes to the Edgework project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2025-06-24
+
+### Added
+- **Teams**: Player retrieval methods to Roster class for easier access to team player data
+- **Schedule**: String representation (`__str__`) method and fetched data flag for better debugging and state tracking
+- **Models**: Enhanced string representations and improved type hints across Player, Schedule, and Team models
+- **Documentation**: Comprehensive documentation suite including:
+  - API reference documentation for all clients and models
+  - Getting started guides (installation, quickstart, configuration)
+  - Usage examples (basic, advanced, and common patterns)
+  - Contributing guidelines and changelog documentation
+  - MkDocs configuration for documentation site generation
+
+### Enhanced
+- **Schedule Client**: Improved error handling and data management capabilities
+- **Models**: Better string representations for debugging and development experience
+- **Type Hints**: Enhanced type annotations throughout the codebase for better IDE support
+
+### Changed
+- Updated User-Agent to EdgeworkClient/0.3.1
+
 ## [0.2.1] - 2025-06-19
 
 ### Fixed

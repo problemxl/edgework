@@ -101,7 +101,7 @@ import os
 from edgework import Edgework
 
 # Example: Use environment variable for user agent
-user_agent = os.getenv("NHL_API_USER_AGENT", "Edgework/0.2.1")
+user_agent = os.getenv("NHL_API_USER_AGENT", "Edgework/0.3.1")
 client = Edgework(user_agent=user_agent)
 ```
 
