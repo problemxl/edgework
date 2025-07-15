@@ -23,6 +23,9 @@ API_PATH: dict = {
     "club_stats_season": "/{API_VERSION}/club-stats-season/{team}",
     "club_stats_season_season_game_type": "/{API_VERSION}/club-stats-season/{team}/{season}/{game_type}",
     "team_scoreboard": "/{API_VERSION}/scoreboard/{team}/now",
+
+    # Team endpoints
+    "teams": "team",
     
     # Roster endpoints
     "roster_current": "/{API_VERSION}/roster/{team}/current",

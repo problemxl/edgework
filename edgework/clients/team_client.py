@@ -11,29 +11,29 @@ class TeamClient:
         
     def get_teams(self) -> List[Team]:
         """
-        Fetch a list of teams from NHL.
-        Note: This method extracts teams from standings since there's no direct teams endpoint.
+        Fetch a list of all teams from the NHL API.
 
         Returns
         -------
         List[Team]
-            A list of teams.
+            A list of all teams.
         """
-        # Get teams from standings since there's no direct teams endpoint
-        response = self.client.get("standings/now", web=True)
-        
+        response = self.client.get("team")
+
         if response.status_code != 200:
             raise Exception(f"Failed to fetch teams: {response.status_code} {response.text}")
-        
+
         data = response.json()
         teams = []
-        
-        # Extract teams from standings
-        for standing in data.get("standings", []):
-            team_data = team_api_to_dict(standing)
-            team = Team(self.client, team_data.get("team_id"), **team_data)
-            teams.append(team)
-        
+
+        # The 'data' key in the response contains the list of teams
+        for team_data in data.get("data", []):
+            # Filter for active NHL teams with a triCode
+            if "triCode" in team_data:
+                parsed_team_data = team_api_to_dict(team_data)
+                team = Team(self.client, parsed_team_data.get("team_id"), **parsed_team_data)
+                teams.append(team)
+
         return teams
 
     def get_roster(self, team_code: str, season: Optional[int] = None) -> Roster:
