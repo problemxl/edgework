@@ -26,8 +26,9 @@ class Player(BaseNHLModel):
         
         
         
-        as fetched since we're initializing with data
-        self._fetched = True
+        # Mark as fetched since we're initializing with data
+        if kwargs:
+            self._fetched = True
 
     def __str__(self) -> str:
         """String representation showing player name and number.

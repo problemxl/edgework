@@ -3,7 +3,7 @@
 import httpx
 from typing import Dict, Any, Optional
 from . import __version__
-from edgework.const import BASE_API_URL, STATS_API_URL
+from .const import BASE_API_URL, STATS_API_URL, BASE_WEB_URL
 
 
 
@@ -33,7 +33,10 @@ class HttpClient:
         Returns:
             httpx.Response object
         """
-        url = f"{BASE_API_URL if web else STATS_API_URL}{path or endpoint}"
+        if web:
+            url = f"{BASE_WEB_URL}/v1/{path or endpoint}"
+        else:
+            url = f"{STATS_API_URL}en/{path or endpoint}"
 
         response = self._client.get(url, params=params)
         response.raise_for_status()

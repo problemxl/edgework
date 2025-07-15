@@ -32,7 +32,8 @@ def team_api_to_dict(data: dict) -> dict:
     # For standings API, the team data is in the root level
     return {
         "team_id": data.get("teamId") or data.get("id"),
-        "team_abbrev": extract_default(data.get("teamAbbrev")) or extract_default(data.get("abbrev")),
+        "tri_code": extract_default(data.get("triCode")) or extract_default(data.get("abbrev")),
+        "team_abbrev": extract_default(data.get("triCode")) or extract_default(data.get("teamAbbrev")) or extract_default(data.get("abbrev")),
         "team_name": extract_default(data.get("teamName")) or extract_default(data.get("name")) or extract_default(data.get("teamCommonName")),
         "full_name": extract_default(data.get("fullName")) or extract_default(data.get("teamName")),
         "location_name": extract_default(data.get("locationName")) or extract_default(data.get("placeName")),
@@ -283,6 +284,29 @@ class Team(BaseNHLModel):
         """Get the team's common name."""
         return self._data.get('team_common_name', '')
 
+    @property
+    def tri_code(self) -> str:
+        """Get the team's tri-code."""
+        return self._data.get('tri_code', '')
+
+    def fetch_team_data(self):
+        """
+        Fetch team data from the NHL API and store it.
+
+        Uses the Edgework client to fetch and update team data.
+
+        Raises:
+            ValueError: If no client or insufficient data is available.
+        """
+        if not self._client or not self.obj_id:
+            raise ValueError("Cannot fetch team data without a client and obj_id.")
+
+        response = self._client.get(f"/teams/{self.obj_id}")
+        if response.status_code != 200:
+            raise Exception(f"Failed to fetch team data: {response.status_code} {response.text}")
+
+        self._data.update(response.json())
+
     def get_roster(self, season: Optional[int] = None) -> Roster:
         """
         Get the roster for this team.
@@ -296,7 +320,7 @@ class Team(BaseNHLModel):
         if not self._client:
             raise ValueError("No client available to fetch roster")
         
-        team_abbrev = self.abbrev
+        team_abbrev = self.tri_code
         if season:
             response = self._client.get(f"roster/{team_abbrev}/{season}", web=True)
         else:
