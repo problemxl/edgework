@@ -22,7 +22,7 @@ class Series(BaseNHLModel):
         Fetch the data for the series.
         """
         # Implementation depends on how data is fetched from the API
-        pass
+        raise NotImplementedError("fetch_data() must be implemented in subclasses")
 
 class Playoffs(BaseNHLModel):
     """Represents the playoffs for a given season."""
@@ -51,4 +51,4 @@ class Playoffs(BaseNHLModel):
         Fetch the data for the playoffs.
         """
         # Implementation depends on how data is fetched from the API
-        pass
+        raise NotImplementedError("fetch_data() must be implemented in subclasses")

@@ -22,7 +22,7 @@ class Term(BaseNHLModel):
         Fetch the data for the term.
         """
         # Implementation depends on how data is fetched from the API
-        pass
+        raise NotImplementedError("fetch_data() must be implemented in subclasses")
 
 class Glossary(BaseNHLModel):
     """Glossary model to store terminology entries."""    
@@ -44,4 +44,4 @@ class Glossary(BaseNHLModel):
         Fetch the data for the glossary.
         """
         # Implementation depends on how data is fetched from the API
-        pass
+        raise NotImplementedError("fetch_data() must be implemented in subclasses")

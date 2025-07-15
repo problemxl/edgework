@@ -19,6 +19,7 @@ class Game(BaseNHLModel):
         """
         super().__init__(edgework_client, obj_id)
         self._data = kwargs
+        self._shifts: Optional[List[Shift]] = None
 
     @property
     def game_time(self):
@@ -39,13 +40,12 @@ class Game(BaseNHLModel):
 
     def _get(self):
         """Get the game information."""
-        pass
+        raise NotImplementedError("Use from_api or from_dict to create Game instances")
 
     @property
     def shifts(self) -> List[Shift]:
         if not self._shifts:
             self._shifts = self._get_shifts()
-        return self._shifts
         return self._shifts
 
     @classmethod

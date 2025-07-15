@@ -21,7 +21,12 @@ class Player(BaseNHLModel):
         if 'player_id' in kwargs:
             self.obj_id = kwargs['player_id']
         
-        # Mark as fetched since we're initializing with data
+        # 
+        
+        
+        
+        
+        as fetched since we're initializing with data
         self._fetched = True
 
     def __str__(self) -> str:

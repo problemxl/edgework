@@ -1,4 +1,5 @@
 from datetime import timedelta
+from edgework.edgework import Edgework
 from edgework.models.base import BaseNHLModel
 
 
@@ -73,7 +74,7 @@ class PeriodTime(BaseNHLModel):
         Fetch the data for the period time.
         """
         # Implementation depends on how data is fetched from the API
-        pass
+        raise NotImplementedError("fetch_data() must be implemented in subclasses")
 
 
 class Shift(BaseNHLModel):
@@ -115,21 +116,25 @@ class Shift(BaseNHLModel):
         Fetch the data for the shift.
         """
         # Implementation depends on how data is fetched from the API
-        pass
-        return str(self)
+        raise NotImplementedError("fetch_data() must be implemented in subclasses")
 
     def __eq__(self, other):
         return self.shift_id == other.shift_id
 
     @classmethod
-    def from_api(cls, data):
+    def from_api(cls, data: dict, edgework_client: Edgework) -> "Shift":
         """
         Create a Shift object from API data.
         
-        :param data: API data dictionary
-        :return: Shift object
+        Args:
+            data: The data dictionary from the API
+            edgework_client: The Edgework client
+
+        Returns:
+            A Shift object initialized with the provided data.
         """
         return cls(
+            edgework_client=None,
             shift_id=data["id"],
             game_id=data["gameId"],
             player_id=data["playerId"],
