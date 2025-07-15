@@ -21,7 +21,12 @@ class Player(BaseNHLModel):
         if 'player_id' in kwargs:
             self.obj_id = kwargs['player_id']
         
-        # Mark as fetched since we're initializing with data
+        # 
+        
+        
+        
+        
+        as fetched since we're initializing with data
         self._fetched = True
 
     def __str__(self) -> str:
@@ -82,9 +87,7 @@ class Player(BaseNHLModel):
     def fetch_data(self):
         """Fetch the data for the player from the API.
         
-        Note: This would require the player_id and client to be set.
-        Currently not implemented as players are typically created with all data
-        from the search API.
+        Uses the NHL Web API player landing endpoint to get detailed player information.
         
         Raises:
             ValueError: If no client is available to fetch player data.
@@ -95,10 +98,21 @@ class Player(BaseNHLModel):
         if not self.obj_id:
             raise ValueError("No player ID available to fetch data")
         
-        # This would be implemented if we need to fetch individual player details
-        # For now, players are typically created with all data from the search API        pass
-        raise NotImplementedError("fetch_data() is not implemented for Player model")
-
+        # Import here to avoid circular imports
+        from edgework.clients.player_client import landing_to_dict
+        
+        # Call the NHL Web API player landing endpoint
+        response = self._client.get(f"player/{self.obj_id}/landing", web=True)
+        data = response.json()
+        
+        # Convert API response to our player dictionary format
+        player_data = landing_to_dict(data)
+        
+        # Update our internal data with the fetched information
+        self._data.update(player_data)
+        
+        # Mark as fetched
+        self._fetched = True
 
     @property
     def full_name(self):

@@ -41,47 +41,95 @@ def api_to_dict(data: dict) -> dict:
     }
 
 def landing_to_dict(data: dict) -> dict:
-    """Convert landing page API response data to player dictionary format."""
-    birth_date = None
-    if data.get("birthDate"):
-        try:
-            birth_date = datetime.strptime(data.get("birthDate"), "%Y-%m-%d")
-        except (ValueError, TypeError):
-            birth_date = None
+    """
+    Convert API response data to player dictionary format with snake_case keys.
     
-    draft_year = None
-    if data.get("draftDetails", {}).get("year"):
-        try:
-            draft_year = datetime(data.get("draftDetails", {}).get("year"), 1, 1)
-        except (ValueError, TypeError):
-            draft_year = None
+    This function generically processes any dictionary structure from the API,
+    converting camelCase keys to snake_case and handling nested dictionaries.
+    It automatically extracts 'default' values from nested objects when available.
     
-    return {
-        "player_id": int(data.get("playerId")) if data.get("playerId") else None,
-        "player_slug": data.get("playerSlug"),
-        "birth_city": data.get("birthCity", {}).get("default") if isinstance(data.get("birthCity"), dict) else data.get("birthCity"),
-        "birth_country": data.get("birthCountry"),
-        "birth_date": birth_date,
-        "birth_state_province": data.get("birthStateProvince", {}).get("default") if isinstance(data.get("birthStateProvince"), dict) else data.get("birthStateProvince"),
-        "current_team_abbr": data.get("currentTeamAbbrev"),
-        "current_team_id": data.get("currentTeamId"),
-        "current_team_name": data.get("fullTeamName", {}).get("default") if isinstance(data.get("fullTeamName"), dict) else data.get("fullTeamName"),
-        "draft_overall_pick": data.get("draftDetails", {}).get("overallPick"),
-        "draft_pick": data.get("draftDetails", {}).get("pickInRound"),
-        "draft_round": data.get("draftDetails", {}).get("round"),
-        "draft_team_abbr": data.get("draftDetails", {}).get("teamAbbrev"),
-        "draft_year": draft_year,
-        "first_name": data.get("firstName", {}).get("default") if isinstance(data.get("firstName"), dict) else data.get("firstName"),
-        "last_name": data.get("lastName", {}).get("default") if isinstance(data.get("lastName"), dict) else data.get("lastName"),
-        "headshot_url": data.get("headshot"),
-        "height": data.get("heightInInches"),
-        "hero_image_url": data.get("heroImage"),
-        "is_active": data.get("isActive"),
-        "position": data.get("position"),
-        "shoots_catches": data.get("shootsCatches"),
-        "sweater_number": data.get("sweaterNumber"),
-        "weight": data.get("weightInPounds")
-    }
+    Args:
+        data: Raw API response dictionary
+        
+    Returns:
+        Dictionary with snake_case field names and processed values
+    """
+    def camel_to_snake(name: str) -> str:
+        """Convert camelCase to snake_case."""
+        import re
+        # Insert underscores before uppercase letters (except at start)
+        s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
+        # Insert underscores between lowercase/digit and uppercase
+        return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
+    
+    def process_value(value):
+        """Process a value, handling nested dictionaries and special cases."""
+        if value is None:
+            return None
+        
+        # Handle nested dictionaries
+        if isinstance(value, dict):
+            # If it has a 'default' key, extract that value
+            if 'default' in value:
+                return value['default']
+            # Otherwise, recursively process the nested dictionary
+            return {camel_to_snake(k): process_value(v) for k, v in value.items()}
+        
+        # Handle lists
+        elif isinstance(value, list):
+            return [process_value(item) for item in value]
+        
+        # Handle date strings
+        elif isinstance(value, str):
+            # Try to parse common date formats
+            date_formats = ['%Y-%m-%d', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%dT%H:%M:%SZ']
+            for fmt in date_formats:
+                try:
+                    return datetime.strptime(value, fmt)
+                except ValueError:
+                    continue
+            # If not a date, return as-is
+            return value
+        
+        # Return primitive types as-is
+        else:
+            return value
+    
+    def flatten_nested_objects(data: dict, result: dict, parent_key: str = '') -> None:
+        """Flatten nested objects with special handling for known structures."""
+        for key, value in data.items():
+            snake_key = camel_to_snake(key)
+            
+            # Special handling for draft details
+            if key == 'draftDetails' and isinstance(value, dict):
+                for draft_key, draft_value in value.items():
+                    draft_snake_key = f"draft_{camel_to_snake(draft_key)}"
+                    if draft_key == 'year' and draft_value:
+                        try:
+                            result[draft_snake_key] = datetime(draft_value, 1, 1)
+                        except (ValueError, TypeError):
+                            result[draft_snake_key] = draft_value
+                    else:
+                        result[draft_snake_key] = process_value(draft_value)
+            
+            # For other nested objects, process normally
+            elif isinstance(value, dict) and 'default' not in value:
+                # If it's a complex nested object, flatten it with prefix
+                if parent_key:
+                    new_key = f"{parent_key}_{snake_key}"
+                else:
+                    new_key = snake_key
+                flatten_nested_objects(value, result, new_key)
+            
+            else:
+                # Process the value (will handle 'default' extraction)
+                final_key = f"{parent_key}_{snake_key}" if parent_key else snake_key
+                result[final_key] = process_value(value)
+    
+    result = {}
+    flatten_nested_objects(data, result)
+    
+    return result
 class PlayerClient:
     """Client for fetching player data."""
     
