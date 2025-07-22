@@ -2,7 +2,7 @@ from datetime import datetime
 
 import edgework.utilities as utilities
 from edgework.http_client import HttpClient
-from edgework.models.standings import Standings, Seeding
+from edgework.models.standings import Seeding, Standings
 
 
 class StandingClient:
@@ -20,18 +20,30 @@ class StandingClient:
             # check if date is in the correct format
             elif len(date) != 10:
                 raise ValueError(
-                    len(f"Date must be in the format YYYY-MM-DD, or 'now'. Provided date: {date} which is not 10 characters long."))
+                    len(
+                        f"Date must be in the format YYYY-MM-DD, or 'now'. Provided date: {date} which is not 10 characters long."
+                    )
+                )
             elif not date[4] == date[7] == "-":
                 raise ValueError(
-                    f"Date must be in the format YYYY-MM-DD, or 'now'. Provided date: {date} which does not have '-' in the correct positions.")
-            elif not date[:4].isdigit() or not date[5:7].isdigit() or not date[8:].isdigit():
+                    f"Date must be in the format YYYY-MM-DD, or 'now'. Provided date: {date} which does not have '-' in the correct positions."
+                )
+            elif (
+                not date[:4].isdigit()
+                or not date[5:7].isdigit()
+                or not date[8:].isdigit()
+            ):
                 raise ValueError(
-                    f"Date must be in the format YYYY-MM-DD, or 'now'. Provided date: {date} which contains non-numeric characters.")
+                    f"Date must be in the format YYYY-MM-DD, or 'now'. Provided date: {date} which contains non-numeric characters."
+                )
         else:
             raise ValueError(
-                f"Date must be in the format YYYY-MM-DD, or 'now'. Provided date: {date} which is not a datetime object, string, or None")
+                f"Date must be in the format YYYY-MM-DD, or 'now'. Provided date: {date} which is not a datetime object, string, or None"
+            )
         response = self._client.get(f"standings/{date}", web=True, params={})
-        seedings_dict = [utilities.dict_camel_to_snake(seed) for seed in response.json()["standings"]]
+        seedings_dict = [
+            utilities.dict_camel_to_snake(seed) for seed in response.json()["standings"]
+        ]
         if date == "now":
             dt_date = datetime.now()
         else:

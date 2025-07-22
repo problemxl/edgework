@@ -1,12 +1,14 @@
 """Tests for the players() method in the Edgework client."""
 
-import pytest
-from unittest.mock import Mock, patch
 from datetime import datetime
-from edgework.edgework import Edgework
-from edgework.models.player import Player
+from unittest.mock import Mock, patch
+
+import pytest
+
 from edgework.clients.player_client import landing_to_dict
+from edgework.edgework import Edgework
 from edgework.http_client import SyncHttpClient
+from edgework.models.player import Player
 
 
 class TestPlayersMethod:
@@ -231,9 +233,7 @@ class TestPlayerFetchData:
         player.fetch_data()
 
         # Verify API call was made correctly
-        self.mock_client.get.assert_called_once_with(
-            "player/8478402/landing", web=True
-        )
+        self.mock_client.get.assert_called_once_with("player/8478402/landing", web=True)
 
         # Verify data was updated
         assert player._fetched is True
@@ -251,7 +251,9 @@ class TestPlayerFetchData:
         """Test fetch_data raises ValueError when no client is available."""
         player = Player(edgework_client=None, obj_id=8478402)
 
-        with pytest.raises(ValueError, match="No client available to fetch player data"):
+        with pytest.raises(
+            ValueError, match="No client available to fetch player data"
+        ):
             player.fetch_data()
 
     def test_fetch_data_no_player_id(self):
@@ -517,40 +519,40 @@ class TestLandingToDict:
 
 
 class TestPlayersIntegration:
-        """Integration tests for the players() method with real API calls."""
+    """Integration tests for the players() method with real API calls."""
 
-        def setup_method(self):
-            """Set up test fixtures before each test method."""
-            self.client = Edgework()
+    def setup_method(self):
+        """Set up test fixtures before each test method."""
+        self.client = Edgework()
 
-        def test_players_data_consistency(self):
-            """Test that player data is consistent across multiple calls."""
-            players1 = self.client.players(active_only=True)
-            players2 = self.client.players(active_only=True)
+    def test_players_data_consistency(self):
+        """Test that player data is consistent across multiple calls."""
+        players1 = self.client.players(active_only=True)
+        players2 = self.client.players(active_only=True)
 
-            # Results should be consistent
-            assert len(players1) == len(
-                players2
-            ), "Multiple calls should return same number of players"
+        # Results should be consistent
+        assert len(players1) == len(
+            players2
+        ), "Multiple calls should return same number of players"
 
-            # Convert to sets of player IDs for comparison
-            ids1 = {p._data.get("player_id") for p in players1}
-            ids2 = {p._data.get("player_id") for p in players2}
+        # Convert to sets of player IDs for comparison
+        ids1 = {p._data.get("player_id") for p in players1}
+        ids2 = {p._data.get("player_id") for p in players2}
 
-            assert ids1 == ids2, "Multiple calls should return same players"
+        assert ids1 == ids2, "Multiple calls should return same players"
 
-        def test_players_team_data_presence(self):
-            """Test that active players have team information."""
-            players = self.client.players(active_only=True)
+    def test_players_team_data_presence(self):
+        """Test that active players have team information."""
+        players = self.client.players(active_only=True)
 
-            players_with_teams = [
-                p
-                for p in players
-                if p._data.get("current_team_id") or p._data.get("current_team_abbr")
-            ]
+        players_with_teams = [
+            p
+            for p in players
+            if p._data.get("current_team_id") or p._data.get("current_team_abbr")
+        ]
 
-            # Most active players should have team information
-            team_percentage = len(players_with_teams) / len(players)
-            assert (
-                team_percentage > 0.8
-            ), f"Expected >80% of active players to have team info, got {team_percentage:.1%}"
+        # Most active players should have team information
+        team_percentage = len(players_with_teams) / len(players)
+        assert (
+            team_percentage > 0.8
+        ), f"Expected >80% of active players to have team info, got {team_percentage:.1%}"

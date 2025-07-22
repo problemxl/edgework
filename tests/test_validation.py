@@ -2,14 +2,17 @@
 Pytest tests for the stats validation functions.
 This file tests all the validation helper functions in the stats module.
 """
-import pytest
+
 from datetime import datetime
+
+import pytest
+
 from edgework.models.stats import (
-    validate_sort_direction, 
-    validate_season, 
-    validate_game_type, 
-    validate_report_type, 
-    validate_limit_and_start
+    validate_game_type,
+    validate_limit_and_start,
+    validate_report_type,
+    validate_season,
+    validate_sort_direction,
 )
 
 
@@ -33,48 +36,66 @@ class TestValidateSortDirection:
         result = validate_sort_direction(["points", "goals"], ["DESC", "ASC"])
         expected = [
             {"property": "points", "direction": "DESC"},
-            {"property": "goals", "direction": "ASC"}
+            {"property": "goals", "direction": "ASC"},
         ]
         assert result == expected
 
     def test_invalid_direction(self):
         """Test invalid direction raises ValueError."""
-        with pytest.raises(ValueError, match="Direction must be either 'ASC' or 'DESC'"):
+        with pytest.raises(
+            ValueError, match="Direction must be either 'ASC' or 'DESC'"
+        ):
             validate_sort_direction("points", "INVALID")
 
     def test_mismatched_list_lengths(self):
         """Test mismatched list lengths raises ValueError."""
-        with pytest.raises(ValueError, match="Sort and direction lists must be of the same length"):
+        with pytest.raises(
+            ValueError, match="Sort and direction lists must be of the same length"
+        ):
             validate_sort_direction(["points", "goals"], ["DESC"])
 
     def test_empty_lists(self):
         """Test empty lists raise ValueError."""
-        with pytest.raises(ValueError, match="Sort and direction lists cannot be empty"):
+        with pytest.raises(
+            ValueError, match="Sort and direction lists cannot be empty"
+        ):
             validate_sort_direction([], [])
 
     def test_mixed_types_string_and_list(self):
         """Test mixed types (string and list) raise ValueError."""
-        with pytest.raises(ValueError, match="Sort and direction must be either both strings or both lists"):
+        with pytest.raises(
+            ValueError,
+            match="Sort and direction must be either both strings or both lists",
+        ):
             validate_sort_direction("points", ["DESC"])
 
     def test_mixed_types_list_and_string(self):
         """Test mixed types (list and string) raise ValueError."""
-        with pytest.raises(ValueError, match="Sort and direction must be either both strings or both lists"):
+        with pytest.raises(
+            ValueError,
+            match="Sort and direction must be either both strings or both lists",
+        ):
             validate_sort_direction(["points"], "DESC")
 
     def test_non_string_in_sort_list(self):
         """Test non-string values in sort list raise ValueError."""
-        with pytest.raises(ValueError, match="Sort must be a string or a list of strings"):
+        with pytest.raises(
+            ValueError, match="Sort must be a string or a list of strings"
+        ):
             validate_sort_direction([123, "goals"], ["DESC", "ASC"])
 
     def test_non_string_in_direction_list(self):
         """Test non-string values in direction list raise ValueError."""
-        with pytest.raises(ValueError, match="Direction must be a string or a list of strings"):
+        with pytest.raises(
+            ValueError, match="Direction must be a string or a list of strings"
+        ):
             validate_sort_direction(["points", "goals"], ["DESC", 123])
 
     def test_invalid_direction_in_list(self):
         """Test invalid direction in list raises ValueError."""
-        with pytest.raises(ValueError, match="Direction must be either 'ASC' or 'DESC'"):
+        with pytest.raises(
+            ValueError, match="Direction must be either 'ASC' or 'DESC'"
+        ):
             validate_sort_direction(["points", "goals"], ["DESC", "INVALID"])
 
 
@@ -105,22 +126,34 @@ class TestValidateSeason:
 
     def test_invalid_season_too_short(self):
         """Test invalid season format (too short) raises ValueError."""
-        with pytest.raises(ValueError, match="Season must be in format YYYYZZZZ.*and within valid NHL history"):
+        with pytest.raises(
+            ValueError,
+            match="Season must be in format YYYYZZZZ.*and within valid NHL history",
+        ):
             validate_season(2023)
 
     def test_invalid_season_wrong_year_sequence(self):
         """Test invalid season with wrong year sequence raises ValueError."""
-        with pytest.raises(ValueError, match="Season must follow format YYYYZZZZ where ZZZZ = YYYY \\+ 1"):
+        with pytest.raises(
+            ValueError,
+            match="Season must follow format YYYYZZZZ where ZZZZ = YYYY \\+ 1",
+        ):
             validate_season(20232025)  # Should be 20232024
 
     def test_invalid_season_too_old(self):
         """Test season too old raises ValueError."""
-        with pytest.raises(ValueError, match="Season must be in format YYYYZZZZ.*within valid NHL history"):
+        with pytest.raises(
+            ValueError,
+            match="Season must be in format YYYYZZZZ.*within valid NHL history",
+        ):
             validate_season(19001901)
 
     def test_invalid_season_too_future(self):
         """Test season too far in future raises ValueError."""
-        with pytest.raises(ValueError, match="Season must be in format YYYYZZZZ.*and within valid NHL history"):
+        with pytest.raises(
+            ValueError,
+            match="Season must be in format YYYYZZZZ.*and within valid NHL history",
+        ):
             validate_season(21102111)  # Well beyond the valid range
 
     def test_non_integer_season(self):
@@ -187,7 +220,9 @@ class TestValidateReportType:
     def test_invalid_report_for_context(self):
         """Test invalid report for given context raises ValueError."""
         valid_skater_reports = ["summary", "bios", "faceoffpercentages"]
-        with pytest.raises(ValueError, match="Report must be one of: summary, bios, faceoffpercentages"):
+        with pytest.raises(
+            ValueError, match="Report must be one of: summary, bios, faceoffpercentages"
+        ):
             validate_report_type("advanced", valid_skater_reports)
 
     def test_non_string_report(self):
@@ -284,7 +319,9 @@ class TestValidationIntegration:
         sort_result = validate_sort_direction(["wins", "saves"], ["DESC", "DESC"])
         season_result = validate_season(None)  # Auto-calculate
         game_type_result = validate_game_type(3)  # Playoffs
-        report_result = validate_report_type("advanced", ["summary", "advanced", "savesByStrength"])
+        report_result = validate_report_type(
+            "advanced", ["summary", "advanced", "savesByStrength"]
+        )
         limit_result, start_result = validate_limit_and_start(-1, 0)  # All records
 
         assert isinstance(sort_result, list)

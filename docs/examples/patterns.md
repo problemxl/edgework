@@ -47,7 +47,7 @@ def get_all_players_chunked(client, chunk_size=100):
     """Get all players in manageable chunks."""
     all_players = []
     offset = 0
-    
+
     while True:
         # Note: Actual pagination depends on API support
         chunk = client.players(active_only=True)
@@ -55,7 +55,7 @@ def get_all_players_chunked(client, chunk_size=100):
             break
         all_players.extend(chunk)
         break  # For now, API doesn't support pagination
-    
+
     return all_players
 ```
 
@@ -68,13 +68,13 @@ from edgework import Edgework
 class CachedEdgework:
     def __init__(self):
         self.client = Edgework()
-    
+
     @lru_cache(maxsize=128)
     def get_team_stats_cached(self, season):
         """Cache team stats to avoid repeated API calls."""
         return tuple(self.client.team_stats(season=season))
-    
-    @lru_cache(maxsize=128) 
+
+    @lru_cache(maxsize=128)
     def get_players_cached(self, active_only=True):
         """Cache player list."""
         return tuple(self.client.players(active_only=active_only))
@@ -97,17 +97,17 @@ client = Edgework()
 def get_top_players_by_position(season, position, stat='points', limit=10):
     """Get top players for a specific position."""
     all_players = client.skater_stats(season=season, limit=200)
-    
+
     # Filter by position
     position_players = [p for p in all_players if p.position == position]
-    
+
     # Sort by specified stat
     sorted_players = sorted(
-        position_players, 
-        key=lambda p: getattr(p, stat, 0), 
+        position_players,
+        key=lambda p: getattr(p, stat, 0),
         reverse=True
     )
-    
+
     return sorted_players[:limit]
 
 # Usage
@@ -171,21 +171,21 @@ def validate_season(season):
     """Validate season format before API calls."""
     if not isinstance(season, str):
         raise ValueError("Season must be a string")
-    
+
     if not season.count('-') == 1:
         raise ValueError("Season must be in format 'YYYY-YYYY'")
-    
+
     years = season.split('-')
     if len(years) != 2:
         raise ValueError("Invalid season format")
-    
+
     try:
         year1, year2 = int(years[0]), int(years[1])
         if year2 != year1 + 1:
             raise ValueError("Season years must be consecutive")
     except ValueError:
         raise ValueError("Season years must be integers")
-    
+
     return season
 
 # Usage
@@ -202,7 +202,7 @@ def get_stats_safe(client, season):
 def analyze_team_roster(team):
     """Analyze a team's roster composition."""
     roster = team.get_roster()
-    
+
     analysis = {
         'total_players': len(roster.players),
         'forwards': len([p for p in roster.players if p.position in ['C', 'LW', 'RW']]),
@@ -210,12 +210,12 @@ def analyze_team_roster(team):
         'goalies': len([p for p in roster.players if p.position == 'G']),
         'positions': {}
     }
-    
+
     # Count by specific position
     for player in roster.players:
         pos = player.position
         analysis['positions'][pos] = analysis['positions'].get(pos, 0) + 1
-    
+
     return analysis
 
 # Usage
@@ -233,7 +233,7 @@ for team in teams:
 def compare_players(player1, player2, stats=['goals', 'assists', 'points']):
     """Compare two players across multiple statistics."""
     comparison = {}
-    
+
     for stat in stats:
         val1 = getattr(player1, stat, 0)
         val2 = getattr(player2, stat, 0)
@@ -243,7 +243,7 @@ def compare_players(player1, player2, stats=['goals', 'assists', 'points']):
             'difference': val1 - val2,
             'better': player1.name if val1 > val2 else player2.name
         }
-    
+
     return comparison
 
 # Usage
@@ -260,7 +260,7 @@ if len(players) >= 2:
 def get_league_leaders(client, season, categories):
     """Get league leaders in multiple categories."""
     leaders = {}
-    
+
     for category in categories:
         try:
             stats = client.skater_stats(
@@ -272,7 +272,7 @@ def get_league_leaders(client, season, categories):
         except Exception as e:
             print(f"Error getting {category} leaders: {e}")
             leaders[category] = []
-    
+
     return leaders
 
 # Usage
@@ -299,14 +299,14 @@ def export_to_json(data, filename, include_metadata=True):
     export_data = {
         'data': data,
     }
-    
+
     if include_metadata:
         export_data['metadata'] = {
             'exported_at': datetime.now().isoformat(),
             'record_count': len(data) if isinstance(data, list) else 1,
             'source': 'Edgework NHL API Client'
         }
-    
+
     with open(filename, 'w', encoding='utf-8') as f:
         json.dump(export_data, f, indent=2, default=str)
 
@@ -332,10 +332,10 @@ export_to_json(team_data, 'team_standings.json')
 def process_teams_batch(client, season, batch_size=5):
     """Process teams in batches to manage memory."""
     teams = client.team_stats(season=season)
-    
+
     for i in range(0, len(teams), batch_size):
         batch = teams[i:i + batch_size]
-        
+
         # Process each team in the batch
         for team in batch:
             try:
@@ -343,7 +343,7 @@ def process_teams_batch(client, season, batch_size=5):
                 print(f"Processed {team.name}: {len(roster.players)} players")
             except Exception as e:
                 print(f"Error processing {team.name}: {e}")
-        
+
         # Optional: Add delay between batches
         time.sleep(0.5)
 

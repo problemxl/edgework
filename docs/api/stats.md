@@ -213,7 +213,7 @@ for player in all_skaters:
     team = player.team_abbrev
     if team not in team_scoring:
         team_scoring[team] = {'goals': 0, 'assists': 0, 'points': 0, 'players': 0}
-    
+
     team_scoring[team]['goals'] += player.goals
     team_scoring[team]['assists'] += player.assists
     team_scoring[team]['points'] += player.points
@@ -241,7 +241,7 @@ for player_id in current_players:
     if player_id in previous_players:
         current = current_players[player_id]
         previous = previous_players[player_id]
-        
+
         if current.points > previous.points:
             improvement = current.points - previous.points
             print(f"{current.name}: +{improvement} points ({previous.points} → {current.points})")
@@ -255,10 +255,10 @@ def calculate_efficiency_rating(player):
     """Calculate a custom efficiency rating."""
     if player.games_played == 0:
         return 0
-    
+
     points_per_game = player.points / player.games_played
     shot_efficiency = player.goals / player.shots if player.shots > 0 else 0
-    
+
     return (points_per_game * 10) + (shot_efficiency * 100)
 
 # Apply to all players

@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import List
+
 from edgework.models.base import BaseNHLModel
 
 
@@ -9,7 +10,7 @@ class GameEvent(BaseNHLModel):
     def __init__(self, edgework_client, obj_id=None, **kwargs):
         """
         Initialize a GameEvent object with dynamic attributes.
-        
+
         Args:
             edgework_client: The Edgework client
             obj_id: The ID of the event
@@ -17,7 +18,7 @@ class GameEvent(BaseNHLModel):
         """
         super().__init__(edgework_client, obj_id)
         self._data = kwargs
-        
+
     def fetch_data(self):
         """
         Fetch the data for the game event.
@@ -29,11 +30,18 @@ class GameEvent(BaseNHLModel):
 class GameLog(BaseNHLModel):
     """GameLog model to store game log information."""
 
-    def __init__(self, edgework_client, obj_id=None, game_id=None, season=None, 
-                 date=None, events=None):
+    def __init__(
+        self,
+        edgework_client,
+        obj_id=None,
+        game_id=None,
+        season=None,
+        date=None,
+        events=None,
+    ):
         """
         Initialize a GameLog object.
-        
+
         Args:
             edgework_client: The Edgework client
             obj_id: The ID of the game log
@@ -47,7 +55,7 @@ class GameLog(BaseNHLModel):
         self.season = season
         self.date = date
         self.events = events or []
-        
+
     def fetch_data(self):
         """
         Fetch the data for the game log.
