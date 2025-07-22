@@ -203,3 +203,5 @@ __marimo__/
 *.json
 __pycache__/
 *.pyc
+edgework/.cache/teams.json
+.gitignore
