@@ -5,6 +5,7 @@ from typing import Any, Dict, Optional
 import httpx
 
 from . import __version__
+from .const import BASE_API_URL, BASE_WEB_URL, STATS_API_URL
 
 
 class HttpClient:
@@ -18,8 +19,6 @@ class HttpClient:
             user_agent: User agent string for requests
         """
         self._user_agent = user_agent
-        self._base_url = "https://api-web.nhle.com/v1/"
-        self._stats_base_url = "https://api.nhle.com/stats/rest/en/"
         self._client = httpx.Client(
             headers={"User-Agent": self._user_agent}, follow_redirects=True
         )
@@ -43,7 +42,10 @@ class HttpClient:
         Returns:
             httpx.Response object
         """
-        url = f"{self._base_url if web else self._stats_base_url}{path or endpoint}"
+        if web:
+            url = f"{BASE_WEB_URL}/v1/{path or endpoint}"
+        else:
+            url = f"{STATS_API_URL}en/{path or endpoint}"
 
         response = self._client.get(url, params=params)
         response.raise_for_status()
@@ -80,7 +82,7 @@ class HttpClient:
         Returns:
             httpx.Response object
         """
-        url = f"{self._base_url if web else self._stats_base_url}{path}"
+        url = f"{BASE_API_URL if web else STATS_API_URL}{path}"
 
         response = self._client.get(url, params=params)
         response.raise_for_status()
@@ -95,9 +97,3 @@ class HttpClient:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
-
-
-class SyncHttpClient(HttpClient):
-    """Synchronous HTTP client - alias for backward compatibility."""
-
-    pass

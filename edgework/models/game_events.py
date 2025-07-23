@@ -24,7 +24,7 @@ class GameEvent(BaseNHLModel):
         Fetch the data for the game event.
         """
         # Implementation depends on how data is fetched from the API
-        pass
+        raise NotImplementedError("fetch_data() must be implemented in subclasses")
 
 
 class GameLog(BaseNHLModel):
@@ -61,4 +61,4 @@ class GameLog(BaseNHLModel):
         Fetch the data for the game log.
         """
         # Implementation depends on how data is fetched from the API
-        pass
+        raise NotImplementedError("fetch_data() must be implemented in subclasses")

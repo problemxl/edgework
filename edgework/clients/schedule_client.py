@@ -1,12 +1,12 @@
 import re
 from datetime import datetime, timedelta
 
-from edgework.http_client import SyncHttpClient
+from edgework.http_client import HttpClient
 from edgework.models.schedule import Schedule
 
 
 class ScheduleClient:
-    def __init__(self, client: SyncHttpClient):
+    def __init__(self, client: HttpClient):
         self._client = client
 
     def get_schedule(self) -> Schedule:

@@ -15,7 +15,7 @@ from edgework.models.stats import GoalieStats, SkaterStats, TeamStats
 class TestEdgeworkInitialization:
     """Test class for Edgework initialization."""
 
-    @patch("edgework.edgework.SyncHttpClient")
+    @patch("edgework.edgework.HttpClient")
     @patch("edgework.edgework.PlayerClient")
     def test_init_default_user_agent(self, mock_player_client, mock_http_client):
         """Test Edgework initialization with default user agent."""
@@ -35,7 +35,7 @@ class TestEdgeworkInitialization:
         # Verify player client was initialized
         mock_player_client.assert_called_once_with(http_client=mock_client_instance)
 
-    @patch("edgework.edgework.SyncHttpClient")
+    @patch("edgework.edgework.HttpClient")
     @patch("edgework.edgework.PlayerClient")
     def test_init_custom_user_agent(self, mock_player_client, mock_http_client):
         """Test Edgework initialization with custom user agent."""
@@ -48,7 +48,7 @@ class TestEdgeworkInitialization:
         # Verify HTTP client was created with custom user agent
         mock_http_client.assert_called_once_with(user_agent=custom_user_agent)
 
-    @patch("edgework.edgework.SyncHttpClient")
+    @patch("edgework.edgework.HttpClient")
     @patch("edgework.edgework.PlayerClient")
     def test_init_creates_stats_models_with_client(
         self, mock_player_client, mock_http_client
@@ -71,7 +71,7 @@ class TestEdgeworkPlayers:
     def setup_method(self):
         """Set up test fixtures before each test method."""
         with (
-            patch("edgework.edgework.SyncHttpClient"),
+            patch("edgework.edgework.HttpClient"),
             patch("edgework.edgework.PlayerClient") as mock_player_client,
         ):
             self.mock_player_client_instance = Mock()
@@ -127,7 +127,7 @@ class TestEdgeworkSkaterStats:
     def setup_method(self):
         """Set up test fixtures before each test method."""
         with (
-            patch("edgework.edgework.SyncHttpClient"),
+            patch("edgework.edgework.HttpClient"),
             patch("edgework.edgework.PlayerClient"),
         ):
             self.edgework = Edgework()
@@ -212,7 +212,7 @@ class TestEdgeworkGoalieStats:
     def setup_method(self):
         """Set up test fixtures before each test method."""
         with (
-            patch("edgework.edgework.SyncHttpClient"),
+            patch("edgework.edgework.HttpClient"),
             patch("edgework.edgework.PlayerClient"),
         ):
             self.edgework = Edgework()
@@ -267,7 +267,7 @@ class TestEdgeworkTeamStats:
     def setup_method(self):
         """Set up test fixtures before each test method."""
         with (
-            patch("edgework.edgework.SyncHttpClient"),
+            patch("edgework.edgework.HttpClient"),
             patch("edgework.edgework.PlayerClient"),
         ):
             self.edgework = Edgework()
@@ -335,14 +335,14 @@ class TestEdgeworkTeamStats:
 class TestEdgeworkContextManager:
     """Test class for Edgework context manager functionality."""
 
-    @patch("edgework.edgework.SyncHttpClient")
+    @patch("edgework.edgework.HttpClient")
     @patch("edgework.edgework.PlayerClient")
     def test_context_manager_enter(self, mock_player_client, mock_http_client):
         """Test Edgework as context manager __enter__ method."""
         with Edgework() as edgework:
             assert isinstance(edgework, Edgework)
 
-    @patch("edgework.edgework.SyncHttpClient")
+    @patch("edgework.edgework.HttpClient")
     @patch("edgework.edgework.PlayerClient")
     def test_context_manager_exit_with_close_method(
         self, mock_player_client, mock_http_client
@@ -357,7 +357,7 @@ class TestEdgeworkContextManager:
 
         mock_client_instance.close.assert_called_once()
 
-    @patch("edgework.edgework.SyncHttpClient")
+    @patch("edgework.edgework.HttpClient")
     @patch("edgework.edgework.PlayerClient")
     def test_context_manager_exit_without_close_method(
         self, mock_player_client, mock_http_client
@@ -370,9 +370,9 @@ class TestEdgeworkContextManager:
 
         # Should not raise an exception
         with Edgework() as edgework:
-            pass
+            assert isinstance(edgework, Edgework)
 
-    @patch("edgework.edgework.SyncHttpClient")
+    @patch("edgework.edgework.HttpClient")
     @patch("edgework.edgework.PlayerClient")
     def test_close_method_directly(self, mock_player_client, mock_http_client):
         """Test calling close method directly."""
@@ -385,7 +385,7 @@ class TestEdgeworkContextManager:
 
         mock_client_instance.close.assert_called_once()
 
-    @patch("edgework.edgework.SyncHttpClient")
+    @patch("edgework.edgework.HttpClient")
     @patch("edgework.edgework.PlayerClient")
     def test_close_method_no_close_attribute(
         self, mock_player_client, mock_http_client
@@ -407,7 +407,7 @@ class TestEdgeworkSeasonConversion:
     def setup_method(self):
         """Set up test fixtures before each test method."""
         with (
-            patch("edgework.edgework.SyncHttpClient"),
+            patch("edgework.edgework.HttpClient"),
             patch("edgework.edgework.PlayerClient"),
         ):
             self.edgework = Edgework()
@@ -459,7 +459,7 @@ class TestEdgeworkSeasonConversion:
 class TestEdgeworkIntegration:
     """Integration tests for Edgework class functionality."""
 
-    @patch("edgework.edgework.SyncHttpClient")
+    @patch("edgework.edgework.HttpClient")
     @patch("edgework.edgework.PlayerClient")
     def test_multiple_method_calls_same_instance(
         self, mock_player_client, mock_http_client
@@ -497,7 +497,7 @@ class TestEdgeworkIntegration:
         assert goalie_result == edgework.goalies
         assert team_result == edgework.teams
 
-    @patch("edgework.edgework.SyncHttpClient")
+    @patch("edgework.edgework.HttpClient")
     @patch("edgework.edgework.PlayerClient")
     def test_client_shared_across_stats_models(
         self, mock_player_client, mock_http_client
@@ -517,7 +517,7 @@ class TestEdgeworkIntegration:
     def test_stats_models_are_different_instances(self):
         """Test that stats models are different instances."""
         with (
-            patch("edgework.edgework.SyncHttpClient"),
+            patch("edgework.edgework.HttpClient"),
             patch("edgework.edgework.PlayerClient"),
         ):
             edgework = Edgework()
@@ -526,7 +526,7 @@ class TestEdgeworkIntegration:
             assert edgework.goalies is not edgework.teams
             assert edgework.teams is not edgework.skaters
 
-    @patch("edgework.edgework.SyncHttpClient")
+    @patch("edgework.edgework.HttpClient")
     @patch("edgework.edgework.PlayerClient")
     def test_error_handling_preserves_instance_state(
         self, mock_player_client, mock_http_client
@@ -550,7 +550,7 @@ class TestEdgeworkTypeHints:
     def setup_method(self):
         """Set up test fixtures before each test method."""
         with (
-            patch("edgework.edgework.SyncHttpClient"),
+            patch("edgework.edgework.HttpClient"),
             patch("edgework.edgework.PlayerClient"),
         ):
             self.edgework = Edgework()
@@ -576,7 +576,7 @@ class TestEdgeworkTypeHints:
     def test_context_manager_return_type(self):
         """Test that context manager returns Edgework instance."""
         with (
-            patch("edgework.edgework.SyncHttpClient"),
+            patch("edgework.edgework.HttpClient"),
             patch("edgework.edgework.PlayerClient"),
         ):
             with Edgework() as edgework:
