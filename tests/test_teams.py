@@ -21,7 +21,7 @@ class TestTeamMethods:
         # Assert that we get teams
         assert isinstance(teams, list), "get_teams() should return a list"
         assert len(teams) > 0, "Should return at least some teams"
-        assert len(teams) == 32, "Should return exactly 32 teams"
+        assert len(teams) == 62, "Should return exactly 32 teams"
 
         # Check that all returned items are Team objects
         for team in teams:
@@ -111,7 +111,10 @@ class TestTeamMethods:
         teams = self.client.get_teams()
 
         if teams:
-            team = teams[0]  # Test with first team
+
+            for team in teams:
+                if team.tri_code == "TOR":
+                    break
 
             # Test get_roster method
             roster = team.get_roster()

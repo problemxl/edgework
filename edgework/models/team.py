@@ -413,7 +413,7 @@ class Team(BaseNHLModel):
             str: The team's abbreviation.
                 Example: "TOR".
         """
-        return self._data.get("team_abbrev", "UNK")
+        return self._data.get("tri_code", "UNK")
 
     @property
     def full_name(self) -> str:
