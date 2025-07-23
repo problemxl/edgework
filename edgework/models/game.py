@@ -1,17 +1,18 @@
 from datetime import datetime
 from typing import List, Optional
 
-from edgework.models.base import BaseNHLModel
 from edgework.http_client import HttpClient
+from edgework.models.base import BaseNHLModel
 from edgework.models.shift import Shift
+
 
 class Game(BaseNHLModel):
     """Game model to store game information."""
-    
+
     def __init__(self, edgework_client, obj_id=None, **kwargs):
         """
         Initialize a Game object with dynamic attributes.
-        
+
         Args:
             edgework_client: The Edgework client
             obj_id: The ID of the game object
@@ -23,7 +24,7 @@ class Game(BaseNHLModel):
 
     @property
     def game_time(self):
-        return self._data.get('start_time_utc').strftime("%I:%M %p")
+        return self._data.get("start_time_utc").strftime("%I:%M %p")
 
     def __str__(self):
         return f"{self._data.get('away_team_abbrev')} @ {self._data.get('home_team_abbrev')} | {self.game_time} | {self._data.get('away_team_score')} - {self._data.get('home_team_score')}"
@@ -33,10 +34,10 @@ class Game(BaseNHLModel):
 
     def __eq__(self, other):
         # Compare using game_id only
-        return self._data.get('game_id') == getattr(other, 'game_id', None)
+        return self._data.get("game_id") == getattr(other, "game_id", None)
 
     def __hash__(self):
-        return hash(self._data.get('game_id'))
+        return hash(self._data.get("game_id"))
 
     def _get(self):
         """Get the game information."""
@@ -59,7 +60,9 @@ class Game(BaseNHLModel):
         game_dict = {
             "game_id": data.get("id"),
             "game_date": datetime.strptime(data.get("gameDate"), "%Y-%m-%d"),
-            "start_time_utc": datetime.strptime(data.get("startTimeUTC"), "%Y-%m-%dT%H:%M:%SZ"),
+            "start_time_utc": datetime.strptime(
+                data.get("startTimeUTC"), "%Y-%m-%dT%H:%M:%SZ"
+            ),
             "game_state": data.get("gameState"),
             "away_team_abbrev": data.get("awayTeam").get("abbrev"),
             "away_team_id": data.get("awayTeam").get("id"),

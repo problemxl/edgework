@@ -1,48 +1,49 @@
+import re
+
+from edgework.clients.player_client import PlayerClient
+from edgework.clients.schedule_client import ScheduleClient
+from edgework.clients.team_client import TeamClient
 from edgework.http_client import HttpClient
 
 # Import the SkaterStats model
 from edgework.models.player import Player
-from edgework.models.team import Team, Roster
-from edgework.models.stats import SkaterStats, GoalieStats, TeamStats
 from edgework.models.schedule import Schedule
-from edgework.clients.player_client import PlayerClient
-from edgework.clients.team_client import TeamClient
-from edgework.clients.schedule_client import ScheduleClient
-import re
+from edgework.models.stats import GoalieStats, SkaterStats, TeamStats
+from edgework.models.team import Roster, Team
 
 
 def _validate_season_format(season: str) -> int:
     """
     Validates season string format and converts to integer.
-    
+
     Args:
         season (str): Season string in format "YYYY-YYYY" (e.g., "2023-2024")
-        
+
     Returns:
         int: Season as integer in format YYYYYYYY (e.g., 20232024)
-        
+
     Raises:
         ValueError: If season format is invalid
     """
     if not isinstance(season, str):
         raise ValueError("Invalid season format. Expected 'YYYY-YYYY'")
-    
+
     # Check if format matches exactly "YYYY-YYYY"
-    if not re.match(r'^\d{4}-\d{4}$', season):
+    if not re.match(r"^\d{4}-\d{4}$", season):
         raise ValueError("Invalid season format. Expected 'YYYY-YYYY'")
-    
+
     # Split and validate years
     try:
-        first_year_str, second_year_str = season.split('-')
+        first_year_str, second_year_str = season.split("-")
         first_year = int(first_year_str)
         second_year = int(second_year_str)
     except ValueError:
         raise ValueError("Invalid season format. Expected 'YYYY-YYYY'")
-    
+
     # Validate that second year is first year + 1
     if second_year != first_year + 1:
         raise ValueError("Invalid season format. Expected 'YYYY-YYYY'")
-    
+
     # Convert to integer format (e.g., "2023-2024" -> 20232024)
     return first_year * 10000 + second_year
 
@@ -68,16 +69,15 @@ class Edgework:
         self._team_client = TeamClient(client=self._client)
         self._schedule_client = ScheduleClient(client=self._client)
 
-    def players(
-        self, active_only: bool = True) -> list[Player]:
+    def players(self, active_only: bool = True) -> list[Player]:
         """
         Fetch a list of players.
-        
+
         Args:
-            active_only (bool): If True, fetch only active players. 
+            active_only (bool): If True, fetch only active players.
                                If False, fetch all players (active and inactive).
                                Defaults to True.
-                               
+
         Returns:
             list[Player]: A list of Player objects.
         """
@@ -114,7 +114,13 @@ class Edgework:
         converted_season = _validate_season_format(season)
 
         self.skaters.fetch_data(
-            report=report, season=converted_season, sort=sort, direction=direction, limit=limit, aggregate=aggregate, game_type=game_type
+            report=report,
+            season=converted_season,
+            sort=sort,
+            direction=direction,
+            limit=limit,
+            aggregate=aggregate,
+            game_type=game_type,
         )
         return self.skaters
 
@@ -188,7 +194,7 @@ class Edgework:
     def get_teams(self) -> list[Team]:
         """
         Fetch a list of all NHL teams.
-        
+
         Returns:
             list[Team]: A list of Team objects.
         """
@@ -197,65 +203,65 @@ class Edgework:
     def get_roster(self, team_code: str, season: str = None) -> Roster:
         """
         Fetch a roster for a specific team.
-        
+
         Args:
             team_code (str): The team code (e.g., 'TOR', 'NYR').
             season (str, optional): The season in format "YYYY-YYYY" (e.g., "2023-2024").
                                    If None, gets current roster.
-        
+
         Returns:
             Roster: A Roster object containing the team's players.
         """
         converted_season = None
         if season:
             converted_season = _validate_season_format(season)
-        
+
         return self._team_client.get_roster(team_code, converted_season)
 
     def get_team_stats(self, team_code: str, season: str = None, game_type: int = 2):
         """
         Get team statistics.
-        
+
         Args:
             team_code (str): The team code (e.g., 'TOR', 'NYR').
             season (str, optional): The season in format "YYYY-YYYY" (e.g., "2023-2024").
                                    If None, gets current season stats.
             game_type (int): Game type (2 for regular season, 3 for playoffs). Default is 2.
-        
+
         Returns:
             dict: Team statistics data.
         """
         converted_season = None
         if season:
             converted_season = _validate_season_format(season)
-        
+
         return self._team_client.get_team_stats(team_code, converted_season, game_type)
 
     def get_team_schedule(self, team_code: str, season: str = None):
         """
         Get team schedule.
-        
+
         Args:
             team_code (str): The team code (e.g., 'TOR', 'NYR').
             season (str, optional): The season in format "YYYY-YYYY" (e.g., "2023-2024").
                                    If None, gets current season schedule.
-        
+
         Returns:
             dict: Team schedule data.
         """
         converted_season = None
         if season:
             converted_season = _validate_season_format(season)
-        
+
         return self._team_client.get_team_schedule(team_code, converted_season)
 
     def get_team_prospects(self, team_code: str):
         """
         Get team prospects.
-        
+
         Args:
             team_code (str): The team code (e.g., 'TOR', 'NYR').
-        
+
         Returns:
             dict: Team prospects data.
         """
@@ -264,10 +270,10 @@ class Edgework:
     def get_team_scoreboard(self, team_code: str):
         """
         Get team scoreboard.
-        
+
         Args:
             team_code (str): The team code (e.g., 'TOR', 'NYR').
-        
+
         Returns:
             dict: Team scoreboard data.
         """
@@ -277,7 +283,7 @@ class Edgework:
     def get_schedule(self) -> Schedule:
         """
         Get the current NHL schedule.
-        
+
         Returns:
             Schedule: Current NHL schedule with games and season information.
         """
@@ -286,10 +292,10 @@ class Edgework:
     def get_schedule_for_date(self, date: str) -> Schedule:
         """
         Get the NHL schedule for a specific date.
-        
+
         Args:
             date (str): The date in format 'YYYY-MM-DD'.
-        
+
         Returns:
             Schedule: NHL schedule for the specified date.
         """
@@ -298,11 +304,11 @@ class Edgework:
     def get_schedule_for_date_range(self, start_date: str, end_date: str) -> Schedule:
         """
         Get the NHL schedule for a date range.
-        
+
         Args:
             start_date (str): The start date in format 'YYYY-MM-DD'.
             end_date (str): The end date in format 'YYYY-MM-DD'.
-        
+
         Returns:
             Schedule: NHL schedule for the specified date range.
         """
@@ -311,10 +317,10 @@ class Edgework:
     def get_team_schedule_full(self, team_abbr: str) -> Schedule:
         """
         Get the full season schedule for a specific team.
-        
+
         Args:
             team_abbr (str): The team abbreviation (e.g., 'TOR', 'NYR').
-        
+
         Returns:
             Schedule: Full season schedule for the specified team.
         """
@@ -323,10 +329,10 @@ class Edgework:
     def get_team_schedule_week(self, team_abbr: str) -> Schedule:
         """
         Get the weekly schedule for a specific team.
-        
+
         Args:
             team_abbr (str): The team abbreviation (e.g., 'TOR', 'NYR').
-        
+
         Returns:
             Schedule: Weekly schedule for the specified team.
         """
@@ -335,10 +341,10 @@ class Edgework:
     def get_team_schedule_month(self, team_abbr: str) -> Schedule:
         """
         Get the monthly schedule for a specific team.
-        
+
         Args:
             team_abbr (str): The team abbreviation (e.g., 'TOR', 'NYR').
-        
+
         Returns:
             Schedule: Monthly schedule for the specified team.
         """
@@ -347,7 +353,7 @@ class Edgework:
     def get_schedule_calendar(self) -> dict:
         """
         Get the current NHL schedule calendar.
-        
+
         Returns:
             dict: Schedule calendar showing available dates with games.
         """
@@ -356,10 +362,10 @@ class Edgework:
     def get_schedule_calendar_for_date(self, date: str) -> dict:
         """
         Get the NHL schedule calendar for a specific date.
-        
+
         Args:
             date (str): The date in format 'YYYY-MM-DD'.
-        
+
         Returns:
             dict: Schedule calendar for the specified date.
         """

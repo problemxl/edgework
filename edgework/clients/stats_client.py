@@ -1,5 +1,5 @@
 from edgework.http_client import HttpClient
-from edgework.models.stats import SkaterStats, GoalieStats, TeamStats
+from edgework.models.stats import GoalieStats, SkaterStats, TeamStats
 from edgework.utilities import dict_camel_to_snake
 
 
@@ -71,7 +71,8 @@ class StatsClient:
         limit: int,
         start: int,
         sort: str,
-        season: int,    ) -> list[SkaterStats]:
+        season: int,
+    ) -> list[SkaterStats]:
         if report not in self.skate_reports:
             raise ValueError(f"Invalid report: {report}")
 
@@ -95,7 +96,8 @@ class StatsClient:
         start: int = 0,
         sort: str = "wins",
     ) -> list[GoalieStats]:
-        if report not in self.goalie_reports:            raise ValueError(
+        if report not in self.goalie_reports:
+            raise ValueError(
                 f"Invalid report: {report}, must be one of "
                 f"{', '.join(self.goalie_reports)}"
             )
@@ -160,7 +162,8 @@ class StatsClient:
             The field to sort by. Default is 'wins'.
         """
 
-        if report not in self.team_reports:            raise ValueError(
+        if report not in self.team_reports:
+            raise ValueError(
                 f"Invalid report: {report}, must be one of "
                 f"{', '.join(self.team_reports)}"
             )

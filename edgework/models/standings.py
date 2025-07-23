@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Dict, List
+
 from pydantic import BaseModel, Field
 
 
@@ -12,6 +13,7 @@ class Seeding(BaseModel):
         conference_abbrev (str): The conference abbreviation.
         conference_home_sequence (int): The conference home sequence.
     """
+
     conference_abbrev: str
     conference_home_sequence: int
     conference_l10_sequence: int
@@ -103,6 +105,7 @@ class Standings(BaseModel):
     season (int): The season the standings are for.
     standings (list[dict]): A list of standings for the season.
     """
+
     date: datetime
     seedings: List[Seeding]
     season: int = Field(default=-1)

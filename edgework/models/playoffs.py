@@ -8,7 +8,7 @@ class Series(BaseNHLModel):
     def __init__(self, edgework_client, obj_id=None, **kwargs):
         """
         Initialize a Series object with dynamic attributes.
-        
+
         Args:
             edgework_client: The Edgework client
             obj_id: The ID of the series
@@ -16,7 +16,7 @@ class Series(BaseNHLModel):
         """
         super().__init__(edgework_client, obj_id)
         self._data = kwargs
-        
+
     def fetch_data(self):
         """
         Fetch the data for the series.
@@ -24,14 +24,22 @@ class Series(BaseNHLModel):
         # Implementation depends on how data is fetched from the API
         raise NotImplementedError("fetch_data() must be implemented in subclasses")
 
+
 class Playoffs(BaseNHLModel):
     """Represents the playoffs for a given season."""
 
-    def __init__(self, edgework_client, obj_id=None, year=None, series=None,
-                 bracket_logo=None, bracket_logo_fr=None):
+    def __init__(
+        self,
+        edgework_client,
+        obj_id=None,
+        year=None,
+        series=None,
+        bracket_logo=None,
+        bracket_logo_fr=None,
+    ):
         """
         Initialize a Playoffs object.
-        
+
         Args:
             edgework_client: The Edgework client
             obj_id: The ID of the playoffs
@@ -45,7 +53,7 @@ class Playoffs(BaseNHLModel):
         self.series = series or []
         self.bracket_logo = bracket_logo
         self.bracket_logo_fr = bracket_logo_fr
-        
+
     def fetch_data(self):
         """
         Fetch the data for the playoffs.
