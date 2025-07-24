@@ -1,14 +1,12 @@
 """Tests for the players() method in the Edgework client."""
 
-from datetime import datetime
-from unittest.mock import Mock, patch
-
 import pytest
-
-from edgework.clients.player_client import landing_to_dict
+from unittest.mock import Mock, patch
+from datetime import datetime
 from edgework.edgework import Edgework
-from edgework.http_client import SyncHttpClient
 from edgework.models.player import Player
+from edgework.clients.player_client import landing_to_dict
+from edgework.http_client import HttpClient
 
 
 class TestPlayersMethod:
@@ -202,7 +200,7 @@ class TestPlayerFetchData:
 
     def setup_method(self):
         """Set up test fixtures before each test method."""
-        self.mock_client = Mock(spec=SyncHttpClient)
+        self.mock_client = Mock(spec=HttpClient)
 
     def test_fetch_data_success(self):
         """Test successful data fetching from the landing API."""

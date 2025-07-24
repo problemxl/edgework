@@ -1,8 +1,6 @@
 from typing import List, Optional
-
 from httpx import Client
-
-from edgework.models.team import Roster, Team, roster_api_to_dict, team_api_to_dict
+from edgework.models.team import Team, Roster, roster_api_to_dict, team_api_to_dict
 
 
 class TeamClient:
@@ -13,71 +11,30 @@ class TeamClient:
 
     def get_teams(self) -> List[Team]:
         """
-        Fetch a list of teams from NHL Stats API.
+        Fetch a list of all teams from the NHL API.
 
         Returns
         -------
         List[Team]
-            A list of teams.
+            A list of all teams.
         """
-        # Use the NHL Stats API teams endpoint
-        response = self.client.get("team", web=False)
+        response = self.client.get("team")
 
         if response.status_code != 200:
-            raise Exception(
-                f"Failed to fetch teams: {response.status_code} {response.text}"
-            )
+            raise Exception(f"Failed to fetch teams: {response.status_code} {response.text}")
 
         data = response.json()
         teams = []
 
-        # The response should have a 'data' array containing team objects
-        teams_data = data.get("data", [])
-
-        for team_data in teams_data:
-            processed_team_data = team_api_to_dict(team_data)
-            team = Team(
-                self.client, processed_team_data.get("team_id"), **processed_team_data
-            )
-            teams.append(team)
+        # The 'data' key in the response contains the list of teams
+        for team_data in data.get("data", []):
+            # Filter for active NHL teams with a triCode
+            if "triCode" in team_data:
+                parsed_team_data = team_api_to_dict(team_data)
+                team = Team(self.client, parsed_team_data.get("team_id"), **parsed_team_data)
+                teams.append(team)
 
         return teams
-
-    def get_team(self, team_id: int) -> Team:
-        """
-        Fetch a single team by ID from NHL Stats API.
-
-        Parameters
-        ----------
-        team_id : int
-            The team ID
-
-        Returns
-        -------
-        Team
-            A Team object.
-        """
-        # Use the NHL Stats API team endpoint for a specific team
-        response = self.client.get(f"team/{team_id}", web=False)
-
-        if response.status_code != 200:
-            raise Exception(
-                f"Failed to fetch team {team_id}: {response.status_code} {response.text}"
-            )
-
-        data = response.json()
-
-        # The response should have the team data directly or in a 'data' field
-        team_data = data.get("data", [])
-        if isinstance(team_data, list) and len(team_data) > 0:
-            team_data = team_data[0]
-        elif not isinstance(team_data, dict):
-            team_data = data
-
-        processed_team_data = team_api_to_dict(team_data)
-        return Team(
-            self.client, processed_team_data.get("team_id"), **processed_team_data
-        )
 
     def get_roster(self, team_code: str, season: Optional[int] = None) -> Roster:
         """
@@ -103,9 +60,7 @@ class TeamClient:
         response = self.client.get(endpoint, web=True)
 
         if response.status_code != 200:
-            raise Exception(
-                f"Failed to fetch roster: {response.status_code} {response.text}"
-            )
+            raise Exception(f"Failed to fetch roster: {response.status_code} {response.text}")
 
         data = response.json()
         roster_data = roster_api_to_dict(data)
@@ -115,9 +70,7 @@ class TeamClient:
 
         return Roster(self.client, team_id, **roster_data)
 
-    def get_team_stats(
-        self, team_code: str, season: Optional[int] = None, game_type: int = 2
-    ):
+    def get_team_stats(self, team_code: str, season: Optional[int] = None, game_type: int = 2):
         """
         Get team statistics.
 
@@ -143,9 +96,7 @@ class TeamClient:
         response = self.client.get(endpoint, web=True)
 
         if response.status_code != 200:
-            raise Exception(
-                f"Failed to fetch team stats: {response.status_code} {response.text}"
-            )
+            raise Exception(f"Failed to fetch team stats: {response.status_code} {response.text}")
 
         return response.json()
 
@@ -173,9 +124,7 @@ class TeamClient:
         response = self.client.get(endpoint, web=True)
 
         if response.status_code != 200:
-            raise Exception(
-                f"Failed to fetch team schedule: {response.status_code} {response.text}"
-            )
+            raise Exception(f"Failed to fetch team schedule: {response.status_code} {response.text}")
 
         return response.json()
 
@@ -197,9 +146,7 @@ class TeamClient:
         response = self.client.get(endpoint, web=True)
 
         if response.status_code != 200:
-            raise Exception(
-                f"Failed to fetch team prospects: {response.status_code} {response.text}"
-            )
+            raise Exception(f"Failed to fetch team prospects: {response.status_code} {response.text}")
 
         return response.json()
 
@@ -221,8 +168,6 @@ class TeamClient:
         response = self.client.get(endpoint, web=True)
 
         if response.status_code != 200:
-            raise Exception(
-                f"Failed to fetch team scoreboard: {response.status_code} {response.text}"
-            )
+            raise Exception(f"Failed to fetch team scoreboard: {response.status_code} {response.text}")
 
         return response.json()

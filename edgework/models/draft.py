@@ -26,7 +26,7 @@ class Draftee(BaseNHLModel):
         Fetch the data for the draftee.
         """
         # Implementation depends on how data is fetched from the API
-        pass
+        raise NotImplementedError("fetch_data() must be implemented in subclasses")
 
 
 class DraftRanking(BaseNHLModel):
@@ -51,7 +51,7 @@ class DraftRanking(BaseNHLModel):
         Fetch the data for the draft ranking.
         """
         # Implementation depends on how data is fetched from the API
-        pass
+        raise NotImplementedError("fetch_data() must be implemented in subclasses")
 
 
 class Draft(BaseNHLModel):

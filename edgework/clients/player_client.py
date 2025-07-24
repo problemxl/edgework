@@ -2,24 +2,19 @@
 
 from datetime import datetime
 from typing import List, Optional
-
-from edgework.http_client import SyncHttpClient
+from edgework.http_client import HttpClient
 from edgework.models.player import Player
 
 
 def api_to_dict(data: dict) -> dict:
     """Convert API response data to player dictionary format."""
-    name = data.get("name", "")
-    slug = (
-        f"{name.replace(' ', '-').lower()}-{data.get('playerId')}"
-        if name
-        else f"player-{data.get('playerId')}"
-    )
+    name = data.get('name', '')
+    slug = f"{name.replace(' ', '-').lower()}-{data.get('playerId')}" if name else f"player-{data.get('playerId')}"
 
     # Split name into first and last name
-    name_parts = name.split(" ") if name else []
+    name_parts = name.split(' ') if name else []
     first_name = name_parts[0] if name_parts else ""
-    last_name = " ".join(name_parts[1:]) if len(name_parts) > 1 else ""
+    last_name = ' '.join(name_parts[1:]) if len(name_parts) > 1 else ""
 
     return {
         "player_id": int(data.get("playerId")) if data.get("playerId") else None,
@@ -27,9 +22,7 @@ def api_to_dict(data: dict) -> dict:
         "last_name": last_name,
         "player_slug": slug,
         "sweater_number": data.get("sweaterNumber"),
-        "birth_date": data.get(
-            "birthDate"
-        ),  # This field doesn't seem to be in the search API
+        "birth_date": data.get("birthDate"),  # This field doesn't seem to be in the search API
         "birth_city": data.get("birthCity"),
         "birth_country": data.get("birthCountry"),
         "birth_state_province": data.get("birthStateProvince"),
@@ -44,9 +37,8 @@ def api_to_dict(data: dict) -> dict:
         "current_team_abbr": data.get("teamAbbrev"),
         "last_team_id": int(data.get("lastTeamId")) if data.get("lastTeamId") else None,
         "last_team_abbr": data.get("lastTeamAbbrev"),
-        "last_season_id": data.get("lastSeasonId"),
+        "last_season_id": data.get("lastSeasonId")
     }
-
 
 def landing_to_dict(data: dict) -> dict:
     """
@@ -62,15 +54,13 @@ def landing_to_dict(data: dict) -> dict:
     Returns:
         Dictionary with snake_case field names and processed values
     """
-
     def camel_to_snake(name: str) -> str:
         """Convert camelCase to snake_case."""
         import re
-
         # Insert underscores before uppercase letters (except at start)
-        s1 = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", name)
+        s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
         # Insert underscores between lowercase/digit and uppercase
-        return re.sub("([a-z0-9])([A-Z])", r"\1_\2", s1).lower()
+        return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
 
     def process_value(value):
         """Process a value, handling nested dictionaries and special cases."""
@@ -80,8 +70,8 @@ def landing_to_dict(data: dict) -> dict:
         # Handle nested dictionaries
         if isinstance(value, dict):
             # If it has a 'default' key, extract that value
-            if "default" in value:
-                return value["default"]
+            if 'default' in value:
+                return value['default']
             # Otherwise, recursively process the nested dictionary
             return {camel_to_snake(k): process_value(v) for k, v in value.items()}
 
@@ -92,7 +82,7 @@ def landing_to_dict(data: dict) -> dict:
         # Handle date strings
         elif isinstance(value, str):
             # Try to parse common date formats
-            date_formats = ["%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M:%SZ"]
+            date_formats = ['%Y-%m-%d', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%dT%H:%M:%SZ']
             for fmt in date_formats:
                 try:
                     return datetime.strptime(value, fmt)
@@ -105,16 +95,16 @@ def landing_to_dict(data: dict) -> dict:
         else:
             return value
 
-    def flatten_nested_objects(data: dict, result: dict, parent_key: str = "") -> None:
+    def flatten_nested_objects(data: dict, result: dict, parent_key: str = '') -> None:
         """Flatten nested objects with special handling for known structures."""
         for key, value in data.items():
             snake_key = camel_to_snake(key)
 
             # Special handling for draft details
-            if key == "draftDetails" and isinstance(value, dict):
+            if key == 'draftDetails' and isinstance(value, dict):
                 for draft_key, draft_value in value.items():
                     draft_snake_key = f"draft_{camel_to_snake(draft_key)}"
-                    if draft_key == "year" and draft_value:
+                    if draft_key == 'year' and draft_value:
                         try:
                             result[draft_snake_key] = datetime(draft_value, 1, 1)
                         except (ValueError, TypeError):
@@ -123,7 +113,7 @@ def landing_to_dict(data: dict) -> dict:
                         result[draft_snake_key] = process_value(draft_value)
 
             # For other nested objects, process normally
-            elif isinstance(value, dict) and "default" not in value:
+            elif isinstance(value, dict) and 'default' not in value:
                 # If it's a complex nested object, flatten it with prefix
                 if parent_key:
                     new_key = f"{parent_key}_{snake_key}"
@@ -140,12 +130,10 @@ def landing_to_dict(data: dict) -> dict:
     flatten_nested_objects(data, result)
 
     return result
-
-
 class PlayerClient:
     """Client for fetching player data."""
 
-    def __init__(self, http_client: SyncHttpClient):
+    def __init__(self, http_client: HttpClient):
         """
         Initialize the player client.
 
@@ -155,9 +143,7 @@ class PlayerClient:
         self.client = http_client
         self.base_url = "https://search.d3.nhle.com/api/v1/search/player"
 
-    def get_all_players(
-        self, active: Optional[bool] = None, limit: int = 10000
-    ) -> List[Player]:
+    def get_all_players(self, active: Optional[bool] = None, limit: int = 10000) -> List[Player]:
         """
         Get all players from the NHL search API.
 
@@ -168,7 +154,11 @@ class PlayerClient:
         Returns:
             List of Player objects
         """
-        params = {"culture": "en-us", "limit": limit, "q": "*"}
+        params = {
+            "culture": "en-us",
+            "limit": limit,
+            "q": "*"
+        }
         if active is not None:
             params["active"] = str(active).lower()
 
@@ -183,6 +173,7 @@ class PlayerClient:
             players_data = data.get("results", [])
 
         return [Player(**api_to_dict(player)) for player in players_data]
+
 
     def get_active_players(self, limit: int = 10000) -> List[Player]:
         """
