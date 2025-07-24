@@ -101,7 +101,7 @@ import os
 from edgework import Edgework
 
 # Example: Use environment variable for user agent
-user_agent = os.getenv("NHL_API_USER_AGENT", "Edgework/0.2.1")
+user_agent = os.getenv("NHL_API_USER_AGENT", "Edgework/0.3.1")
 client = Edgework(user_agent=user_agent)
 ```
 
@@ -116,7 +116,7 @@ from edgework import Edgework
 
 class NHLApiClient:
     _instance = None
-    
+
     def __new__(cls):
         if cls._instance is None:
             cls._instance = Edgework()
@@ -144,7 +144,7 @@ class ConfiguredEdgework:
     def __init__(self, config: EdgeworkConfig):
         self.config = config
         self.client = Edgework(user_agent=config.user_agent)
-    
+
     def get_top_scorers(self, limit=None):
         return self.client.skater_stats(
             season=self.config.default_season,
@@ -169,7 +169,7 @@ from edgework import Edgework
 class CachedEdgework:
     def __init__(self):
         self.client = Edgework()
-    
+
     @lru_cache(maxsize=128)
     def get_skater_stats(self, season, sort="points", limit=50):
         """Cached version of skater_stats."""

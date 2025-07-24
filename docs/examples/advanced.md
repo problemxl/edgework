@@ -81,7 +81,7 @@ players = client.skater_stats(season="2023-2024", limit=100)
 with open('player_stats.csv', 'w', newline='', encoding='utf-8') as csvfile:
     fieldnames = ['name', 'team', 'position', 'games', 'goals', 'assists', 'points']
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-    
+
     writer.writeheader()
     for player in players:
         writer.writerow({
@@ -116,7 +116,7 @@ plt.scatter(goals_for, goals_against, alpha=0.7)
 
 # Add team labels
 for i, name in enumerate(team_names):
-    plt.annotate(name, (goals_for[i], goals_against[i]), 
+    plt.annotate(name, (goals_for[i], goals_against[i]),
                 xytext=(5, 5), textcoords='offset points')
 
 plt.xlabel('Goals For')
@@ -140,7 +140,7 @@ teams = client.team_stats(season="2023-2024", limit=5)
 
 for team in teams:
     roster = team.get_roster()
-    
+
     # Analyze roster by age (if birth_date available)
     ages = []
     for player in roster.players:
@@ -150,7 +150,7 @@ for team in teams:
             birth_year = int(player.birth_date[:4])
             age = 2024 - birth_year
             ages.append(age)
-    
+
     if ages:
         avg_age = sum(ages) / len(ages)
         print(f"{team.name}: {len(roster.players)} players, avg age {avg_age:.1f}")
@@ -224,7 +224,7 @@ for name, operation in operations:
     start_time = time.time()
     result = operation()
     end_time = time.time()
-    
+
     print(f"{name}: {end_time - start_time:.2f}s ({len(result)} items)")
 ```
 
@@ -244,7 +244,7 @@ class TeamSummary:
     goals_for: int
     goals_against: int
     goal_differential: int
-    
+
     @classmethod
     def from_team_stats(cls, team_stats):
         return cls(

@@ -1,15 +1,15 @@
 from datetime import timedelta
-from edgework.edgework import Edgework
+
 from edgework.models.base import BaseNHLModel
 
 
 class PeriodTime(BaseNHLModel):
     """PeriodTime model to store period time information."""
-    
+
     def __init__(self, edgework_client=None, obj_id=None, **kwargs):
         """
         Initialize a PeriodTime object with dynamic attributes.
-        
+
         Args:
             edgework_client: The Edgework client
             obj_id: The ID of the period time
@@ -18,27 +18,27 @@ class PeriodTime(BaseNHLModel):
         super().__init__(edgework_client, obj_id)
         self._data = kwargs
         # Set defaults if not provided
-        if 'minutes' not in self._data:
-            self._data['minutes'] = 0
-        if 'seconds' not in self._data:
-            self._data['seconds'] = 0
+        if "minutes" not in self._data:
+            self._data["minutes"] = 0
+        if "seconds" not in self._data:
+            self._data["seconds"] = 0
         self.validate()
-        
+
     @classmethod
     def from_string(cls, edgework_client, time_str):
         """
         Create a PeriodTime object from a string.
-        
+
         Args:
             edgework_client: The Edgework client
             time_str: The string to parse (format: "MM:SS")
-            
+
         Returns:
             A PeriodTime object
         """
         minutes, seconds = map(int, time_str.split(":"))
         return cls(edgework_client, minutes=minutes, seconds=seconds)
-        
+
     def validate(self):
         """Validate the period time."""
         if self.minutes < 0:
@@ -60,21 +60,21 @@ class PeriodTime(BaseNHLModel):
     @property
     def timedelta(self):
         """Get the timedelta representation."""
-        return timedelta(minutes=self.minutes, seconds=self.seconds)    
-    
+        return timedelta(minutes=self.minutes, seconds=self.seconds)
+
     def __sub__(self, other):
         """Subtract another PeriodTime or timedelta from this PeriodTime."""
         if isinstance(other, PeriodTime):
             return self.timedelta - other.timedelta
         if isinstance(other, timedelta):
             return self.timedelta - other
-            
+
     def fetch_data(self):
         """
         Fetch the data for the period time.
         """
         # Implementation depends on how data is fetched from the API
-        raise NotImplementedError("fetch_data() must be implemented in subclasses")
+        pass
 
 
 class Shift(BaseNHLModel):
@@ -83,10 +83,11 @@ class Shift(BaseNHLModel):
 
     A shift is a period of time when a player is on the ice.
     """
+
     def __init__(self, edgework_client, obj_id=None, **kwargs):
         """
         Initialize a Shift object with dynamic attributes.
-        
+
         Args:
             edgework_client: The Edgework client
             obj_id: The ID of the shift object
@@ -98,7 +99,9 @@ class Shift(BaseNHLModel):
     @property
     def duration(self) -> timedelta:
         """Get the duration of the shift."""
-        return timedelta(seconds=self.shift_end.total_seconds - self.shift_start.total_seconds)
+        return timedelta(
+            seconds=self.shift_end.total_seconds - self.shift_start.total_seconds
+        )
 
     @property
     def shift_length(self):
@@ -110,31 +113,27 @@ class Shift(BaseNHLModel):
 
     def __repr__(self):
         return str(self)
-        
+
     def fetch_data(self):
         """
         Fetch the data for the shift.
         """
         # Implementation depends on how data is fetched from the API
-        raise NotImplementedError("fetch_data() must be implemented in subclasses")
+        pass
+        return str(self)
 
     def __eq__(self, other):
         return self.shift_id == other.shift_id
 
     @classmethod
-    def from_api(cls, data: dict, edgework_client: Edgework) -> "Shift":
+    def from_api(cls, data):
         """
         Create a Shift object from API data.
-        
-        Args:
-            data: The data dictionary from the API
-            edgework_client: The Edgework client
 
-        Returns:
-            A Shift object initialized with the provided data.
+        :param data: API data dictionary
+        :return: Shift object
         """
         return cls(
-            edgework_client=None,
             shift_id=data["id"],
             game_id=data["gameId"],
             player_id=data["playerId"],
