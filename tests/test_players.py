@@ -7,7 +7,7 @@ import pytest
 
 from edgework.clients.player_client import landing_to_dict
 from edgework.edgework import Edgework
-from edgework.http_client import SyncHttpClient
+from edgework.http_client import HttpClient
 from edgework.models.player import Player
 
 
@@ -202,7 +202,7 @@ class TestPlayerFetchData:
 
     def setup_method(self):
         """Set up test fixtures before each test method."""
-        self.mock_client = Mock(spec=SyncHttpClient)
+        self.mock_client = Mock(spec=HttpClient)
 
     def test_fetch_data_success(self):
         """Test successful data fetching from the landing API."""
