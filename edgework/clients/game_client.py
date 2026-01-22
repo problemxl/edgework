@@ -11,13 +11,28 @@ class GameClient:
         self._client = client
 
     def get_game(self, game_id: int) -> Game:
-        response = self._client.get(f'gamecenter/{game_id}/boxscore')
+        """Get game information and boxscore for a given game.
+
+        Parameters
+        ----------
+        game_id : int
+            The ID of the game.
+
+        Returns
+        -------
+        Game
+            A Game object containing game information and boxscore data.
+
+        """
+        response = self._client.get(f"gamecenter/{game_id}/boxscore")
         data = response.json()
 
         game_dict = {
             "game_id": data.get("id"),
             "game_date": datetime.strptime(data.get("gameDate"), "%Y-%m-%d"),
-            "start_time_utc": datetime.strptime(data.get("startTimeUTC"), "%Y-%m-%dT%H:%M:%SZ"),
+            "start_time_utc": datetime.strptime(
+                data.get("startTimeUTC"), "%Y-%m-%dT%H:%M:%SZ"
+            ),
             "game_state": data.get("gameState"),
             "away_team_abbrev": data.get("awayTeam").get("abbrev"),
             "away_team_id": data.get("awayTeam").get("id"),
@@ -26,18 +41,45 @@ class GameClient:
             "home_team_id": data.get("homeTeam").get("id"),
             "home_team_score": data.get("homeTeam").get("score"),
             "season": data.get("season"),
-            "venue": data.get("venue").get("default")
+            "venue": data.get("venue").get("default"),
         }
 
         return Game.from_dict(game_dict, self._client)
 
     def get_shifts(self, game_id: int) -> list[Shift]:
+        """Get shift chart data for a given game.
+
+        Parameters
+        ----------
+        game_id : int
+            The ID of the game.
+
+        Returns
+        -------
+        list[Shift]
+            A list of Shift objects representing shift chart data.
+
+        """
         response = self._client.get(f"/rest/en/shiftcharts?cayenneExp=gameId={game_id}")
         data = response.json()["data"]
         shifts = [Shift.from_api(d) for d in data]
         return shifts
 
-    def get_play_by_play(self, game_id: int) -> list[Shift]:
+    def get_play_by_play(self, game_id: int) -> list[GameEvent]:
+        """Get the play-by-play data for a given game.
+
+        Parameters
+        ----------
+        game_id : int
+            The ID of the game.
+
+        Returns
+        -------
+        list[GameEvent]
+            A list of GameEvent objects representing the play-by-play data.
+
+        """
         response = self._client.get(f"gamecenter/{game_id}/play-by-play")
         data = response.json()
-        plays = [GameEvent]
+        plays = [GameEvent.from_api(play, game_id) for play in data.get("plays", [])]
+        return plays

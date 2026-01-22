@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Optional
 
 
 @dataclass
@@ -51,34 +52,77 @@ class GameEvent:
     period: int
     period_time: str
     remaining_time: str
-    x_coordinate: int
-    y_coordinate: int
-    home_score: int
-    away_score: int
-    home_sog: int
-    away_sog: int
-    zone: str
-    assist1_id: int
-    assist1_total: int
-    assist2_id: int
-    assist2_total: int
-    scoring_player_id: int
-    scoring_player_total: int
-    secondary_result: str
-    type_code: str
-    blocking_player_id: int
-    winning_player_id: int
-    losing_player_id: int
-    hittee_id: int
-    served_by_id: int
-    event_owner_team_id: int
-    shot_type: str  # TODO: Add shot type to the dataclass
-    drawn_by_player_id: int
-    reason: str
-    player_id: int
-    goalie_in_net_id: int
-    hitting_player_id: int
-    shooting_player_id: int
+    x_coordinate: Optional[int] = None
+    y_coordinate: Optional[int] = None
+    home_score: Optional[int] = None
+    away_score: Optional[int] = None
+    home_sog: Optional[int] = None
+    away_sog: Optional[int] = None
+    zone: Optional[str] = None
+    assist1_id: Optional[int] = None
+    assist1_total: Optional[int] = None
+    assist2_id: Optional[int] = None
+    assist2_total: Optional[int] = None
+    scoring_player_id: Optional[int] = None
+    scoring_player_total: Optional[int] = None
+    secondary_result: Optional[str] = None
+    type_code: Optional[str] = None
+    blocking_player_id: Optional[int] = None
+    winning_player_id: Optional[int] = None
+    losing_player_id: Optional[int] = None
+    hittee_id: Optional[int] = None
+    served_by_id: Optional[int] = None
+    event_owner_team_id: Optional[int] = None
+    shot_type: Optional[str] = None
+    drawn_by_player_id: Optional[int] = None
+    reason: Optional[str] = None
+    player_id: Optional[int] = None
+    goalie_in_net_id: Optional[int] = None
+    hitting_player_id: Optional[int] = None
+    shooting_player_id: Optional[int] = None
+
+    @classmethod
+    def from_api(cls, data: dict, game_id: int) -> "GameEvent":
+        details = data.get("details", {})
+        period_desc = data.get("periodDescriptor", {})
+
+        return cls(
+            game_id=game_id,
+            event_id=data.get("eventId", 0),
+            event_type=data.get("typeDescKey", ""),
+            event_description=data.get("typeDescKey", ""),
+            period=period_desc.get("number", 0),
+            period_time=data.get("timeInPeriod", ""),
+            remaining_time=data.get("timeRemaining", ""),
+            x_coordinate=details.get("xCoord"),
+            y_coordinate=details.get("yCoord"),
+            home_score=details.get("homeScore"),
+            away_score=details.get("awayScore"),
+            home_sog=details.get("homeSOG"),
+            away_sog=details.get("awaySOG"),
+            zone=details.get("zoneCode"),
+            assist1_id=details.get("assist1PlayerId"),
+            assist1_total=details.get("assist1PlayerTotal"),
+            assist2_id=details.get("assist2PlayerId"),
+            assist2_total=details.get("assist2PlayerTotal"),
+            scoring_player_id=details.get("scoringPlayerId"),
+            scoring_player_total=details.get("scoringPlayerTotal"),
+            secondary_result=details.get("secondaryResult"),
+            type_code=str(data.get("typeCode", "")),
+            blocking_player_id=details.get("blockingPlayerId"),
+            winning_player_id=details.get("winningPlayerId"),
+            losing_player_id=details.get("losingPlayerId"),
+            hittee_id=details.get("hitteePlayerId"),
+            served_by_id=details.get("servedByPlayerId"),
+            event_owner_team_id=details.get("eventOwnerTeamId"),
+            shot_type=details.get("shotType"),
+            drawn_by_player_id=details.get("drawnByPlayerId"),
+            reason=details.get("reason"),
+            player_id=details.get("playerId"),
+            goalie_in_net_id=details.get("goalieInNetId"),
+            hitting_player_id=details.get("hittingPlayerId"),
+            shooting_player_id=details.get("shootingPlayerId"),
+        )
 
 
 @dataclass

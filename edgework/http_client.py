@@ -14,7 +14,9 @@ class HttpClient(ABC):
         pass
 
     @abstractmethod
-    def get(self, path: str, params: dict, web: bool) -> httpx.Response:
+    def get(
+        self, path: str, params: dict | None = None, web: bool = True
+    ) -> httpx.Response:
         pass
 
 
@@ -30,16 +32,23 @@ class SyncHttpClient(HttpClient):
         return cls._instance
 
     def __init__(self):
-        if not hasattr(self, 'client'):
+        if not hasattr(self, "client"):
             self.client = httpx.Client()
 
-    def get(self, path: str, params=None, web=True) -> httpx.Response:
+    def get(
+        self, path: str, params: dict | None = None, web: bool = True
+    ) -> httpx.Response:
         if params is None:
             params = {}
         if web:
-            return self.client.get(f"{self.WEB_BASE_URL}/{self.API_VERSION}/{path}", params=params,
-                                   follow_redirects=True)
-        return self.client.get(f"{self.API_BASE_URL}/stats/{path}", params=params, follow_redirects=True)
+            return self.client.get(
+                f"{self.WEB_BASE_URL}/{self.API_VERSION}/{path}",
+                params=params,
+                follow_redirects=True,
+            )
+        return self.client.get(
+            f"{self.API_BASE_URL}/stats/{path}", params=params, follow_redirects=True
+        )
 
     def get_raw(self, url: str, params=None) -> httpx.Response:
         if params is None:
@@ -54,7 +63,14 @@ class AsyncHttpClient(HttpClient):
     def __init__(self):
         self.client = httpx.AsyncClient()
 
-    async def get(self, path: str, params: dict = {}) -> httpx.Response:
+    async def get(
+        self, path: str, params: dict | None = None, web: bool = True
+    ) -> httpx.Response:
+        if params is None:
+            params = {}
         async with httpx.AsyncClient(follow_redirects=True) as client:
-            # print(f"{self.WEB_BASE_URL}/{self.API_VERSION}/{path}")
-            return await client.get(f"{self.WEB_BASE_URL}/{self.API_VERSION}/{path}", params=params)     
+            if web:
+                return await client.get(
+                    f"{self.WEB_BASE_URL}/{self.API_VERSION}/{path}", params=params
+                )
+            return await client.get(f"{self.API_BASE_URL}/stats/{path}", params=params)

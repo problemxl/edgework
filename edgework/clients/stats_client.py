@@ -78,7 +78,8 @@ class StatsClient:
 
         response = self._client.get(
             f"en/skater/{report}?isAggregate={aggregate}&isGame={game}&limit={
-                limit}&start={start}&sort={sort}&cayenneExp=seasonId={season}"
+                limit
+            }&start={start}&sort={sort}&cayenneExp=seasonId={season}"
         )
 
         data = response.json()["data"]
@@ -99,31 +100,16 @@ class StatsClient:
         if report not in self.goalie_reports:
             raise ValueError(
                 f"Invalid report: {report}, must be one of {
-                    ', '.join(self.goalie_reports)}"
+                    ', '.join(self.goalie_reports)
+                }"
             )
 
-        url_path = f"en/goalie/{report}?isAggregate={aggregate}&isGame={game}&limit={
-            limit}&start={start}&sort={sort}&cayenneExp=seasonId={season}"
-        response = self._client.get(path=url_path, params=None, web=False)
+        url_path = f"en/goalie/{report}?isAggregate={aggregate}&isGame={game}&limit={limit}&start={start}&sort={sort}&cayenneExp=seasonId={season}"
+        response = self._client.get(path=url_path, params={}, web=False)
         data = response.json()["data"]
 
-        skater_stats_dict = [dict_camel_to_snake(d) for d in data]
-        return [GoalieStats(**d) for d in skater_stats_dict]
-
-    def get_team_stats(
-        self,
-        season: int,
-        report: str = "summary",
-        aggregate: bool = False,
-        game: bool = True,
-        limit: int = -1,
-        start: int = 0,
-        sort: str = "wins",
-    ) -> list[TeamStats]:
-        response = self._client.get(f"en/team/stats?cayenneExp=seasonId={season}")
-        data = response.json()["data"]
-        team_stats_dict = [dict_camel_to_snake(d) for d in data]
-        return [TeamStats(**d) for d in team_stats_dict]
+        goalie_stats_dict = [dict_camel_to_snake(d) for d in data]
+        return [GoalieStats(**d) for d in goalie_stats_dict]
 
     def get_team_stats(
         self,
@@ -163,11 +149,13 @@ class StatsClient:
         if report not in self.team_reports:
             raise ValueError(
                 f"Invalid report: {report}, must be one of {
-                    ', '.join(self.team_reports)}"
+                    ', '.join(self.team_reports)
+                }"
             )
 
         url_path = f"en/team/{report}?isAggregate={aggregate}&isGame={game}&limit={
-            limit}&start={start}&sort={sort}&cayenneExp=seasonId={season}"
+            limit
+        }&start={start}&sort={sort}&cayenneExp=seasonId={season}"
         response = self._client.get(path=url_path, params=None, web=False)
         data = response.json()["data"]
 
