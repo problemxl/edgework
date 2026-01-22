@@ -1,11 +1,9 @@
 """Tests for schedule-related functionality in the Edgework client."""
 
 from datetime import datetime, timezone
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
-
-from edgework.models.game import Game
 from edgework.models.schedule import Schedule, schedule_api_to_dict
 
 

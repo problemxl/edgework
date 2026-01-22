@@ -1,5 +1,4 @@
 from typing import Optional, List, Union
-from datetime import datetime
 from edgework.models.base import BaseNHLModel
 from edgework.models.player import Player
 

@@ -1,5 +1,4 @@
 from edgework.models.base import BaseNHLModel
-from edgework.models.team import Team
 
 
 class Series(BaseNHLModel):

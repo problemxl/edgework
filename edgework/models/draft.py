@@ -1,4 +1,3 @@
-from datetime import datetime
 
 from edgework.endpoints import API_PATH
 from edgework.models.base import BaseNHLModel
