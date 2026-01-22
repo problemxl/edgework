@@ -3,7 +3,7 @@ Pytest tests for the main Edgework client class.
 This file tests all methods and functionality of the Edgework class.
 """
 
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 

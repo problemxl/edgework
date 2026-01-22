@@ -1,8 +1,6 @@
 """Tests for team-related functionality in the Edgework client."""
-
-import pytest
 from edgework.edgework import Edgework
-from edgework.models.team import Team, Roster
+from edgework.models.team import Roster
 from edgework.models.player import Player
 
 
