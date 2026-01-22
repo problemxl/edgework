@@ -190,7 +190,6 @@ class TestSkaterStats:
             web=False,
         )
 
-    # @pytest.mark.live_api
     def test_fetch_data_live(self, real_client: SyncHttpClient):
         stats = SkaterStats(real_client, obj_id=8478402)  # Connor McDavid
         stats.fetch_data(season=20232024)  # Use a recent season
@@ -285,7 +284,6 @@ class TestGoalieStats:
         with pytest.raises(KeyError):
             stats.fetch_data(report="summary", season=20232024)
 
-    # @pytest.mark.live_api
     def test_fetch_data_live(self, real_client: SyncHttpClient):
         stats = GoalieStats(real_client, obj_id=0)  # Connor Hellebuyck
         stats.fetch_data(season=20232024)  # Use a recent season
@@ -393,7 +391,6 @@ class TestTeamStats:
             stats.fetch_data(report="summary", season=20232024)
         assert "'data'" in str(exc_info.value)
 
-    # @pytest.mark.live_api
     def test_fetch_data_live(self, real_client: SyncHttpClient):
         stats = TeamStats(real_client, obj_id=10)  # Toronto Maple Leafs
         stats.fetch_data(season=20232024)  # Use a recent season
