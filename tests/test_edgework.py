@@ -201,7 +201,7 @@ class TestEdgeworkSkaterStats:
         assert call_args.kwargs["report"] == "summary"
         assert call_args.kwargs["sort"] == "points"
         assert call_args.kwargs["direction"] == "DESC"
-        assert call_args.kwargs["aggregate"] == False
+        assert call_args.kwargs["aggregate"] is False
         assert call_args.kwargs["limit"] == 10
         assert call_args.kwargs["game_type"] == 2
 
@@ -328,8 +328,8 @@ class TestEdgeworkTeamStats:
         assert call_args.kwargs["sort"] == "points"
         assert call_args.kwargs["direction"] == "DESC"
         assert call_args.kwargs["limit"] == 10
-        assert call_args.kwargs["aggregate"] == False
-        assert call_args.kwargs["game"] == True
+        assert call_args.kwargs["aggregate"] is False
+        assert call_args.kwargs["game"] is True
 
 
 class TestEdgeworkContextManager:
