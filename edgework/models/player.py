@@ -1,4 +1,5 @@
 from datetime import datetime
+
 from edgework.models.base import BaseNHLModel
 
 
@@ -18,13 +19,8 @@ class Player(BaseNHLModel):
         self._data = kwargs
 
         # Set the player_id as obj_id if provided in kwargs
-        if 'player_id' in kwargs:
-            self.obj_id = kwargs['player_id']
-
-        #
-
-
-
+        if "player_id" in kwargs:
+            self.obj_id = kwargs["player_id"]
 
         # Mark as fetched since we're initializing with data
         if kwargs:
@@ -38,10 +34,10 @@ class Player(BaseNHLModel):
                 Examples: "#97 Connor McDavid (EDM)", "Connor McDavid (EDM)",
                 "#97 Connor McDavid", or "Connor McDavid".
         """
-        first_name = self._data.get('first_name', '')
-        last_name = self._data.get('last_name', '')
-        sweater_number = self._data.get('sweater_number')
-        team_abbr = self._data.get('current_team_abbr', '')
+        first_name = self._data.get("first_name", "")
+        last_name = self._data.get("last_name", "")
+        sweater_number = self._data.get("sweater_number")
+        team_abbr = self._data.get("current_team_abbr", "")
 
         name = f"{first_name} {last_name}".strip()
         if sweater_number and team_abbr:
@@ -60,7 +56,7 @@ class Player(BaseNHLModel):
             str: Developer-friendly string representation showing the player ID.
                 Example: "Player(id=8478402)".
         """
-        player_id = self._data.get('player_id', self.obj_id)
+        player_id = self._data.get("player_id", self.obj_id)
         return f"Player(id={player_id})"
 
     def __eq__(self, other) -> bool:
@@ -74,7 +70,7 @@ class Player(BaseNHLModel):
                 False otherwise.
         """
         if isinstance(other, Player):
-            return self._data.get('player_id') == other._data.get('player_id')
+            return self._data.get("player_id") == other._data.get("player_id")
         return False
 
     def __hash__(self):
@@ -83,7 +79,7 @@ class Player(BaseNHLModel):
         Returns:
             int: Hash value based on the player_id.
         """
-        return hash(self._data.get('player_id'))
+        return hash(self._data.get("player_id"))
 
     def fetch_data(self):
         """Fetch the data for the player from the API.
@@ -123,8 +119,8 @@ class Player(BaseNHLModel):
             str: The player's full name (first name + last name).
                 Example: "Connor McDavid".
         """
-        first_name = self._data.get('first_name', '')
-        last_name = self._data.get('last_name', '')
+        first_name = self._data.get("first_name", "")
+        last_name = self._data.get("last_name", "")
         return f"{first_name} {last_name}".strip()
 
     @property
@@ -145,10 +141,10 @@ class Player(BaseNHLModel):
             int | None: The player's age in years, or None if birth_date is not available
                 or cannot be parsed.
         """
-        birth_date = self._data.get('birth_date')
+        birth_date = self._data.get("birth_date")
         if birth_date:
             if isinstance(birth_date, str):
-                birth_date = datetime.fromisoformat(birth_date.replace('Z', '+00:00'))
+                birth_date = datetime.fromisoformat(birth_date.replace("Z", "+00:00"))
             elif isinstance(birth_date, datetime):
                 pass
             else:
@@ -156,7 +152,9 @@ class Player(BaseNHLModel):
 
             today = datetime.now()
             age = today.year - birth_date.year
-            if today.month < birth_date.month or (today.month == birth_date.month and today.day < birth_date.day):
+            if today.month < birth_date.month or (
+                today.month == birth_date.month and today.day < birth_date.day
+            ):
                 age -= 1
             return age
         return None
@@ -168,7 +166,7 @@ class Player(BaseNHLModel):
         Returns:
             str | None: URL to the player's headshot image, or None if not available.
         """
-        return self._data.get('headshot')
+        return self._data.get("headshot")
 
     @property
     def hero_image(self):
@@ -177,7 +175,7 @@ class Player(BaseNHLModel):
         Returns:
             str | None: URL to the player's hero image, or None if not available.
         """
-        return self._data.get('hero_image')
+        return self._data.get("hero_image")
 
     @property
     def awards(self):
@@ -187,7 +185,7 @@ class Player(BaseNHLModel):
             list | None: List of awards with trophy names and season details,
                 or None if not available.
         """
-        return self._data.get('awards')
+        return self._data.get("awards")
 
     @property
     def badges(self):
@@ -197,7 +195,7 @@ class Player(BaseNHLModel):
             list | None: List of special badges with logos and titles,
                 or None if not available.
         """
-        return self._data.get('badges')
+        return self._data.get("badges")
 
     @property
     def team_logo(self):
@@ -206,7 +204,7 @@ class Player(BaseNHLModel):
         Returns:
             str | None: URL to the current team's logo, or None if not available.
         """
-        return self._data.get('team_logo')
+        return self._data.get("team_logo")
 
     @property
     def last_5_games(self):
@@ -215,7 +213,7 @@ class Player(BaseNHLModel):
         Returns:
             list | None: List of the last 5 games with stats, or None if not available.
         """
-        return self._data.get('last5_games')
+        return self._data.get("last5_games")
 
     @property
     def season_totals(self):
@@ -225,7 +223,7 @@ class Player(BaseNHLModel):
             list | None: List of season totals for each year played,
                 or None if not available.
         """
-        return self._data.get('season_totals')
+        return self._data.get("season_totals")
 
     @property
     def current_team_roster(self):
@@ -234,7 +232,7 @@ class Player(BaseNHLModel):
         Returns:
             list | None: List of current teammates, or None if not available.
         """
-        return self._data.get('current_team_roster')
+        return self._data.get("current_team_roster")
 
     @property
     def birth_city(self):
@@ -243,7 +241,7 @@ class Player(BaseNHLModel):
         Returns:
             str | None: The player's birth city, or None if not available.
         """
-        return self._data.get('birth_city')
+        return self._data.get("birth_city")
 
     @property
     def birth_state_province(self):
@@ -252,7 +250,7 @@ class Player(BaseNHLModel):
         Returns:
             str | None: The player's birth state/province, or None if not available.
         """
-        return self._data.get('birth_state_province')
+        return self._data.get("birth_state_province")
 
     @property
     def birth_country(self):
@@ -261,7 +259,7 @@ class Player(BaseNHLModel):
         Returns:
             str | None: The player's birth country code, or None if not available.
         """
-        return self._data.get('birth_country')
+        return self._data.get("birth_country")
 
     @property
     def height_formatted(self):
@@ -270,7 +268,7 @@ class Player(BaseNHLModel):
         Returns:
             str | None: Formatted height string, or None if not available.
         """
-        return self._data.get('height_formatted')
+        return self._data.get("height_formatted")
 
     @property
     def weight(self):
@@ -279,7 +277,7 @@ class Player(BaseNHLModel):
         Returns:
             int | None: Weight in kilograms, or None if not available.
         """
-        return self._data.get('weight')
+        return self._data.get("weight")
 
     @property
     def weight_pounds(self):
@@ -288,7 +286,7 @@ class Player(BaseNHLModel):
         Returns:
             int | None: Weight in pounds, or None if not available.
         """
-        return self._data.get('weight_pounds')
+        return self._data.get("weight_pounds")
 
     @property
     def draft_year(self):
@@ -298,7 +296,7 @@ class Player(BaseNHLModel):
             datetime | int | None: Draft year as datetime object or integer,
                 or None if not available.
         """
-        return self._data.get('draft_year')
+        return self._data.get("draft_year")
 
     @property
     def draft_round(self):
@@ -307,7 +305,7 @@ class Player(BaseNHLModel):
         Returns:
             int | None: Draft round number, or None if not available.
         """
-        return self._data.get('draft_round')
+        return self._data.get("draft_round")
 
     @property
     def draft_overall_pick(self):
@@ -316,7 +314,7 @@ class Player(BaseNHLModel):
         Returns:
             int | None: Overall pick number, or None if not available.
         """
-        return self._data.get('draft_overall_pick')
+        return self._data.get("draft_overall_pick")
 
     @property
     def career_totals(self):
@@ -328,7 +326,9 @@ class Player(BaseNHLModel):
                 'career_totals_playoffs_assists', etc.
         """
         # Extract all career_totals_* keys from _data
-        career_data = {k: v for k, v in self._data.items() if k.startswith('career_totals_')}
+        career_data = {
+            k: v for k, v in self._data.items() if k.startswith("career_totals_")
+        }
         return career_data if career_data else None
 
     def get_attribute(self, attr_name):

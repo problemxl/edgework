@@ -1,12 +1,14 @@
 """Tests for the players() method in the Edgework client."""
 
-import pytest
-from unittest.mock import Mock
 from datetime import datetime
-from edgework.edgework import Edgework
-from edgework.models.player import Player
+from unittest.mock import Mock, patch
+
+import pytest
+
 from edgework.clients.player_client import landing_to_dict
+from edgework.edgework import Edgework
 from edgework.http_client import HttpClient
+from edgework.models.player import Player
 
 
 class TestPlayersMethod:

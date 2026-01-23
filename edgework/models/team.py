@@ -1,4 +1,6 @@
-from typing import Optional, List, Union
+from datetime import datetime
+from typing import List, Optional, Union
+
 from edgework.models.base import BaseNHLModel
 from edgework.models.player import Player
 
@@ -16,39 +18,107 @@ def roster_api_to_dict(data: dict) -> dict:
         "roster_type": data.get("rosterType"),
         "team_abbrev": data.get("teamAbbrev"),
         "team_id": data.get("teamId"),
-        "players": players
+        "players": players,
     }
 
 
 def team_api_to_dict(data: dict) -> dict:
-    """Convert team API response data to team dictionary format."""
-    # Helper function to extract default value from nested dict
-    def extract_default(value):
-        if isinstance(value, dict) and 'default' in value:
-            return value['default']
-        return value
+    """
+    Convert team API response data to team dictionary format with snake_case keys.
 
-    # For standings API, the team data is in the root level
-    return {
-        "team_id": data.get("teamId") or data.get("id"),
-        "tri_code": extract_default(data.get("triCode")) or extract_default(data.get("abbrev")),
-        "team_abbrev": extract_default(data.get("triCode")) or extract_default(data.get("teamAbbrev")) or extract_default(data.get("abbrev")),
-        "team_name": extract_default(data.get("teamName")) or extract_default(data.get("name")) or extract_default(data.get("teamCommonName")),
-        "full_name": extract_default(data.get("fullName")) or extract_default(data.get("teamName")),
-        "location_name": extract_default(data.get("locationName")) or extract_default(data.get("placeName")),
-        "team_common_name": extract_default(data.get("teamCommonName")),
-        "team_place_name": extract_default(data.get("teamPlaceName")) or extract_default(data.get("placeName")),
-        "logo": data.get("logo") or data.get("teamLogo"),
-        "dark_logo": data.get("darkLogo"),
-        "french_name": data.get("frenchName"),
-        "french_place_name": data.get("frenchPlaceName"),
-        "venue": data.get("venue"),
-        "conference": data.get("conferenceName"),
-        "division": data.get("divisionName"),
-        "website": data.get("website"),
-        "franchise_id": data.get("franchiseId"),
-        "active": data.get("active", True)
-    }
+    This function processes team dictionary structures from various NHL APIs,
+    converting camelCase keys to snake_case and handling nested dictionaries.
+    It automatically extracts 'default' values from nested objects when available.
+
+    Args:
+        data: Raw API response dictionary from standings, roster, or other team endpoints
+
+    Returns:
+        Dictionary with snake_case field names and processed values
+    """
+
+    def camel_to_snake(name: str) -> str:
+        """Convert camelCase to snake_case."""
+        import re
+
+        # Insert underscores before uppercase letters (except at start)
+        s1 = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", name)
+        # Insert underscores between lowercase/digit and uppercase
+        return re.sub("([a-z0-9])([A-Z])", r"\1_\2", s1).lower()
+
+    def process_value(value):
+        """Process a value, handling nested dictionaries and special cases."""
+        if value is None:
+            return None
+
+        # Handle nested dictionaries
+        if isinstance(value, dict):
+            # If it has a 'default' key, extract that value
+            if "default" in value:
+                return value["default"]
+            # Otherwise, recursively process the nested dictionary
+            return {camel_to_snake(k): process_value(v) for k, v in value.items()}
+
+        # Handle lists
+        elif isinstance(value, list):
+            return [process_value(item) for item in value]
+
+        # Handle date strings
+        elif isinstance(value, str):
+            # Try to parse common date formats
+            from datetime import datetime
+
+            date_formats = ["%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M:%SZ"]
+            for fmt in date_formats:
+                try:
+                    return datetime.strptime(value, fmt)
+                except ValueError:
+                    continue
+            # If not a date, return as-is
+            return value
+
+        # Return primitive types as-is
+        else:
+            return value
+
+    def flatten_nested_objects(data: dict, result: dict, parent_key: str = "") -> None:
+        """Flatten nested objects with special handling for known team structures."""
+        for key, value in data.items():
+            snake_key = camel_to_snake(key)
+
+            # Special handling for franchise details
+            if key == "franchise" and isinstance(value, dict):
+                for franchise_key, franchise_value in value.items():
+                    franchise_snake_key = f"franchise_{camel_to_snake(franchise_key)}"
+                    result[franchise_snake_key] = process_value(franchise_value)
+
+            # Special handling for venue details
+            elif key == "venue" and isinstance(value, dict):
+                for venue_key, venue_value in value.items():
+                    venue_snake_key = f"venue_{camel_to_snake(venue_key)}"
+                    result[venue_snake_key] = process_value(venue_value)
+
+            # For other nested objects, process normally
+            elif isinstance(value, dict) and "default" not in value:
+                # If it's a complex nested object, flatten it with prefix
+                if parent_key:
+                    new_key = f"{parent_key}_{snake_key}"
+                else:
+                    new_key = snake_key
+                flatten_nested_objects(value, result, new_key)
+
+            else:
+                # Process the value (will handle 'default' extraction)
+                final_key = f"{parent_key}_{snake_key}" if parent_key else snake_key
+                result[final_key] = process_value(value)
+
+    result = {}
+    flatten_nested_objects(data, result)
+
+    # Ensure we have standard team fields with fallbacks
+    result["team_id"] = result.get("team_id") or result.get("id")
+
+    return result
 
 
 class Roster(BaseNHLModel):
@@ -68,15 +138,15 @@ class Roster(BaseNHLModel):
         self._players: List[Player] = []
 
         # Process players data if provided
-        if 'players' in self._data and self._data['players']:
+        if "players" in self._data and self._data["players"]:
             self._process_players()
-          # Mark as fetched if we have data
+        # Mark as fetched if we have data
         if kwargs:
             self._fetched = True
 
     def _process_players(self):
         """Process raw player data into Player objects."""
-        players_data = self._data.get('players', [])
+        players_data = self._data.get("players", [])
         self._players = []
 
         for player_data in players_data:
@@ -118,7 +188,7 @@ class Roster(BaseNHLModel):
                 "current_team_id": self._data.get("team_id"),
                 "current_team_abbr": self._data.get("team_abbrev"),
                 "is_active": True,
-                "headshot": player_data.get("headshot")
+                "headshot": player_data.get("headshot"),
             }
 
             player = Player(self._client, player_dict["player_id"], **player_dict)
@@ -202,11 +272,13 @@ class Roster(BaseNHLModel):
             raise ValueError("No client available to fetch roster data")
         if not self.obj_id:
             raise ValueError("No team ID available to fetch roster data")
-          # Use current roster endpoint
+        # Use current roster endpoint
         response = self._client.get(f"roster/{self.obj_id}/current", web=True)
 
         if response.status_code != 200:
-            raise Exception(f"Failed to fetch roster: {response.status_code} {response.text}")
+            raise Exception(
+                f"Failed to fetch roster: {response.status_code} {response.text}"
+            )
 
         data = response.json()
         self._data = roster_api_to_dict(data)
@@ -217,94 +289,161 @@ class Roster(BaseNHLModel):
 class Team(BaseNHLModel):
     """Team model to store team information."""
 
-    def __init__(self, edgework_client, obj_id=None, **kwargs):
+    def __init__(self, edgework_client=None, obj_id=None, **kwargs):
         """
         Initialize a Team object with dynamic attributes.
 
         Args:
-            edgework_client: The Edgework client
+            edgework_client: The Edgework client (optional for team data from API)
             obj_id: The ID of the team object
             **kwargs: Dynamic attributes for team properties
         """
         super().__init__(edgework_client, obj_id)
         self._data = kwargs
 
-        # Set team_id as obj_id if provided in kwargs
-        if 'team_id' in kwargs:
-            self.obj_id = kwargs['team_id']
+        # Set the team_id as obj_id if provided in kwargs
+        if "team_id" in kwargs:
+            self.obj_id = kwargs["team_id"]
 
-        # Mark as fetched if we have data
-        if kwargs:
-            self._fetched = True
+        # Mark as fetched since we're initializing with data
+        self._fetched = True
 
-    def __str__(self):
-        """String representation showing team name."""
-        name = self._data.get('team_name') or self._data.get('full_name') or 'Unknown Team'
-        return name
+    def __str__(self) -> str:
+        """String representation showing team name and abbreviation.
+
+        Returns:
+            str: Formatted string with team name and abbreviation.
+                Examples: "Toronto Maple Leafs (TOR)", "Edmonton Oilers (EDM)",
+                or just "Toronto Maple Leafs" if no abbreviation available.
+        """
+        team_name = self._data.get("team_name") or self._data.get("full_name", "")
+        team_abbrev = self._data.get("team_abbrev", "")
+
+        if team_name and team_abbrev:
+            return f"{team_name} ({team_abbrev})"
+        elif team_name:
+            return team_name
+        elif team_abbrev:
+            return team_abbrev
+        else:
+            return "Unknown Team"
 
     def __repr__(self):
-        """Developer representation of the Team object."""
-        team_id = self._data.get('team_id', self.obj_id)
-        abbrev = self._data.get('team_abbrev', 'UNK')
-        return f"Team(id={team_id}, abbrev='{abbrev}')"
+        """Developer representation of the Team object.
 
-    def __eq__(self, other):
-        """Compare teams by their team_id."""
+        Returns:
+            str: Developer-friendly string representation showing the team ID.
+                Example: "Team(id=10)".
+        """
+        team_id = self._data.get("team_id", self.obj_id)
+        return f"Team(id={team_id})"
+
+    def __eq__(self, other) -> bool:
+        """Compare teams by their team_id.
+
+        Args:
+            other: The other object to compare with.
+
+        Returns:
+            bool: True if both objects are Team instances with the same team_id,
+                False otherwise.
+        """
         if isinstance(other, Team):
-            return self._data.get('team_id') == other._data.get('team_id')
+            return self._data.get("team_id") == other._data.get("team_id")
         return False
 
     def __hash__(self):
-        """Hash based on team_id for use in sets and dicts."""
-        return hash(self._data.get('team_id'))
+        """Hash based on team_id for use in sets and dicts.
+
+        Returns:
+            int: Hash value based on the team_id.
+        """
+        return hash(self._data.get("team_id"))
+
+    def fetch_data(self):
+        """Fetch the data for the team from the API.
+
+        Uses the NHL Stats API team endpoint to get detailed team information.
+
+        Raises:
+            ValueError: If no client is available to fetch team data.
+            ValueError: If no team ID is available to fetch data.
+        """
+        if not self._client:
+            raise ValueError("No client available to fetch team data")
+        if not self.obj_id:
+            raise ValueError("No team ID available to fetch data")
+
+        # Use the NHL Stats API team endpoint
+        response = self._client.get(f"team/{self.obj_id}", web=False)
+
+        if response.status_code != 200:
+            raise Exception(
+                f"Failed to fetch team data: {response.status_code} {response.text}"
+            )
+
+        data = response.json()
+
+        # Convert API response to our team dictionary format
+        team_data = team_api_to_dict(data)
+
+        # Update our internal data with the fetched information
+        self._data.update(team_data)
+
+        # Mark as fetched
+        self._fetched = True
 
     @property
     def name(self) -> str:
-        """Get the team's name."""
-        return self._data.get('team_name') or self._data.get('full_name') or 'Unknown Team'
+        """Get the team's name.
+
+        Returns:
+            str: The team's name.
+                Example: "Toronto Maple Leafs".
+        """
+        return (
+            self._data.get("team_name") or self._data.get("full_name") or "Unknown Team"
+        )
 
     @property
     def abbrev(self) -> str:
-        """Get the team's abbreviation."""
-        return self._data.get('team_abbrev', 'UNK')
+        """Get the team's abbreviation.
+
+        Returns:
+            str: The team's abbreviation.
+                Example: "TOR".
+        """
+        return self._data.get("tri_code", "UNK")
 
     @property
     def full_name(self) -> str:
-        """Get the team's full name."""
-        return self._data.get('full_name') or self.name
+        """Get the team's full name.
+
+        Returns:
+            str: The team's full name.
+                Example: "Toronto Maple Leafs".
+        """
+        return self._data.get("full_name") or self.name
 
     @property
     def location(self) -> str:
-        """Get the team's location."""
-        return self._data.get('location_name', '')
+        """Get the team's location.
+
+        Returns:
+            str: The team's location/city.
+                Example: "Toronto".
+        """
+        return self._data.get("location_name", "")
 
     @property
     def common_name(self) -> str:
-        """Get the team's common name."""
-        return self._data.get('team_common_name', '')
+        """Get the team's common name.
 
-    @property
-    def tri_code(self) -> str:
-        """Get the team's tri-code."""
-        return self._data.get('tri_code', '')
-
-    def fetch_team_data(self):
+        Returns:
+            str: The team's common name.
+                Example: "Maple Leafs".
         """
-        Fetch team data from the NHL API and store it.
-
-        Uses the Edgework client to fetch and update team data.
-
-        Raises:
-            ValueError: If no client or insufficient data is available.
-        """
-        if not self._client or not self.obj_id:
-            raise ValueError("Cannot fetch team data without a client and obj_id.")
-
-        response = self._client.get(f"/teams/{self.obj_id}")
-        if response.status_code != 200:
-            raise Exception(f"Failed to fetch team data: {response.status_code} {response.text}")
-
-        self._data.update(response.json())
+        return self._data.get("team_common_name", "")
 
     def get_roster(self, season: Optional[int] = None) -> Roster:
         """
@@ -319,21 +458,23 @@ class Team(BaseNHLModel):
         if not self._client:
             raise ValueError("No client available to fetch roster")
 
-        team_abbrev = self.tri_code
+        team_abbrev = self.abbrev
         if season:
             response = self._client.get(f"roster/{team_abbrev}/{season}", web=True)
         else:
             response = self._client.get(f"roster/{team_abbrev}/current", web=True)
 
         if response.status_code != 200:
-            raise Exception(f"Failed to fetch roster: {response.status_code} {response.text}")
+            raise Exception(
+                f"Failed to fetch roster: {response.status_code} {response.text}"
+            )
 
         data = response.json()
         roster_data = roster_api_to_dict(data)
-        roster_data['team_id'] = self._data.get('team_id')
-        roster_data['team_abbrev'] = team_abbrev
+        roster_data["team_id"] = self._data.get("team_id")
+        roster_data["team_abbrev"] = team_abbrev
 
-        return Roster(self._client, self._data.get('team_id'), **roster_data)
+        return Roster(self._client, self._data.get("team_id"), **roster_data)
 
     def get_stats(self, season: Optional[int] = None, game_type: int = 2):
         """
@@ -351,7 +492,9 @@ class Team(BaseNHLModel):
 
         team_abbrev = self.abbrev
         if season:
-            response = self._client.get(f"club-stats/{team_abbrev}/{season}/{game_type}", web=True)
+            response = self._client.get(
+                f"club-stats/{team_abbrev}/{season}/{game_type}", web=True
+            )
         else:
             response = self._client.get(f"club-stats/{team_abbrev}/now", web=True)
 
@@ -372,9 +515,13 @@ class Team(BaseNHLModel):
 
         team_abbrev = self.abbrev
         if season:
-            response = self._client.get(f"club-schedule-season/{team_abbrev}/{season}", web=True)
+            response = self._client.get(
+                f"club-schedule-season/{team_abbrev}/{season}", web=True
+            )
         else:
-            response = self._client.get(f"club-schedule-season/{team_abbrev}/now", web=True)
+            response = self._client.get(
+                f"club-schedule-season/{team_abbrev}/now", web=True
+            )
 
         return response
 
@@ -392,14 +539,3 @@ class Team(BaseNHLModel):
         response = self._client.get(f"prospects/{team_abbrev}", web=True)
 
         return response
-
-    def fetch_data(self):
-        """
-        Fetch the team data from the API.
-        Note: This implementation assumes team data is provided at initialization.
-        Individual team endpoints may not exist in the current API.
-        """
-        # Most team data comes from roster, standings, or stats endpoints
-        # Individual team detail endpoints may not be available
-        if not self._fetched:
-            self._fetched = True

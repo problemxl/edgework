@@ -1,4 +1,5 @@
 from edgework.models.base import BaseNHLModel
+from edgework.models.team import Team
 
 
 class Series(BaseNHLModel):
@@ -21,7 +22,7 @@ class Series(BaseNHLModel):
         Fetch the data for the series.
         """
         # Implementation depends on how data is fetched from the API
-        pass
+        raise NotImplementedError("fetch_data() must be implemented in subclasses")
 
 
 class Playoffs(BaseNHLModel):
@@ -58,4 +59,4 @@ class Playoffs(BaseNHLModel):
         Fetch the data for the playoffs.
         """
         # Implementation depends on how data is fetched from the API
-        pass
+        raise NotImplementedError("fetch_data() must be implemented in subclasses")

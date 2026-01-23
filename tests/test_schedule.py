@@ -1,9 +1,11 @@
 """Tests for schedule-related functionality in the Edgework client."""
 
 from datetime import datetime, timezone
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
+
+from edgework.models.game import Game
 from edgework.models.schedule import Schedule, schedule_api_to_dict
 
 
@@ -198,8 +200,9 @@ class TestSchedule:
         """Test fetch_data with client."""
         schedule = Schedule(self.mock_client)
 
-        # Should not raise an error but also doesn't do anything currently
-        schedule.fetch_data()
+        # Should raise NotImplementedError since fetch_data is not implemented
+        with pytest.raises(NotImplementedError):
+            schedule.fetch_data()
 
     @patch("edgework.models.game.Game")
     def test_games_property_with_client(self, mock_game_class):
@@ -372,4 +375,3 @@ class TestScheduleIntegration:
         # This would test actual client integration
         # schedule = self.client.get_schedule()
         # assert isinstance(schedule, Schedule)
-        pass

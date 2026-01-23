@@ -24,7 +24,17 @@ class StandingClient:
                         f"Date must be in the format YYYY-MM-DD, or 'now'. Provided date: {date} which is not 10 characters long."
                     )
                 )
-            elif not date[4] == date[7] == "-":
+            elif len(date) != 10:
+                raise ValueError(
+                    len(
+                        "Date must be in format YYYY-MM-DD, or 'now'. "
+                        f"Provided date: {date} which is not 10 characters long."
+                    )
+                )
+                raise ValueError(
+                    "Date must be in the format YYYY-MM-DD, or 'now'. "
+                    f"Provided date: {date} which is not 10 characters long."
+                )
                 raise ValueError(
                     f"Date must be in the format YYYY-MM-DD, or 'now'. Provided date: {date} which does not have '-' in the correct positions."
                 )

@@ -172,7 +172,7 @@ class Schedule(BaseNHLModel):
                 "No client available to fetch schedule data"
             )  # For now, schedule data is typically loaded when created
         # If specific schedule fetching is needed, it would be implemented here
-        pass
+        raise NotImplementedError("fetch_data() is not implemented for Schedule model")
 
     @property
     def games(self) -> List["Game"]:
@@ -273,7 +273,7 @@ class Schedule(BaseNHLModel):
                             start_date.replace("Z", "+00:00")
                         )
                     except (ValueError, TypeError):
-                        pass
+                        raise ValueError("Invalid start date format")
 
                 if isinstance(end_date, str):
                     try:
@@ -281,7 +281,7 @@ class Schedule(BaseNHLModel):
                             end_date.replace("Z", "+00:00")
                         )
                     except (ValueError, TypeError):
-                        pass
+                        raise ValueError("Invalid end date format")
 
                 # Format dates if they are datetime objects
                 if hasattr(start_date, "strftime") and hasattr(end_date, "strftime"):
