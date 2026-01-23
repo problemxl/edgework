@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import List
 
 from edgework.models.base import BaseNHLModel
