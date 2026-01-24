@@ -42,10 +42,17 @@ class HttpClient:
         Returns:
             httpx.Response object
         """
+        target = path or endpoint
+
         if web:
-            url = f"{BASE_WEB_URL}/v1/{path or endpoint}"
+            url = f"{BASE_WEB_URL}/v1/{target}"
         else:
-            url = f"{STATS_API_URL}en/{path or endpoint}"
+            target = target.lstrip("/")
+            if target.startswith("en/"):
+                target = target[3:]
+            if target.startswith("rest/"):
+                target = target[5:]
+            url = f"{STATS_API_URL}en/{target}"
 
         response = self._client.get(url, params=params)
         response.raise_for_status()

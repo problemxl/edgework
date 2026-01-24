@@ -34,7 +34,7 @@ class GameClient:
         return Game.from_dict(game_dict, self._client)
 
     def get_shifts(self, game_id: int) -> list[Shift]:
-        response = self._client.get(f"/rest/en/shiftcharts?cayenneExp=gameId={game_id}")
+        response = self._client.get(f"shiftcharts?cayenneExp=gameId={game_id}")
         data = response.json()["data"]
         shifts = [Shift.from_api(d) for d in data]
         return shifts
