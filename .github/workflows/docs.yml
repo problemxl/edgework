@@ -52,11 +52,18 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./site
+
   deploy:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-22.04
     needs: build
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
