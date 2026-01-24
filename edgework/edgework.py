@@ -95,7 +95,7 @@ class Edgework:
         aggregate: bool = False,
         limit: int = 10,
         game_type: int = 2,
-    ):
+    ) -> SkaterStats:
         """
         Fetch skater stats for a given season.
         Args:
@@ -132,7 +132,7 @@ class Edgework:
         direction: str | list[str] = "DESC",
         is_aggregate: bool = False,
         limit: int = 10,
-    ):
+    ) -> GoalieStats:
         """
         Fetch goalie stats for a given season.
         Args:
@@ -163,7 +163,7 @@ class Edgework:
         limit: int = 10,
         aggregate: bool = False,
         game: bool = True,
-    ):
+    ) -> TeamStats:
         """
         Fetch team stats for a given season.
         Args:
@@ -218,7 +218,9 @@ class Edgework:
 
         return self._team_client.get_roster(team_code, converted_season)
 
-    def get_team_stats(self, team_code: str, season: str = None, game_type: int = 2):
+    def get_team_stats(
+        self, team_code: str, season: str = None, game_type: int = 2
+    ) -> dict:
         """
         Get team statistics.
 
@@ -237,7 +239,7 @@ class Edgework:
 
         return self._team_client.get_team_stats(team_code, converted_season, game_type)
 
-    def get_team_schedule(self, team_code: str, season: str = None):
+    def get_team_schedule(self, team_code: str, season: str = None) -> dict:
         """
         Get team schedule.
 
@@ -255,7 +257,7 @@ class Edgework:
 
         return self._team_client.get_team_schedule(team_code, converted_season)
 
-    def get_team_prospects(self, team_code: str):
+    def get_team_prospects(self, team_code: str) -> dict:
         """
         Get team prospects.
 
@@ -267,7 +269,7 @@ class Edgework:
         """
         return self._team_client.get_team_prospects(team_code)
 
-    def get_team_scoreboard(self, team_code: str):
+    def get_team_scoreboard(self, team_code: str) -> dict:
         """
         Get team scoreboard.
 

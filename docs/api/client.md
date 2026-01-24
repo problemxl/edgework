@@ -8,7 +8,7 @@ The main client class for interacting with NHL APIs.
 
 ## HTTP Client
 
-::: edgework.http_client.SyncHttpClient
+::: edgework.http_client.HttpClient
 
 ## Season Validation
 
