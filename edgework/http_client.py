@@ -48,10 +48,10 @@ class HttpClient:
             url = f"{BASE_WEB_URL}/v1/{target}"
         else:
             target = target.lstrip("/")
-            if target.startswith("en/"):
-                target = target[3:]
             if target.startswith("rest/"):
                 target = target[5:]
+            if target.startswith("en/"):
+                target = target[3:]
             url = f"{STATS_API_URL}en/{target}"
 
         response = self._client.get(url, params=params)
