@@ -24,6 +24,7 @@ nav:
     - Basic Usage: examples/basic-usage.md
     - Advanced Examples: examples/advanced.md
     - Common Patterns: examples/patterns.md
+  - Usage with LLMs: llm-usage.md
   - NHL API Documentation: api/nhl-apis.md
   - Contributing: contributing.md
   - Changelog: changelog.md
