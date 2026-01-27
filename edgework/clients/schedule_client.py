@@ -34,12 +34,12 @@ class ScheduleClient:
                 "Invalid date format. Should be in the format of 'YYYY-MM-DD'."
             )
 
-        response = self._client.get(f"schedule/{date}")
+        response = self._client.get(f"schedule/{date}", web=True)
         data = response.json()
-        return Schedule.from_api(None, data)
+        return Schedule.from_api(self._client, data)
 
     def get_schedule_for_date_range(self, start_date: str, end_date: str) -> Schedule:
-        """Get the schedule for the given date range.
+        """Get schedule for the given date range.
 
         Parameters
         ----------
@@ -82,7 +82,10 @@ class ScheduleClient:
 
         for i in range((end_dt - start_dt).days + 1):
             date = start_dt + timedelta(days=i)
-            response = self._client.get(f"schedule/{date.strftime('%Y-%m-%d')}")
+            response = self._client.get(
+                f"schedule/{date.strftime('%Y-%m-%d')}", web=True
+            )
+            data = response.json()
             data = response.json()
 
             # Extract games from this day
@@ -125,9 +128,9 @@ class ScheduleClient:
         Schedule
 
         """
-        response = self._client.get(f"club-schedule-season/{team_abbr}/now")
+        response = self._client.get(f"club-schedule-season/{team_abbr}/now", web=True)
         data = response.json()
-        return Schedule.from_api(None, data)
+        return Schedule.from_api(self._client, data)
 
     def get_schedule_for_team_for_week(self, team_abbr: str) -> Schedule:
         """Get the schedule for the given team for the current week.
@@ -142,9 +145,9 @@ class ScheduleClient:
         Schedule
 
         """
-        response = self._client.get(f"club-schedule/{team_abbr}/week/now")
+        response = self._client.get(f"club-schedule/{team_abbr}/week/now", web=True)
         data = response.json()
-        return Schedule.from_api(None, data)
+        return Schedule.from_api(self._client, data)
 
     def get_schedule_for_team_for_month(self, team_abbr: str) -> Schedule:
         """Get the schedule for the given team for the current month.
@@ -159,9 +162,9 @@ class ScheduleClient:
         Schedule
 
         """
-        response = self._client.get(f"club-schedule/{team_abbr}/month/now")
+        response = self._client.get(f"club-schedule/{team_abbr}/month/now", web=True)
         data = response.json()
-        return Schedule.from_api(None, data)
+        return Schedule.from_api(self._client, data)
 
     def get_schedule_calendar(self) -> dict:
         """Get the current schedule calendar.
@@ -171,7 +174,7 @@ class ScheduleClient:
         dict
             Schedule calendar data showing available dates with games.
         """
-        response = self._client.get("schedule-calendar/now")
+        response = self._client.get("schedule-calendar/now", web=True)
         return response.json()
 
     def get_schedule_calendar_for_date(self, date: str) -> dict:
@@ -193,5 +196,5 @@ class ScheduleClient:
                 "Invalid date format. Should be in the format of 'YYYY-MM-DD'."
             )
 
-        response = self._client.get(f"schedule-calendar/{date}")
+        response = self._client.get(f"schedule-calendar/{date}", web=True)
         return response.json()
