@@ -13,7 +13,7 @@ class ScheduleClient:
         """Get the current schedule."""
         response = self._client.get("schedule/now", web=True)
         data = response.json()
-        return Schedule.from_api(None, data)
+        return Schedule.from_api(self._client, data)
 
     def get_schedule_for_date(self, date: str) -> Schedule:
         """Get the schedule for the given date.
@@ -34,7 +34,7 @@ class ScheduleClient:
                 "Invalid date format. Should be in the format of 'YYYY-MM-DD'."
             )
 
-        response = self._client.get(f"schedule/{date}", web=True)
+        response = self._client.get(f"schedule/{date}")
         data = response.json()
         return Schedule.from_api(None, data)
 
@@ -82,9 +82,7 @@ class ScheduleClient:
 
         for i in range((end_dt - start_dt).days + 1):
             date = start_dt + timedelta(days=i)
-            response = self._client.get(
-                f"schedule/{date.strftime('%Y-%m-%d')}", web=True
-            )
+            response = self._client.get(f"schedule/{date.strftime('%Y-%m-%d')}")
             data = response.json()
 
             # Extract games from this day
@@ -127,7 +125,7 @@ class ScheduleClient:
         Schedule
 
         """
-        response = self._client.get(f"club-schedule-season/{team_abbr}/now", web=True)
+        response = self._client.get(f"club-schedule-season/{team_abbr}/now")
         data = response.json()
         return Schedule.from_api(None, data)
 
@@ -144,7 +142,7 @@ class ScheduleClient:
         Schedule
 
         """
-        response = self._client.get(f"club-schedule/{team_abbr}/week/now", web=True)
+        response = self._client.get(f"club-schedule/{team_abbr}/week/now")
         data = response.json()
         return Schedule.from_api(None, data)
 
@@ -161,7 +159,7 @@ class ScheduleClient:
         Schedule
 
         """
-        response = self._client.get(f"club-schedule/{team_abbr}/month/now", web=True)
+        response = self._client.get(f"club-schedule/{team_abbr}/month/now")
         data = response.json()
         return Schedule.from_api(None, data)
 
@@ -173,7 +171,7 @@ class ScheduleClient:
         dict
             Schedule calendar data showing available dates with games.
         """
-        response = self._client.get("schedule-calendar/now", web=True)
+        response = self._client.get("schedule-calendar/now")
         return response.json()
 
     def get_schedule_calendar_for_date(self, date: str) -> dict:
@@ -195,5 +193,5 @@ class ScheduleClient:
                 "Invalid date format. Should be in the format of 'YYYY-MM-DD'."
             )
 
-        response = self._client.get(f"schedule-calendar/{date}", web=True)
+        response = self._client.get(f"schedule-calendar/{date}")
         return response.json()

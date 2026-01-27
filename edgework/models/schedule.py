@@ -30,15 +30,16 @@ def schedule_api_to_dict(data: dict) -> dict:
 class Schedule(BaseNHLModel):
     """Schedule model to store schedule information."""
 
-    def __init__(self, edgework_client, obj_id=None, **kwargs):
+    def __init__(self, http_client, obj_id=None, **kwargs):
         """
         Initialize a Schedule object with dynamic attributes.
+
           Args:
-            edgework_client: The Edgework client
+            http_client: The HttpClient
             obj_id: The ID of the schedule (optional)
             **kwargs: Dynamic attributes for schedule properties
         """
-        super().__init__(edgework_client, obj_id)
+        super().__init__(http_client, obj_id)
         self._data = kwargs.copy()  # Create a copy to avoid modifying original kwargs
         self._games_objects: List[Game] = []
 
@@ -51,12 +52,12 @@ class Schedule(BaseNHLModel):
             self._fetched = True
 
     @classmethod
-    def from_dict(cls, edgework_client, data: dict) -> "Schedule":
+    def from_dict(cls, http_client, data: dict) -> "Schedule":
         """
         Create a Schedule object from a dictionary.
 
         Args:
-            edgework_client: The Edgework client
+            http_client: The HttpClient
             data: Dictionary containing schedule data
 
         Returns:
@@ -92,7 +93,7 @@ class Schedule(BaseNHLModel):
         )
         number_of_games = data.get("numberOfGames") or 0
         return cls(
-            edgework_client=edgework_client,
+            http_client=http_client,
             previous_start_date=previous,
             games=games,
             pre_season_start_date=pre_season,
@@ -103,12 +104,12 @@ class Schedule(BaseNHLModel):
         )
 
     @classmethod
-    def from_dict(cls, edgework_client, data: dict) -> "Schedule":
+    def from_dict(cls, http_client, data: dict) -> "Schedule":
         """
         Create a Schedule object from dictionary data.
 
         Args:
-            edgework_client: The Edgework client
+            http_client: The HttpClient
             data: Dictionary containing schedule data
 
         Returns:
@@ -145,22 +146,22 @@ class Schedule(BaseNHLModel):
             "number_of_games", len(processed_data["games"])
         )
 
-        return cls(edgework_client=edgework_client, **processed_data)
+        return cls(http_client=http_client, **processed_data)
 
     @classmethod
-    def from_api(cls, edgework_client, data: dict) -> "Schedule":
+    def from_api(cls, http_client, data: dict) -> "Schedule":
         """
         Create a Schedule object from raw API response data.
 
         Args:
-            edgework_client: The Edgework client
+            http_client: The HttpClient
             data: Raw API response data
 
         Returns:
             Schedule: A Schedule object
         """
         schedule_dict = schedule_api_to_dict(data)
-        return cls.from_dict(edgework_client, schedule_dict)
+        return cls.from_dict(http_client, schedule_dict)
 
     def fetch_data(self):
         """
@@ -189,7 +190,7 @@ class Schedule(BaseNHLModel):
             self._games_objects = []
             for game_data in self._data["games"]:
                 if self._client:
-                    game = Game.from_api(game_data, self._client.http_client)
+                    game = Game.from_api(game_data, self._client)
                     self._games_objects.append(game)
         return self._games_objects
 
