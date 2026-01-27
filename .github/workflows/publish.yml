@@ -37,6 +37,38 @@ jobs:
           python -m pip install --upgrade pip
           pip install build
 
+      - name: Auto-bump version if needed
+        run: |
+          # 1. Get current version from pyproject.toml
+          CURRENT_VERSION=$(grep -m 1 'version =' pyproject.toml | cut -d '"' -f 2)
+          echo "Current local version: $CURRENT_VERSION"
+          
+          # 2. Check PyPI for this version
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" https://pypi.org/pypi/edgework/$CURRENT_VERSION/json)
+          
+          if [ "$HTTP_CODE" -eq 200 ]; then
+            echo "⚠️ Version $CURRENT_VERSION exists on PyPI. Bumping patch version..."
+            
+            # 3. Split version into parts (Major.Minor.Patch)
+            IFS='.' read -r major minor patch <<< "$CURRENT_VERSION"
+            NEW_PATCH=$((patch + 1))
+            NEW_VERSION="$major.$minor.$NEW_PATCH"
+            
+            echo "🚀 Bumping to $NEW_VERSION"
+            
+            # 4. Update pyproject.toml and __init__.py
+            sed -i "s/version = \"$CURRENT_VERSION\"/version = \"$NEW_VERSION\"/" pyproject.toml
+            sed -i "s/__version__ = \"$CURRENT_VERSION\"/__version__ = \"$NEW_VERSION\"/" edgework/__init__.py
+            
+            # Optional: Configure git to commit this bump back to the repo
+            # git config user.name "github-actions"
+            # git config user.email "actions@github.com"
+            # git commit -am "chore: auto-bump version to $NEW_VERSION [skip ci]"
+            # git push
+          else
+            echo "✅ Version $CURRENT_VERSION is unique. Proceeding."
+          fi
+
       - name: Build package
         run: python -m build
 
