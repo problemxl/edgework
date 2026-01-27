@@ -2,10 +2,6 @@
 
 __version__ = "0.4.2"
 
-import sys
-
-sys.path.insert(0, "/home/mark/edgework")
-
-from edgework.edgework import Edgework
+from .edgework import Edgework
 
 __all__ = ["Edgework", "__version__"]
