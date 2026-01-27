@@ -11,9 +11,9 @@ class ScheduleClient:
 
     def get_schedule(self) -> Schedule:
         """Get the current schedule."""
-        response = self._client.get("schedule/now")
+        response = self._client.get("schedule/now", web=True)
         data = response.json()
-        return Schedule.from_api(None, data)
+        return Schedule.from_api(self._client, data)
 
     def get_schedule_for_date(self, date: str) -> Schedule:
         """Get the schedule for the given date.
@@ -82,7 +82,7 @@ class ScheduleClient:
 
         for i in range((end_dt - start_dt).days + 1):
             date = start_dt + timedelta(days=i)
-            response = self._client.get(f'schedule/{date.strftime("%Y-%m-%d")}')
+            response = self._client.get(f"schedule/{date.strftime('%Y-%m-%d')}")
             data = response.json()
 
             # Extract games from this day
