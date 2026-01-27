@@ -34,7 +34,7 @@ class ScheduleClient:
                 "Invalid date format. Should be in the format of 'YYYY-MM-DD'."
             )
 
-        response = self._client.get(f"schedule/{date}")
+        response = self._client.get(f"schedule/{date}", web=True)
         data = response.json()
         return Schedule.from_api(None, data)
 
@@ -82,7 +82,9 @@ class ScheduleClient:
 
         for i in range((end_dt - start_dt).days + 1):
             date = start_dt + timedelta(days=i)
-            response = self._client.get(f"schedule/{date.strftime('%Y-%m-%d')}")
+            response = self._client.get(
+                f"schedule/{date.strftime('%Y-%m-%d')}", web=True
+            )
             data = response.json()
 
             # Extract games from this day
