@@ -217,9 +217,7 @@ class TestSchedule:
 
         assert len(games) == 1
         assert games[0] == mock_game
-        mock_game_class.from_api.assert_called_once_with(
-            game_data, self.mock_http_client
-        )
+        mock_game_class.from_api.assert_called_once_with(game_data, self.mock_client)
 
     def test_games_property_without_client(self):
         """Test games property without client returns empty list."""
