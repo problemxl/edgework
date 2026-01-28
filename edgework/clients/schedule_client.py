@@ -38,15 +38,19 @@ class ScheduleClient:
         data = response.json()
         return Schedule.from_api(self._client, data)
 
-    def get_schedule_for_date_range(self, start_date: str, end_date: str) -> Schedule:
+    def get_schedule_for_date_range(
+        self, start_date: str, end_date: str, web: bool = True
+    ) -> Schedule:
         """Get schedule for the given date range.
 
         Parameters
         ----------
-        start_date : strtac
+        start_date : str
             The start date for which to get the schedule. Should be in the format of 'YYYY-MM-DD'.
         end_date : str
             The end date for which to get the schedule. Should be in the format of 'YYYY-MM-DD'.
+        web : bool, optional
+            Whether to use the web API endpoint. Defaults to True.
 
         Returns
         -------
@@ -80,24 +84,30 @@ class ScheduleClient:
             "numberOfGames": 0,
         }
 
-        for i in range((end_dt - start_dt).days + 1):
-            date = start_dt + timedelta(days=i)
-            response = self._client.get(
-                f"schedule/{date.strftime('%Y-%m-%d')}", web=True
-            )
-            data = response.json()
+        # Track seen game IDs to avoid duplicates
+        seen_game_ids = set()
+
+        current_date = start_date
+        while current_date:
+            response = self._client.get(f"schedule/{current_date}", web=web)
             data = response.json()
 
-            # Extract games from this day
-            day_games = [
+            # Extract games from this page
+            page_games = [
                 game
                 for day in data.get("gameWeek", [])
                 for game in day.get("games", [])
             ]
-            games.extend(day_games)
 
-            # Set metadata from first day
-            if i == 0:
+            # Filter out duplicates
+            for game in page_games:
+                game_id = game.get("id")
+                if game_id not in seen_game_ids:
+                    seen_game_ids.add(game_id)
+                    games.append(game)
+
+            # Set metadata from first page
+            if not schedule_data["previousStartDate"]:
                 schedule_data["previousStartDate"] = data.get("previousStartDate")
                 schedule_data["preSeasonStartDate"] = data.get("preSeasonStartDate")
 
@@ -111,8 +121,35 @@ class ScheduleClient:
             if data.get("playoffEndDate"):
                 schedule_data["playoffEndDate"] = data.get("playoffEndDate")
 
-        schedule_data["numberOfGames"] = len(games)
-        schedule_data["games"] = games
+            # Check if there's a next page
+            next_start_date = data.get("nextStartDate")
+            if next_start_date:
+                # Parse the next start date
+                next_start_dt = datetime.fromisoformat(next_start_date)
+                # Stop if we've gone past the requested end date
+                if next_start_dt.date() > end_dt.date():
+                    current_date = None
+                else:
+                    current_date = next_start_date[:10]  # YYYY-MM-DD format
+            else:
+                current_date = None
+
+        # Filter games to ensure they're within the requested date range
+        games = [game for game in games if "gameDate" in game]
+        filtered_games = []
+        for game in games:
+            try:
+                game_date = datetime.fromisoformat(
+                    game.get("gameDate", "").replace("Z", "+00:00")
+                ).date()
+                if start_dt.date() <= game_date <= end_dt.date():
+                    filtered_games.append(game)
+            except (ValueError, AttributeError):
+                # If we can't parse the date, include the game to avoid losing data
+                filtered_games.append(game)
+
+        schedule_data["numberOfGames"] = len(filtered_games)
+        schedule_data["games"] = filtered_games
         return Schedule.from_api(None, schedule_data)
 
     def get_schedule_for_team(self, team_abbr: str) -> Schedule:

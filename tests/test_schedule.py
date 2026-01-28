@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
+from edgework.clients.schedule_client import ScheduleClient
 from edgework.models.game import Game
 from edgework.models.schedule import Schedule, schedule_api_to_dict
 
@@ -352,6 +353,114 @@ class TestSchedule:
         assert len(completed_games) == 0
 
 
+class TestScheduleClient:
+    """Unit tests for ScheduleClient methods."""
+
+    def setup_method(self):
+        """Set up test fixtures before each test method."""
+        self.mock_http_client = Mock()
+        self.schedule_client = ScheduleClient(self.mock_http_client)
+
+    def test_get_schedule_for_date_range_uses_pagination(self):
+        """Test that get_schedule_for_date_range uses pagination (nextStartDate)."""
+        # Mock first response with nextStartDate
+        first_response = Mock()
+        first_response.json.return_value = {
+            "gameWeek": [
+                {
+                    "games": [
+                        {"id": 1, "gameDate": "2024-01-01T00:00:00Z"},
+                        {"id": 2, "gameDate": "2024-01-01T19:00:00Z"},
+                    ]
+                }
+            ],
+            "nextStartDate": "2024-01-08T00:00:00Z",
+            "previousStartDate": "2023-12-31T00:00:00Z",
+            "preSeasonStartDate": "2023-09-15T00:00:00Z",
+        }
+
+        # Mock second response (no nextStartDate)
+        second_response = Mock()
+        second_response.json.return_value = {
+            "gameWeek": [
+                {
+                    "games": [
+                        {"id": 3, "gameDate": "2024-01-08T00:00:00Z"},
+                    ]
+                }
+            ],
+            "nextStartDate": None,
+            "regularSeasonStartDate": "2023-10-01T00:00:00Z",
+        }
+
+        # Set up mock to return different responses
+        self.mock_http_client.get.side_effect = [first_response, second_response]
+
+        result = self.schedule_client.get_schedule_for_date_range(
+            "2024-01-01", "2024-01-15"
+        )
+
+        # Verify it made 2 API calls (pagination)
+        assert self.mock_http_client.get.call_count == 2
+
+        # Verify first call used start_date
+        first_call = self.mock_http_client.get.call_args_list[0]
+        assert "schedule/2024-01-01" in first_call[0][0]
+
+        # Verify second call used nextStartDate
+        second_call = self.mock_http_client.get.call_args_list[1]
+        assert "schedule/2024-01-08" in second_call[0][0]
+
+        # Verify no duplicates
+        game_ids = [game.get("id") for game in result._data["games"]]
+        assert len(game_ids) == len(set(game_ids))
+
+    def test_get_schedule_for_date_range_filters_by_date(self):
+        """Test that get_schedule_for_date_range filters games to requested date range."""
+        # Mock response with games that span beyond the requested range
+        response = Mock()
+        response.json.return_value = {
+            "gameWeek": [
+                {
+                    "games": [
+                        {"id": 1, "gameDate": "2024-01-01T00:00:00Z"},  # Inside range
+                        {"id": 2, "gameDate": "2024-01-15T00:00:00Z"},  # Inside range
+                        {"id": 3, "gameDate": "2023-12-31T00:00:00Z"},  # Before range
+                        {"id": 4, "gameDate": "2024-01-16T00:00:00Z"},  # After range
+                    ]
+                }
+            ],
+            "nextStartDate": None,
+        }
+
+        self.mock_http_client.get.return_value = response
+
+        result = self.schedule_client.get_schedule_for_date_range(
+            "2024-01-01", "2024-01-15"
+        )
+
+        # Verify only games within range are included
+        games = result._data["games"]
+        game_ids = [game.get("id") for game in games]
+        assert 1 in game_ids
+        assert 2 in game_ids
+        assert 3 not in game_ids  # Before range
+        assert 4 not in game_ids  # After range
+
+    def test_get_schedule_for_date_range_invalid_date_format(self):
+        """Test that get_schedule_for_date_range raises ValueError for invalid date format."""
+        with pytest.raises(ValueError, match="Invalid date format"):
+            self.schedule_client.get_schedule_for_date_range("2024/01/01", "2024-01-15")
+
+        with pytest.raises(ValueError, match="Invalid date format"):
+            self.schedule_client.get_schedule_for_date_range("2024-01-01", "01/15/2024")
+
+    def test_get_schedule_for_date_range_invalid_date_range(self):
+        """Test that get_schedule_for_date_range raises ValueError when start_date > end_date."""
+        with pytest.raises(ValueError, match="Start date cannot be after end date"):
+            self.schedule_client.get_schedule_for_date_range("2024-01-15", "2024-01-01")
+
+
 class TestScheduleIntegration:
     """Integration tests for Schedule with real Edgework client (if available)."""
 
@@ -373,3 +482,28 @@ class TestScheduleIntegration:
         # This would test actual client integration
         # schedule = self.client.get_schedule()
         # assert isinstance(schedule, Schedule)
+
+    def test_get_schedule_for_date_range_live_api(self):
+        """Test get_schedule_for_date_range with live API."""
+        if not self.has_client:
+            pytest.skip("Edgework client not available")
+
+        # Use a small date range to avoid too many API calls
+        schedule = self.client.get_schedule_for_date_range("2024-01-01", "2024-01-07")
+
+        assert schedule is not None
+        assert len(schedule._data["games"]) >= 0
+
+        # Check for duplicates
+        game_ids = [game.get("id") for game in schedule._data["games"]]
+        assert len(game_ids) == len(set(game_ids)), "Duplicate games found!"
+
+    def test_get_schedule_for_single_date(self):
+        """Test getting schedule for a single date."""
+        if not self.has_client:
+            pytest.skip("Edgework client not available")
+
+        schedule = self.client.get_schedule_for_date("2024-01-01")
+
+        assert schedule is not None
+        assert isinstance(schedule, Schedule)

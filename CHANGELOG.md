@@ -5,6 +5,13 @@ All notable changes to Edgework project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.7] - 2025-01-28
+
+### Fixed
+- **Schedule**: Use nextStartDate pagination to avoid duplicate games when fetching schedule by date range
+- **Schedule Client**: Added web=True parameter to get_schedule_for_date_range for correct API endpoint usage
+- **Tests**: Added TestScheduleClient unit tests and TestScheduleIntegration live API tests
+
 ## [0.4.6] - 2025-01-28
 
 ### Fixed
