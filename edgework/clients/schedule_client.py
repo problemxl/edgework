@@ -1,5 +1,5 @@
 import re
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from edgework.http_client import HttpClient
 from edgework.models.schedule import Schedule
@@ -34,16 +34,19 @@ class ScheduleClient:
                 "Invalid date format. Should be in the format of 'YYYY-MM-DD'."
             )
 
-        response = self._client.get(f"schedule/{date}")
+        response = self._client.get(f"schedule/{date}", web=True)
         data = response.json()
         return Schedule.from_api(None, data)
 
     def get_schedule_for_date_range(self, start_date: str, end_date: str) -> Schedule:
         """Get the schedule for the given date range.
 
+        Uses nextStartDate pagination to fetch non-overlapping schedule chunks,
+        avoiding duplicates that occur when fetching day-by-day.
+
         Parameters
         ----------
-        start_date : strtac
+        start_date : str
             The start date for which to get the schedule. Should be in the format of 'YYYY-MM-DD'.
         end_date : str
             The end date for which to get the schedule. Should be in the format of 'YYYY-MM-DD'.
@@ -53,7 +56,6 @@ class ScheduleClient:
         Schedule
 
         """
-        # Validate the date format
         if not re.match(r"\d{4}-\d{2}-\d{2}", start_date):
             raise ValueError(
                 f"Invalid date format. Should be in the format of 'YYYY-MM-DD'. Start date given was {start_date}"
@@ -70,6 +72,8 @@ class ScheduleClient:
             raise ValueError("Start date cannot be after end date.")
 
         games = []
+        seen_game_ids = set()
+        current_date = start_date
         schedule_data = {
             "previousStartDate": None,
             "games": [],
@@ -80,25 +84,26 @@ class ScheduleClient:
             "numberOfGames": 0,
         }
 
-        for i in range((end_dt - start_dt).days + 1):
-            date = start_dt + timedelta(days=i)
-            response = self._client.get(f"schedule/{date.strftime('%Y-%m-%d')}")
+        while current_date:
+            response = self._client.get(f"schedule/{current_date}", web=True)
             data = response.json()
 
-            # Extract games from this day
             day_games = [
                 game
                 for day in data.get("gameWeek", [])
                 for game in day.get("games", [])
             ]
-            games.extend(day_games)
 
-            # Set metadata from first day
-            if i == 0:
+            for game in day_games:
+                game_id = game.get("id")
+                if game_id and game_id not in seen_game_ids:
+                    seen_game_ids.add(game_id)
+                    games.append(game)
+
+            if not schedule_data["previousStartDate"]:
                 schedule_data["previousStartDate"] = data.get("previousStartDate")
                 schedule_data["preSeasonStartDate"] = data.get("preSeasonStartDate")
 
-            # Update season dates
             if data.get("regularSeasonStartDate"):
                 schedule_data["regularSeasonStartDate"] = data.get(
                     "regularSeasonStartDate"
@@ -108,8 +113,26 @@ class ScheduleClient:
             if data.get("playoffEndDate"):
                 schedule_data["playoffEndDate"] = data.get("playoffEndDate")
 
-        schedule_data["numberOfGames"] = len(games)
-        schedule_data["games"] = games
+            next_start = data.get("nextStartDate")
+            if not next_start:
+                break
+
+            next_date_dt = datetime.fromisoformat(next_start)
+            if next_date_dt > end_dt:
+                break
+
+            current_date = next_start
+
+        filtered_games = []
+        for game in games:
+            game_date = game.get("gameDate")
+            if game_date:
+                game_date_dt = datetime.fromisoformat(game_date)
+                if start_dt <= game_date_dt <= end_dt:
+                    filtered_games.append(game)
+
+        schedule_data["numberOfGames"] = len(filtered_games)
+        schedule_data["games"] = filtered_games
         return Schedule.from_api(None, schedule_data)
 
     def get_schedule_for_team(self, team_abbr: str) -> Schedule:

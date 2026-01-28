@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
+from edgework.clients.schedule_client import ScheduleClient
 from edgework.models.game import Game
 from edgework.models.schedule import Schedule, schedule_api_to_dict
 
@@ -352,24 +353,211 @@ class TestSchedule:
         assert len(completed_games) == 0
 
 
-class TestScheduleIntegration:
-    """Integration tests for Schedule with real Edgework client (if available)."""
+class TestScheduleClient:
+    """Test class for ScheduleClient methods."""
 
     def setup_method(self):
         """Set up test fixtures before each test method."""
-        try:
-            from edgework.edgework import Edgework
+        self.mock_http_client = Mock()
+        self.schedule_client = ScheduleClient(self.mock_http_client)
 
-            self.client = Edgework()
-            self.has_client = True
-        except Exception:
-            self.has_client = False
+    @patch("edgework.clients.schedule_client.datetime")
+    def test_get_schedule_for_date_range_uses_pagination(self, mock_datetime):
+        """Test that get_schedule_for_date_range uses nextStartDate pagination."""
+        from datetime import datetime as dt
+
+        mock_datetime.fromisoformat.side_effect = lambda x: dt.fromisoformat(x)
+
+        start_date = "2024-01-01"
+        end_date = "2024-01-10"
+
+        mock_response_1 = Mock()
+        mock_response_1.json.return_value = {
+            "gameWeek": [
+                {
+                    "games": [
+                        {"id": 1, "gameDate": "2024-01-01T19:00:00"},
+                        {"id": 2, "gameDate": "2024-01-02T19:00:00"},
+                    ]
+                }
+            ],
+            "nextStartDate": "2024-01-05",
+            "previousStartDate": "2023-12-26",
+            "preSeasonStartDate": "2023-09-21",
+            "regularSeasonStartDate": "2023-10-10",
+            "regularSeasonEndDate": "2024-04-17",
+            "playoffEndDate": "2024-06-20",
+        }
+
+        mock_response_2 = Mock()
+        mock_response_2.json.return_value = {
+            "gameWeek": [
+                {
+                    "games": [
+                        {"id": 2, "gameDate": "2024-01-02T19:00:00"},
+                        {"id": 3, "gameDate": "2024-01-06T19:00:00"},
+                    ]
+                }
+            ],
+            "nextStartDate": "2024-01-12",
+            "previousStartDate": "2024-01-01",
+            "regularSeasonStartDate": "2023-10-10",
+            "regularSeasonEndDate": "2024-04-17",
+            "playoffEndDate": "2024-06-20",
+        }
+
+        mock_response_3 = Mock()
+        mock_response_3.json.return_value = {
+            "gameWeek": [{"games": [{"id": 4, "gameDate": "2024-01-12T19:00:00"}]}],
+            "nextStartDate": None,
+            "previousStartDate": "2024-01-06",
+            "regularSeasonStartDate": "2023-10-10",
+            "regularSeasonEndDate": "2024-04-17",
+            "playoffEndDate": "2024-06-20",
+        }
+
+        self.mock_http_client.get.side_effect = [
+            mock_response_1,
+            mock_response_2,
+            mock_response_3,
+        ]
+
+        schedule = self.schedule_client.get_schedule_for_date_range(
+            start_date, end_date
+        )
+
+        game_ids = [g["id"] for g in schedule._data["games"]]
+
+        assert len(game_ids) == 3
+        assert 1 in game_ids
+        assert 2 in game_ids
+        assert 3 in game_ids
+
+        assert game_ids.count(1) == 1
+        assert game_ids.count(2) == 1
+        assert game_ids.count(3) == 1
+
+        assert self.mock_http_client.get.call_count == 2
+
+    @patch("edgework.clients.schedule_client.datetime")
+    def test_get_schedule_for_date_range_filters_by_date(self, mock_datetime):
+        """Test that get_schedule_for_date_range filters games to requested date range."""
+        from datetime import datetime as dt
+
+        mock_datetime.fromisoformat.side_effect = lambda x: dt.fromisoformat(x)
+
+        start_date = "2024-01-05"
+        end_date = "2024-01-10"
+
+        mock_response = Mock()
+        mock_response.json.return_value = {
+            "gameWeek": [
+                {
+                    "games": [
+                        {"id": 1, "gameDate": "2024-01-01T19:00:00"},
+                        {"id": 2, "gameDate": "2024-01-06T19:00:00"},
+                        {"id": 3, "gameDate": "2024-01-12T19:00:00"},
+                    ]
+                }
+            ],
+            "nextStartDate": None,
+            "previousStartDate": "2023-12-26",
+            "regularSeasonStartDate": "2023-10-10",
+            "regularSeasonEndDate": "2024-04-17",
+        }
+
+        self.mock_http_client.get.return_value = mock_response
+
+        schedule = self.schedule_client.get_schedule_for_date_range(
+            start_date, end_date
+        )
+
+        game_ids = [g["id"] for g in schedule._data["games"]]
+
+        assert len(game_ids) == 1
+        assert 2 in game_ids
+        assert 1 not in game_ids
+        assert 3 not in game_ids
+
+    def test_get_schedule_for_date_range_invalid_date_format(self):
+        """Test that get_schedule_for_date_range validates date format."""
+        with pytest.raises(ValueError, match="Invalid date format"):
+            self.schedule_client.get_schedule_for_date_range("2024/01/01", "2024-01-10")
+
+        with pytest.raises(ValueError, match="Invalid date format"):
+            self.schedule_client.get_schedule_for_date_range("2024-01-01", "2024/01/10")
+
+    @patch("edgework.clients.schedule_client.datetime")
+    def test_get_schedule_for_date_range_invalid_date_range(self, mock_datetime):
+        """Test that get_schedule_for_date_range validates date range."""
+        mock_datetime.fromisoformat.side_effect = lambda x: datetime.fromisoformat(x)
+
+        with pytest.raises(ValueError, match="Start date cannot be after end date"):
+            self.schedule_client.get_schedule_for_date_range("2024-01-10", "2024-01-01")
+
+
+class TestScheduleIntegration:
+    """Integration tests for Schedule with real Edgework client."""
+
+    def setup_method(self):
+        """Set up test fixtures before each test method."""
+        from edgework.edgework import Edgework
+
+        self.client = Edgework()
+
+    @pytest.mark.integration
+    def test_get_schedule_for_date_range_live_api(self):
+        """Test get_schedule_for_date_range with live NHL API."""
+        start_date = "2026-01-10"
+        end_date = "2026-01-16"
+
+        schedule = self.client.get_schedule_for_date_range(start_date, end_date)
+
+        game_ids = [g.get("id") for g in schedule._data["games"]]
+
+        unique_ids = set(game_ids)
+        assert len(game_ids) == len(unique_ids), f"Found duplicate game IDs: {game_ids}"
+
+        for game in schedule._data["games"]:
+            game_date = game.get("startTimeUTC")
+            if game_date:
+                from datetime import datetime
+
+                game_date_dt = datetime.fromisoformat(game_date.replace("Z", "+00:00"))
+                start_dt = datetime.fromisoformat(start_date)
+                end_dt = datetime.fromisoformat(end_date)
+                assert start_dt <= game_date_dt.date() <= end_dt, (
+                    f"Game {game.get('id')} at {game_date} outside range {start_date} to {end_date}"
+                )
+
+    @pytest.mark.integration
+    def test_get_schedule_for_single_date(self):
+        """Test get_schedule_for_date with live NHL API."""
+        from datetime import datetime, timedelta
+
+        test_date = "2026-01-12"
+        schedule = self.client.get_schedule_for_date(test_date)
+
+        game_ids = [g.get("id") for g in schedule._data["games"]]
+        unique_ids = set(game_ids)
+
+        assert len(game_ids) == len(unique_ids), f"Found duplicate game IDs: {game_ids}"
+
+        test_date_dt = datetime.fromisoformat(test_date)
+
+        for game in schedule._data["games"]:
+            game_date_str = game.get("startTimeUTC")
+            if game_date_str:
+                game_date_dt = datetime.fromisoformat(
+                    game_date_str.replace("Z", "+00:00")
+                )
+
+                date_diff = abs((game_date_dt.date() - test_date_dt.date()).days)
+                assert date_diff <= 7, (
+                    f"Game {game.get('id')} at {game_date_str} is {date_diff} days from {test_date}"
+                )
 
     def test_schedule_creation_from_client(self):
         """Test creating Schedule objects through the client."""
-        if not self.has_client:
-            pytest.skip("Edgework client not available")
-
-        # This would test actual client integration
-        # schedule = self.client.get_schedule()
-        # assert isinstance(schedule, Schedule)
+        schedule = self.client.get_schedule()
+        assert isinstance(schedule, Schedule)
