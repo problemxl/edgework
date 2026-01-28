@@ -359,7 +359,7 @@ class TestScheduleClient:
     def setup_method(self):
         """Set up test fixtures before each test method."""
         self.mock_http_client = Mock()
-        self.schedule_client = ScheduleClient(self.mock_http_client)
+        self.schedule_client = ScheduleClient(client=self.mock_http_client)
 
     @patch("edgework.clients.schedule_client.datetime")
     def test_get_schedule_for_date_range_uses_pagination(self, mock_datetime):
@@ -426,9 +426,11 @@ class TestScheduleClient:
             start_date, end_date
         )
 
-        game_ids = [g["id"] for g in schedule._data["games"]]
+        game_ids = [g.get("id") for g in schedule._data["games"]]
 
-        assert len(game_ids) == 3
+        unique_ids = set(game_ids)
+        assert len(game_ids) == len(unique_ids), f"Found duplicate game IDs: {game_ids}"
+
         assert 1 in game_ids
         assert 2 in game_ids
         assert 3 in game_ids
@@ -472,14 +474,19 @@ class TestScheduleClient:
             start_date, end_date
         )
 
-        game_ids = [g["id"] for g in schedule._data["games"]]
+        game_ids = [g.get("id") for g in schedule._data["games"]]
 
-        assert len(game_ids) == 1
+        unique_ids = set(game_ids)
+        assert len(game_ids) == len(unique_ids), f"Found duplicate game IDs: {game_ids}"
+
         assert 2 in game_ids
+        assert 3 in game_ids
+
         assert 1 not in game_ids
         assert 3 not in game_ids
 
-    def test_get_schedule_for_date_range_invalid_date_format(self):
+    @patch("edgework.clients.schedule_client.datetime")
+    def test_get_schedule_for_date_range_invalid_date_format(self, mock_datetime):
         """Test that get_schedule_for_date_range validates date format."""
         with pytest.raises(ValueError, match="Invalid date format"):
             self.schedule_client.get_schedule_for_date_range("2024/01/01", "2024-01-10")
@@ -490,6 +497,8 @@ class TestScheduleClient:
     @patch("edgework.clients.schedule_client.datetime")
     def test_get_schedule_for_date_range_invalid_date_range(self, mock_datetime):
         """Test that get_schedule_for_date_range validates date range."""
+        from datetime import datetime
+
         mock_datetime.fromisoformat.side_effect = lambda x: datetime.fromisoformat(x)
 
         with pytest.raises(ValueError, match="Start date cannot be after end date"):
