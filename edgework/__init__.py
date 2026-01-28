@@ -1,6 +1,6 @@
-"""Edgework NHL API Client - Version 0.4.3"""
+"""Edgework NHL API Client - Version 0.4.5"""
 
-__version__ = "0.4.2"
+__version__ = "0.4.5"
 
 from .edgework import Edgework
 
