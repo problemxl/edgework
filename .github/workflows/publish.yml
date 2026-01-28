@@ -140,4 +140,4 @@ jobs:
           # The 'repository-url' defaults to PyPI, so it's not strictly needed.
           # To use an API token instead (less secure):
           # password: ${{ secrets.PYPI_API_TOKEN }}
-          # skip_existing: true # Optional: uncomment to skip if version already exists
+          skip_existing: true # Skip if version already exists (prevents race condition errors)
