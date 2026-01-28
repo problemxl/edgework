@@ -135,12 +135,11 @@ class ScheduleClient:
                 current_date = None
 
         # Filter games to ensure they're within the requested date range
-        games = [game for game in games if "gameDate" in game]
         filtered_games = []
         for game in games:
             try:
                 game_date = datetime.fromisoformat(
-                    game.get("gameDate", "").replace("Z", "+00:00")
+                    game.get("startTimeUTC", "").replace("Z", "+00:00")
                 ).date()
                 if start_dt.date() <= game_date <= end_dt.date():
                     filtered_games.append(game)

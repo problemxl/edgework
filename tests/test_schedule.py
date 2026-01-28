@@ -423,10 +423,22 @@ class TestScheduleClient:
             "gameWeek": [
                 {
                     "games": [
-                        {"id": 1, "gameDate": "2024-01-01T00:00:00Z"},  # Inside range
-                        {"id": 2, "gameDate": "2024-01-15T00:00:00Z"},  # Inside range
-                        {"id": 3, "gameDate": "2023-12-31T00:00:00Z"},  # Before range
-                        {"id": 4, "gameDate": "2024-01-16T00:00:00Z"},  # After range
+                        {
+                            "id": 1,
+                            "startTimeUTC": "2024-01-01T00:00:00Z",
+                        },  # Inside range
+                        {
+                            "id": 2,
+                            "startTimeUTC": "2024-01-15T00:00:00Z",
+                        },  # Inside range
+                        {
+                            "id": 3,
+                            "startTimeUTC": "2023-12-31T00:00:00Z",
+                        },  # Before range
+                        {
+                            "id": 4,
+                            "startTimeUTC": "2024-01-16T00:00:00Z",
+                        },  # After range
                     ]
                 }
             ],
