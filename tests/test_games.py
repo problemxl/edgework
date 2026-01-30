@@ -20,7 +20,7 @@ def get_valid_game_id():
             return schedule.games[0]._data.get("game_id")
     except Exception:
         pass
-    return 2023020001
+    return None
 
 
 class TestGameFromApi:
@@ -435,6 +435,9 @@ class TestGameIntegration:
         except Exception:
             pytest.skip("Could not get schedule to find game ID")
 
+        if not game_id:
+            pytest.skip("No valid game ID available")
+
         try:
             game = Game.get_game(game_id, self.client._client)
 
@@ -483,6 +486,9 @@ class TestGameIntegration:
         except Exception:
             pytest.skip("Could not get schedule to find game ID")
 
+        if not game_id:
+            pytest.skip("No valid game ID available")
+
         game = Game(edgework_client=self.client._client, obj_id=game_id)
         game._data = {}
         game._fetched = False
@@ -516,6 +522,9 @@ class TestGameIntegration:
         except Exception:
             pytest.skip("Could not get schedule to find game ID")
 
+        if not game_id:
+            pytest.skip("No valid game ID available")
+
         try:
             game = Game.get_game(game_id, self.client._client)
 
@@ -544,6 +553,9 @@ class TestGameIntegration:
             game_id = schedule.games[0]._data.get("game_id")
         except Exception:
             pytest.skip("Could not get schedule to find game ID")
+
+        if not game_id:
+            pytest.skip("No valid game ID available")
 
         try:
             game = Game.get_game(game_id, self.client._client)
@@ -574,6 +586,9 @@ class TestGameIntegration:
             game_id = schedule.games[0]._data.get("game_id")
         except Exception:
             pytest.skip("Could not get schedule to find game ID")
+
+        if not game_id:
+            pytest.skip("No valid game ID available")
 
         try:
             # Get game via get_game (uses from_api internally)
@@ -609,6 +624,9 @@ class TestGameIntegration:
             game_ids = [g._data.get("game_id") for g in schedule.games[:3]]
         except Exception:
             pytest.skip("Could not get schedule")
+
+        # Filter out None values
+        game_ids = [gid for gid in game_ids if gid is not None]
 
         games = []
         for game_id in game_ids:
