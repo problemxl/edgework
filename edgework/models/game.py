@@ -51,8 +51,7 @@ class Game(BaseNHLModel):
 
     @classmethod
     def from_dict(cls, data: dict, client: HttpClient):
-        game = cls(**data)
-        game._client = client
+        game = cls(edgework_client=client, **data)
         return game
 
     @classmethod
