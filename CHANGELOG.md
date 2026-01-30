@@ -5,6 +5,16 @@ All notable changes to Edgework project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.9] - 2025-01-30
+
+### Added
+- **Game Model**: Implement `fetch_data()` method to fetch detailed game information from NHL API
+- **Game Model**: Add comprehensive test suite for Game model with 25 test cases
+- **Game Model**: Fix `Game.from_dict()` to properly pass `edgework_client` parameter
+
+### Changed
+- **Game Model**: Enable lazy loading for Game objects via BaseNHLModel `_fetch_if_not_fetched()`
+
 ## [0.4.8] - 2025-01-28
 
 ### Fixed
