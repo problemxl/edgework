@@ -51,15 +51,13 @@ class Game(BaseNHLModel):
 
     @classmethod
     def from_dict(cls, data: dict, client: HttpClient):
-        game = cls(**data)
-        game._client = client
+        game = cls(edgework_client=client, **data)
         return game
 
     @classmethod
     def from_api(cls, data: dict, client: HttpClient):
         game_dict = {
             "game_id": data.get("id"),
-            "game_date": datetime.strptime(data.get("gameDate"), "%Y-%m-%d"),
             "start_time_utc": datetime.strptime(
                 data.get("startTimeUTC"), "%Y-%m-%dT%H:%M:%SZ"
             ),
@@ -80,6 +78,42 @@ class Game(BaseNHLModel):
         response = client.get(f"gamecenter/{game_id}/boxscore")
         data = response.json()
         return cls.from_api(data, client)
+
+    def fetch_data(self):
+        """Fetch the game data from the API.
+
+        Uses the NHL API gamecenter endpoint to get detailed game information.
+
+        Raises:
+            ValueError: If no client is available to fetch game data.
+            ValueError: If no game ID is available to fetch data.
+        """
+        if not self._client:
+            raise ValueError("No client available to fetch game data")
+        if not self.obj_id:
+            raise ValueError("No game ID available to fetch data")
+
+        response = self._client.get(f"gamecenter/{self.obj_id}/boxscore")
+        data = response.json()
+
+        game_dict = {
+            "game_id": data.get("id"),
+            "start_time_utc": datetime.strptime(
+                data.get("startTimeUTC"), "%Y-%m-%dT%H:%M:%SZ"
+            ),
+            "game_state": data.get("gameState"),
+            "away_team_abbrev": data.get("awayTeam").get("abbrev"),
+            "away_team_id": data.get("awayTeam").get("id"),
+            "away_team_score": data.get("awayTeam").get("score"),
+            "home_team_abbrev": data.get("homeTeam").get("abbrev"),
+            "home_team_id": data.get("homeTeam").get("id"),
+            "home_team_score": data.get("homeTeam").get("score"),
+            "season": data.get("season"),
+            "venue": data.get("venue").get("default"),
+        }
+
+        self._data.update(game_dict)
+        self._fetched = True
 
     def _get_shifts(self):
         """Get the shifts for the game."""
