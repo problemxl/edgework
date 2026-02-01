@@ -23,10 +23,16 @@ Is this change?
 
 ## Current Status
 
-- **Latest Release**: v0.5.0 (bug fixes)
+- **Latest Release**: v0.5.0 (bug fixes + play-by-play features)
 - **Previous Release**: v0.4.9
 
-> **Note**: v0.5.0 contains bug fixes that would typically be a PATCH release (v0.4.10). This version number is being retained as-is. Future releases will continue from v0.5.0.
+> **Note**: v0.5.0 combines bug fixes (typically PATCH) with new play-by-play features (MINOR) into a single release. This release includes:
+> - Bug fixes for schedule.games and Game._fetched flag
+> - New Play and PlayByPlay models for play-by-play data
+> - New Game.play_by_play property with lazy loading
+> - 23 new tests for play-by-play functionality
+>
+> Future releases will follow proper semver: v0.6.0 for new features.
 
 ## Planned Releases
 
@@ -156,7 +162,7 @@ Before releasing any version:
 
 | Version | Type | Date | Notes |
 |---------|-------|------|-------|
-| v0.5.0 | PATCH | 2025-02-01 | Bug fixes (schedule.games, Game._fetched flag) |
+| v0.5.0 | MINOR | 2025-02-01 | Bug fixes + play-by-play features |
 | v0.4.9 | MINOR | 2025-01-30 | Game model features |
 | v0.4.8 | PATCH | 2025-01-28 | Schedule date filtering fixes |
 | v0.4.7 | PATCH | 2025-01-28 | Schedule pagination fixes |
@@ -288,6 +294,8 @@ v0.5.0 → v0.6.0 → v0.7.0
 **Correct**: Separate releases:
 - v0.6.0 for feature
 - v0.5.1 for bug fix
+
+> **Note**: v0.5.0 contains both bug fixes and features (play-by-play) in a single release. While not ideal, this was a pragmatic decision to consolidate related game functionality. Future releases should use proper semver.
 
 ### ❌ Don't Forget CHANGELOG
 
