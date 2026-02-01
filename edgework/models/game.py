@@ -4,6 +4,7 @@ from typing import List, Optional
 from edgework.http_client import HttpClient
 from edgework.models.base import BaseNHLModel
 from edgework.models.shift import Shift
+from edgework.models.play_by_play import PlayByPlay
 
 
 class Game(BaseNHLModel):
@@ -21,6 +22,7 @@ class Game(BaseNHLModel):
         super().__init__(edgework_client, obj_id)
         self._data = kwargs
         self._shifts: Optional[List[Shift]] = None
+        self._play_by_play: Optional[PlayByPlay] = None
 
     @property
     def game_time(self):
@@ -48,6 +50,12 @@ class Game(BaseNHLModel):
         if not self._shifts:
             self._shifts = self._get_shifts()
         return self._shifts
+
+    @property
+    def play_by_play(self) -> PlayByPlay:
+        if not self._play_by_play:
+            self._play_by_play = self._get_play_by_play()
+        return self._play_by_play
 
     @classmethod
     def from_dict(cls, data: dict, client: HttpClient):
@@ -128,3 +136,14 @@ class Game(BaseNHLModel):
         shifts = [Shift.from_api(d) for d in data]
         self._shifts = shifts
         return shifts
+
+    def _get_play_by_play(self):
+        """Get the play-by-play data for the game."""
+        response = self._client.get(
+            f"gamecenter/{self.game_id}/play-by-play",
+            web=True,
+        )
+        data = response.json()
+        play_by_play = PlayByPlay.from_api(data, self._client)
+        self._play_by_play = play_by_play
+        return play_by_play
