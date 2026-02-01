@@ -141,7 +141,9 @@ class TestGameFetchData:
         game.fetch_data()
 
         # Verify API call was made correctly
-        self.mock_client.get.assert_called_once_with("gamecenter/2023020001/boxscore")
+        self.mock_client.get.assert_called_once_with(
+            "gamecenter/2023020001/boxscore", web=True
+        )
 
         # Verify data was updated
         assert game._fetched is True
@@ -402,7 +404,9 @@ class TestGameGetGame:
         game = Game.get_game(2023020001, self.mock_client)
 
         # Verify correct API endpoint was called
-        self.mock_client.get.assert_called_once_with("gamecenter/2023020001/boxscore")
+        self.mock_client.get.assert_called_once_with(
+            "gamecenter/2023020001/boxscore", web=True
+        )
 
         # Verify data was parsed correctly
         assert game._data["game_id"] == 2023020001
