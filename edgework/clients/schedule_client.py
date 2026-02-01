@@ -149,7 +149,7 @@ class ScheduleClient:
 
         schedule_data["numberOfGames"] = len(filtered_games)
         schedule_data["games"] = filtered_games
-        return Schedule.from_api(None, schedule_data)
+        return Schedule.from_api(self._client, schedule_data)
 
     def get_schedule_for_team(self, team_abbr: str) -> Schedule:
         """Get the schedule for the given team.
