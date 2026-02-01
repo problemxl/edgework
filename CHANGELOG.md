@@ -19,12 +19,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.5.0] - 2025-02-01
 
+### Added
+- **Play Model**: New `Play` model for individual play events in a game
+- **PlayByPlay Model**: New `PlayByPlay` model for full play-by-play game data
+- **Game Model**: Add `play_by_play` property to `Game` object for accessing play-by-play data
+- **Game Model**: Add helper properties to `Play` model (`is_goal`, `is_penalty`, `is_shot`, `goal_details`, `scoring_player_id`, `assist_player_ids`)
+- **PlayByPlay Model**: Add filtering methods (`goals`, `penalties`, `shots`) and query methods (`get_plays_by_period`, `get_plays_by_team`, `get_plays_by_player`)
+
 ### Fixed
 - **Schedule**: Fix `get_schedule_for_date_range()` to pass HTTP client to `Schedule.from_api()`, enabling proper lazy loading of games
 - **Game**: Fix `Game.from_api()` to set `_fetched=True` flag, preventing unnecessary API fetches and errors when accessing game properties
 - **Schedule**: Fix empty games list issue when accessing `schedule.games` property for date range queries
-
-## [0.4.9] - 2025-01-30
 
 ### Added
 - **Game Model**: Implement `fetch_data()` method to fetch detailed game information from NHL API
