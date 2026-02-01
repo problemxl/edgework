@@ -71,11 +71,13 @@ class Game(BaseNHLModel):
             "season": data.get("season"),
             "venue": data.get("venue").get("default"),
         }
-        return cls.from_dict(game_dict, client)
+        game = cls.from_dict(game_dict, client)
+        game._fetched = True
+        return game
 
     @classmethod
     def get_game(cls, game_id: int, client: HttpClient):
-        response = client.get(f"gamecenter/{game_id}/boxscore")
+        response = client.get(f"gamecenter/{game_id}/boxscore", web=True)
         data = response.json()
         return cls.from_api(data, client)
 
@@ -93,7 +95,7 @@ class Game(BaseNHLModel):
         if not self.obj_id:
             raise ValueError("No game ID available to fetch data")
 
-        response = self._client.get(f"gamecenter/{self.obj_id}/boxscore")
+        response = self._client.get(f"gamecenter/{self.obj_id}/boxscore", web=True)
         data = response.json()
 
         game_dict = {
