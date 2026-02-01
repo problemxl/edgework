@@ -71,7 +71,9 @@ class Game(BaseNHLModel):
             "season": data.get("season"),
             "venue": data.get("venue").get("default"),
         }
-        return cls.from_dict(game_dict, client)
+        game = cls.from_dict(game_dict, client)
+        game._fetched = True
+        return game
 
     @classmethod
     def get_game(cls, game_id: int, client: HttpClient):
