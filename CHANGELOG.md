@@ -5,6 +5,13 @@ All notable changes to Edgework project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2025-02-01
+
+### Fixed
+- **Schedule**: Fix `get_schedule_for_date_range()` to pass HTTP client to `Schedule.from_api()`, enabling proper lazy loading of games
+- **Game**: Fix `Game.from_api()` to set `_fetched=True` flag, preventing unnecessary API fetches and errors when accessing game properties
+- **Schedule**: Fix empty games list issue when accessing `schedule.games` property for date range queries
+
 ## [0.4.9] - 2025-01-30
 
 ### Added
