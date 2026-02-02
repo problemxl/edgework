@@ -164,14 +164,6 @@ Before releasing any version:
 | v0.6.0 | MINOR | 2025-02-01 | Play-by-play support for games |
 | v0.5.0 | PATCH | 2025-02-01 | Bug fixes for schedule.games and Game._fetched |
 | v0.4.9 | MINOR | 2025-01-30 | Game model features |
-| v0.4.8 | PATCH | 2025-01-28 | Schedule date filtering fixes |
-| v0.4.7 | PATCH | 2025-01-28 | Schedule pagination fixes |
-| v0.4.6 | PATCH | 2025-01-28 | Schedule pagination fixes |
-| v0.4.5 | PATCH | 2025-01-28 | Schedule pagination fixes |
-| v0.4.3 | PATCH | 2025-01-28 | Schedule pagination fixes |
-| v0.3.1 | MINOR | 2025-06-24 | Documentation and enhancements |
-| v0.2.1 | PATCH | 2025-06-19 | Player client fixes |
-| v0.2.0 | MINOR | 2025-06-19 | Player list functionality |
 
 ### Known Issues
 
@@ -295,8 +287,13 @@ v0.5.0 → v0.6.0 → v0.7.0
 - v0.6.0 for feature
 - v0.5.1 for bug fix
 
+> **Note**: v0.5.0 contains both bug fixes and features (play-by-play) in a single release. While not ideal, this consolidated related game functionality into one release. Future releases should avoid this pattern.
+
+<<<<<<< HEAD
+=======
 > **Note**: v0.5.0 contains both bug fixes and features (play-by-play) in a single release. While not ideal, this was a pragmatic decision to consolidate related game functionality. Future releases should use proper semver.
 
+>>>>>>> develop
 ### ❌ Don't Forget CHANGELOG
 
 **Wrong**: Release without documenting changes
