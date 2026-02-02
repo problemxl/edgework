@@ -23,16 +23,15 @@ Is this change?
 
 ## Current Status
 
-- **Latest Release**: v0.5.0 (bug fixes + play-by-play features)
-- **Previous Release**: v0.4.9
+- **Latest Release**: v0.6.0 (play-by-play features)
+- **Previous Release**: v0.5.0 (bug fixes)
 
-> **Note**: v0.5.0 combines bug fixes (typically PATCH) with new play-by-play features (MINOR) into a single release. This release includes:
-> - Bug fixes for schedule.games and Game._fetched flag
+> **Note**: v0.6.0 introduces new play-by-play functionality (MINOR version bump):
 > - New Play and PlayByPlay models for play-by-play data
 > - New Game.play_by_play property with lazy loading
 > - 23 new tests for play-by-play functionality
 >
-> Future releases will follow proper semver: v0.6.0 for new features.
+> v0.5.0 contained only bug fixes (PATCH).
 
 ## Planned Releases
 
@@ -162,7 +161,8 @@ Before releasing any version:
 
 | Version | Type | Date | Notes |
 |---------|-------|------|-------|
-| v0.5.0 | MINOR | 2025-02-01 | Bug fixes + play-by-play features |
+| v0.6.0 | MINOR | 2025-02-01 | Play-by-play support for games |
+| v0.5.0 | PATCH | 2025-02-01 | Bug fixes for schedule.games and Game._fetched |
 | v0.4.9 | MINOR | 2025-01-30 | Game model features |
 | v0.4.8 | PATCH | 2025-01-28 | Schedule date filtering fixes |
 | v0.4.7 | PATCH | 2025-01-28 | Schedule pagination fixes |
@@ -182,11 +182,11 @@ Before releasing any version:
 
 ## Decision Guidelines
 
-### Current Version: v0.5.0
+### Current Version: v0.6.0
 
 Based on current version, next versions would be:
-- **PATCH fix** → v0.5.1
-- **MINOR feature** → v0.6.0
+- **PATCH fix** → v0.6.1
+- **MINOR feature** → v0.7.0
 - **MAJOR breaking change** → v1.0.0
 
 ### When to Use MAJOR Bumps
