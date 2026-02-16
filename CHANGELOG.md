@@ -5,6 +5,26 @@ All notable changes to Edgework project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2025-02-16
+
+### Added
+- **Standings Module**: Complete implementation of NHL standings functionality
+  - New `StandingClient` for fetching current and historical standings
+  - Refactored `Standings` and `Seeding` models using BaseNHLModel inheritance
+  - Added filtering methods: `get_team_standing()`, `get_division_standings()`, `get_playoff_teams()`, `get_wildcard_race()`
+  - Added comprehensive test suite with 24 tests including live API tests
+- **Draft Module**: Complete implementation of NHL draft functionality
+  - New `DraftClient` with methods for draft picks, rankings, and tracker
+  - `Draft` model with support for filtering picks by round, team, and overall pick number
+  - `Draftee` model for individual draft selections with full player details
+  - `DraftRanking` model for prospect rankings with top prospect queries
+  - Added comprehensive test suite with 23 tests including live API tests
+- **New API Endpoints Supported**:
+  - `/standings/now` and `/standings/{date}` - Current and historical standings
+  - `/draft/picks/now` and `/draft/picks/{season}/{round}` - Draft picks
+  - `/draft/rankings/now` and `/draft/rankings/{season}/{category}` - Draft rankings
+  - `/draft-tracker/picks/now` - Live draft tracker
+
 ## [0.6.0] - 2025-02-01
 
 ### Added
