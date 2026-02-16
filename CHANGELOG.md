@@ -5,6 +5,30 @@ All notable changes to Edgework project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2025-02-16
+
+### Added
+- **Game Client Enhancement**: Complete GameClient implementation with all missing endpoints
+  - Added `get_game_landing()` - Fetch comprehensive game landing page data
+  - Added `get_game_boxscore()` - Get raw boxscore dictionary
+  - Added `get_game_story()` - Fetch game story/narrative content
+  - Added `get_game_right_rail()` - Get right rail game information
+  - Added `get_score()` - Fetch current or historical scores by date
+  - Added `get_scoreboard()` - Get current scoreboard data
+  - Added `get_where_to_watch()` - Get broadcast information
+  - Added `get_games_for_date()` - Get all games for a specific date
+  - Added `get_current_games()` - Get current/upcoming games
+  - Fixed `get_play_by_play()` to return proper PlayByPlay object
+  - Fixed `get_game()` to use correct web API endpoint
+  - Added comprehensive test suite with 19 tests (18 passing, 1 skipped due to season availability)
+
+### Changed
+- **GameClient**: Updated all game endpoints to use web API (`web=True` parameter)
+- **GameClient**: Fixed incomplete `get_play_by_play()` method implementation
+
+### Fixed
+- **GameClient**: Corrected endpoint URLs for gamecenter API calls
+
 ## [0.7.0] - 2025-02-16
 
 ### Added
