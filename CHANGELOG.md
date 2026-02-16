@@ -5,36 +5,43 @@ All notable changes to Edgework project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2025-02-16
+
+### Added
+- **Standings Module**: Complete implementation of NHL standings functionality
+  - New `StandingClient` for fetching current and historical standings
+  - Refactored `Standings` and `Seeding` models using BaseNHLModel inheritance
+  - Added filtering methods: `get_team_standing()`, `get_division_standings()`, `get_playoff_teams()`, `get_wildcard_race()`
+  - Added comprehensive test suite with 24 tests including live API tests
+- **Draft Module**: Complete implementation of NHL draft functionality
+  - New `DraftClient` with methods for draft picks, rankings, and tracker
+  - `Draft` model with support for filtering picks by round, team, and overall pick number
+  - `Draftee` model for individual draft selections with full player details
+  - `DraftRanking` model for prospect rankings with top prospect queries
+  - Added comprehensive test suite with 23 tests including live API tests
+- **New API Endpoints Supported**:
+  - `/standings/now` and `/standings/{date}` - Current and historical standings
+  - `/draft/picks/now` and `/draft/picks/{season}/{round}` - Draft picks
+  - `/draft/rankings/now` and `/draft/rankings/{season}/{category}` - Draft rankings
+  - `/draft-tracker/picks/now` - Live draft tracker
+
 ## [0.6.0] - 2025-02-01
 
 ### Added
-- **Play Model**: New `Play` model for individual play events in a game
+- **Play Model**: New `Play` model for individual play events in a game (goals, penalties, shots, faceoffs, etc.)
 - **PlayByPlay Model**: New `PlayByPlay` model for full play-by-play game data
-- **Game Model**: Add `play_by_play` property to `Game` object for accessing play-by-play data
-- **Game Model**: Add helper properties to `Play` model (`is_goal`, `is_penalty`, `is_shot`, `goal_details`, `scoring_player_id`, `assist_player_ids`)
-- **PlayByPlay Model**: Add filtering methods (`goals`, `penalties`, `shots`) and query methods (`get_plays_by_period`, `get_plays_by_team`, `get_plays_by_player`)
-
-### Changed
-- **Game Model**: Lazy load play-by-play data when accessing `game.play_by_play` property
+- **Game Model**: Add `play_by_play` property to `Game` object with lazy loading
+- **Play Model**: Add helper properties (`is_goal`, `is_penalty`, `is_shot`, `goal_details`, `scoring_player_id`, `assist_player_ids`)
+- **PlayByPlay Model**: Add filtering methods (`goals`, `penalties`, `shots` properties)
+- **PlayByPlay Model**: Add query methods (`get_plays_by_period()`, `get_plays_by_team()`, `get_plays_by_player()`)
+- **Tests**: Add comprehensive play-by-play test suite with 23 test cases
 
 ## [0.5.0] - 2025-02-01
 
-### Added
-- **Play Model**: New `Play` model for individual play events in a game
-- **PlayByPlay Model**: New `PlayByPlay` model for full play-by-play game data
-- **Game Model**: Add `play_by_play` property to `Game` object for accessing play-by-play data
-- **Game Model**: Add helper properties to `Play` model (`is_goal`, `is_penalty`, `is_shot`, `goal_details`, `scoring_player_id`, `assist_player_ids`)
-- **PlayByPlay Model**: Add filtering methods (`goals`, `penalties`, `shots`) and query methods (`get_plays_by_period`, `get_plays_by_team`, `get_plays_by_player`)
-
 ### Fixed
 - **Schedule**: Fix `get_schedule_for_date_range()` to pass HTTP client to `Schedule.from_api()`, enabling proper lazy loading of games
-- **Game**: Fix `Game.from_api()` to set `_fetched=True` flag, preventing unnecessary API fetches and errors when accessing game properties
+- **Game**: Fix `Game.from_api()` to set `_fetched=True` flag, preventing unnecessary API fetches
 - **Schedule**: Fix empty games list issue when accessing `schedule.games` property for date range queries
-
-### Added
-- **Game Model**: Implement `fetch_data()` method to fetch detailed game information from NHL API
-- **Game Model**: Add comprehensive test suite for Game model with 25 test cases
-- **Game Model**: Fix `Game.from_dict()` to properly pass `edgework_client` parameter
 
 ### Changed
 - **Game Model**: Enable lazy loading for Game objects via BaseNHLModel `_fetch_if_not_fetched()`
