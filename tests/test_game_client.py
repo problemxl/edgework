@@ -279,7 +279,7 @@ class TestGameClientLiveAPI:
         pbp = client.get_play_by_play(2024020001)
 
         assert isinstance(pbp, PlayByPlay)
-        assert pbp._data.get("id") == 2024020001
+        assert pbp._data.get("game_id") == 2024020001
 
     @pytest.mark.live_api
     def test_get_game_landing_live(self, real_client):

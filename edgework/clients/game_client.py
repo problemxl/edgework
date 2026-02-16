@@ -58,7 +58,7 @@ class GameClient:
         """
         response = self._client.get(f"gamecenter/{game_id}/play-by-play", web=True)
         data = response.json()
-        return PlayByPlay.from_api(self._client, data)
+        return PlayByPlay.from_api(data, self._client)
 
     def get_game_landing(self, game_id: int) -> Dict:
         """Fetch game landing page data.
