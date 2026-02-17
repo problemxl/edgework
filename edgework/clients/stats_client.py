@@ -1,3 +1,5 @@
+from typing import Dict, List
+
 from edgework.http_client import HttpClient
 from edgework.models.stats import GoalieStats, SkaterStats, TeamStats
 from edgework.utilities import dict_camel_to_snake
@@ -122,46 +124,6 @@ class StatsClient:
         start: int = 0,
         sort: str = "wins",
     ) -> list[TeamStats]:
-        response = self._client.get(f"en/team/stats?cayenneExp=seasonId={season}")
-        data = response.json()["data"]
-        team_stats_dict = [dict_camel_to_snake(d) for d in data]
-        return [TeamStats(**d) for d in team_stats_dict]
-
-    def get_team_stats(
-        self,
-        season: int,
-        report: str = "summary",
-        aggregate: bool = False,
-        game: bool = True,
-        limit: int = -1,
-        start: int = 0,
-        sort: str = "wins",
-    ) -> list[TeamStats]:
-        """
-        Get team stats
-
-        Params
-        ------
-        season: int
-            The season to get stats for
-        report: str
-            The type of report to get, must be one of the following:
-            'summary', 'faceoffpercentages', 'daysbetweengames', 'faceoffwins', 'goalsagainstbystrength',
-            'goalsbyperiod', 'goalsforbystrength', 'leadingtrailing', 'realtime', 'outshootoutshotby',
-            'penalties', 'penaltykill', 'penaltykilltime', 'powerplay', 'powerplaytime', 'summaryshooting
-            'percentages', 'scoretrailfirst', 'shootout', 'shottype', 'goalgames'. Default is 'summary'.
-        aggregate: bool
-            Whether to aggregate the stats for the season. Default is False. `game` takes precedence over `aggregate`.
-        game: bool
-            Whether to get stats for games. Default is True. `game` takes precedence over `aggregate`.
-        limit: int
-            The number of results to return. Default is -1. If -1, all results are returned.
-        start: int
-            The index to start at. Default is 0.
-        sort: str
-            The field to sort by. Default is 'wins'.
-        """
-
         if report not in self.team_reports:
             raise ValueError(
                 f"Invalid report: {report}, must be one of "
@@ -177,3 +139,83 @@ class StatsClient:
 
         team_stats_dict = [dict_camel_to_snake(d) for d in data]
         return [TeamStats(**d) for d in team_stats_dict]
+
+    def get_skater_stats_leaders(self, game_type: int = 2) -> Dict:
+        """Fetch current skater statistics leaders.
+
+        Args:
+            game_type: Game type ID (2=Regular Season, 3=Playoffs)
+
+        Returns:
+            Dictionary with current skater leaders including:
+            - Points leaders
+            - Goals leaders
+            - Assists leaders
+        """
+        response = self._client.get(f"skater-stats-leaders/current", web=True)
+        return response.json()
+
+    def get_goalie_stats_leaders(self, game_type: int = 2) -> Dict:
+        """Fetch current goalie statistics leaders.
+
+        Args:
+            game_type: Game type ID (2=Regular Season, 3=Playoffs)
+
+        Returns:
+            Dictionary with current goalie leaders including:
+            - Wins leaders
+            - GAA leaders
+            - Save percentage leaders
+        """
+        response = self._client.get(f"goalie-stats-leaders/current", web=True)
+        return response.json()
+
+    def get_skater_stats_leaders_by_season(
+        self, season: str, game_type: int = 2
+    ) -> Dict:
+        """Fetch skater statistics leaders for a specific season.
+
+        Args:
+            season: Season in format "YYYY-YYYY" (e.g., "2023-2024")
+            game_type: Game type ID (2=Regular Season, 3=Playoffs)
+
+        Returns:
+            Dictionary with skater leaders for the specified season.
+        """
+        try:
+            start_year, end_year = season.split("-")
+            season_id = f"{start_year}{end_year}"
+        except (ValueError, AttributeError):
+            raise ValueError(
+                f"Invalid season format: '{season}'. Expected format: 'YYYY-YYYY'"
+            )
+
+        response = self._client.get(
+            f"skater-stats-leaders/{season_id}/{game_type}", web=True
+        )
+        return response.json()
+
+    def get_goalie_stats_leaders_by_season(
+        self, season: str, game_type: int = 2
+    ) -> Dict:
+        """Fetch goalie statistics leaders for a specific season.
+
+        Args:
+            season: Season in format "YYYY-YYYY" (e.g., "2023-2024")
+            game_type: Game type ID (2=Regular Season, 3=Playoffs)
+
+        Returns:
+            Dictionary with goalie leaders for the specified season.
+        """
+        try:
+            start_year, end_year = season.split("-")
+            season_id = f"{start_year}{end_year}"
+        except (ValueError, AttributeError):
+            raise ValueError(
+                f"Invalid season format: '{season}'. Expected format: 'YYYY-YYYY'"
+            )
+
+        response = self._client.get(
+            f"goalie-stats-leaders/{season_id}/{game_type}", web=True
+        )
+        return response.json()
