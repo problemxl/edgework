@@ -5,6 +5,45 @@ All notable changes to Edgework project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.0] - 2025-02-16
+
+### Added
+- **PlayoffClient**: New client for NHL playoff data
+  - `get_playoff_bracket()` - Full playoff bracket with all rounds and series
+  - `get_playoff_series_carousel()` - Active playoff series carousel
+  - `get_playoff_series_schedule()` - Schedule for specific playoff series
+  - `get_playoff_series_by_round()` - All series in a specific round
+  - `get_series_winner()` - Winner of a specific series
+
+- **NetworkClient**: New client for TV and broadcast data
+  - `get_tv_schedule()` - TV schedule by date or current
+  - `get_tv_schedule_now()` - Current TV schedule
+  - `get_broadcasts_for_game()` - Broadcast information for specific game
+  - `get_where_to_watch()` - Where to watch current games
+
+- **UtilityClient**: New client for NHL metadata
+  - `get_season()` - Season metadata (all historical seasons)
+  - `get_meta()` - API metadata
+  - `get_meta_game()` - Game-specific metadata
+  - `get_meta_playoff_series()` - Playoff series metadata
+  - `get_location()` - Location data
+  - `get_postal_lookup()` - Postal code lookup
+
+- **StatsClient**: Added leaderboard endpoints
+  - `get_skater_stats_leaders()` - Current skater leaders (points, goals, assists)
+  - `get_goalie_stats_leaders()` - Current goalie leaders (wins, GAA, save%)
+  - `get_skater_stats_leaders_by_season()` - Leaders by season
+  - `get_goalie_stats_leaders_by_season()` - Leaders by season
+
+### New API Endpoints Supported:
+- `/playoff-bracket/{year}` - Playoff bracket
+- `/playoff-series/carousel/{season}` - Playoff series carousel
+- `/schedule/playoff-series/{season}/{series}` - Playoff series schedule
+- `/network/tv-schedule/now` and `/{date}` - TV schedule
+- `/season`, `/meta`, `/meta/game/{id}`, `/location`
+- `/skater-stats-leaders/current` and `/{season}/{game_type}`
+- `/goalie-stats-leaders/current` and `/{season}/{game_type}`
+
 ## [0.9.0] - 2025-02-16
 
 ### Added
