@@ -1,6 +1,5 @@
 from datetime import timedelta
 
-from edgework.edgework import Edgework
 from edgework.models.base import BaseNHLModel
 
 
@@ -28,126 +27,126 @@ class PeriodTime(BaseNHLModel):
     @classmethod
     def from_string(cls, edgework_client, time_str):
         """
-        Create a PeriodTime object from a string.
+        Create a PeriodTime object from a string in "MM:SS" format.
 
         Args:
             edgework_client: The Edgework client
-            time_str: The string to parse (format: "MM:SS")
+            time_str (str): Time string in "MM:SS" format
 
         Returns:
-            A PeriodTime object
+            PeriodTime: A PeriodTime object
         """
         minutes, seconds = map(int, time_str.split(":"))
         return cls(edgework_client, minutes=minutes, seconds=seconds)
 
     def validate(self):
-        """Validate the period time."""
-        if self.minutes < 0:
-            raise ValueError("Time cannot be negative")
-        if self.minutes > 20:
-            raise ValueError("Minutes must be less than 20")
-        if self.seconds < 0:
-            raise ValueError("Time cannot be negative")
-        if self.seconds >= 60:
-            raise ValueError("Seconds must be less than 60")
-        if self.minutes == 20 and self.seconds > 0:
-            raise ValueError("Minutes must be less than 20")
+        """Validate that minutes and seconds are within valid ranges."""
+        if not (0 <= self.minutes < 60):
+            raise ValueError(f"Minutes must be between 0 and 59, got {self.minutes}")
+        if not (0 <= self.seconds < 60):
+            raise ValueError(f"Seconds must be between 0 and 59, got {self.seconds}")
 
     @property
-    def total_seconds(self):
-        """Get the total seconds."""
-        return self.minutes * 60 + self.seconds
+    def minutes(self) -> int:
+        """Return the minutes component of the time."""
+        return self._data.get("minutes", 0)
 
     @property
-    def timedelta(self):
-        """Get the timedelta representation."""
+    def seconds(self) -> int:
+        """Return the seconds component of the time."""
+        return self._data.get("seconds", 0)
+
+    def to_timedelta(self) -> timedelta:
+        """Convert to a timedelta object."""
         return timedelta(minutes=self.minutes, seconds=self.seconds)
 
-    def __sub__(self, other):
-        """Subtract another PeriodTime or timedelta from this PeriodTime."""
-        if isinstance(other, PeriodTime):
-            return self.timedelta - other.timedelta
-        if isinstance(other, timedelta):
-            return self.timedelta - other
+    def __str__(self) -> str:
+        """Return string representation in "MM:SS" format."""
+        return f"{self.minutes:02d}:{self.seconds:02d}"
 
-    def fetch_data(self):
-        """
-        Fetch the data for the period time.
-        """
-        # Implementation depends on how data is fetched from the API
-        raise NotImplementedError("fetch_data() must be implemented in subclasses")
+    def __repr__(self) -> str:
+        """Return detailed string representation."""
+        return f"PeriodTime({self.minutes:02d}:{self.seconds:02d})"
+
+    def __eq__(self, other) -> bool:
+        """Compare two PeriodTime objects."""
+        if not isinstance(other, PeriodTime):
+            return NotImplemented
+        return self.minutes == other.minutes and self.seconds == other.seconds
+
+    def __lt__(self, other) -> bool:
+        """Compare if this time is less than another."""
+        if not isinstance(other, PeriodTime):
+            return NotImplemented
+        return self.to_timedelta() < other.to_timedelta()
 
 
 class Shift(BaseNHLModel):
-    """
-    Shift model to store shift information.
+    """Shift model to store shift information."""
 
-    A shift is a period of time when a player is on the ice.
-    """
-
-    def __init__(self, edgework_client, obj_id=None, **kwargs):
+    def __init__(self, edgework_client=None, obj_id=None, **kwargs):
         """
-        Initialize a Shift object with dynamic attributes.
+        Initialize a Shift object.
 
         Args:
             edgework_client: The Edgework client
-            obj_id: The ID of the shift object
-            **kwargs: Dynamic attributes for shift properties
+            obj_id: The ID of the shift
+            **kwargs: Shift properties
         """
         super().__init__(edgework_client, obj_id)
         self._data = kwargs
 
-    @property
-    def duration(self) -> timedelta:
-        """Get the duration of the shift."""
-        return timedelta(
-            seconds=self.shift_end.total_seconds - self.shift_start.total_seconds
+    @classmethod
+    def from_api(cls, data: dict):
+        """
+        Create a Shift object from API response data.
+
+        Args:
+            data: Raw API response dictionary
+
+        Returns:
+            Shift: A Shift object
+        """
+        return cls(
+            player_id=data.get("playerId"),
+            shift_start=data.get("startTime"),
+            shift_end=data.get("endTime"),
+            duration=data.get("duration"),
+            period=data.get("period"),
         )
 
     @property
-    def shift_length(self):
-        """Get the length of the shift."""
-        return self.shift_end - self.shift_start
+    def player_id(self) -> int:
+        """Return the player ID."""
+        return self._data.get("player_id")
 
-    def __str__(self):
-        return f"Shift {self.shift_id} - {self.shift_length}"
+    @property
+    def shift_start(self) -> str:
+        """Return the shift start time."""
+        return self._data.get("shift_start")
 
-    def __repr__(self):
-        return str(self)
+    @property
+    def shift_end(self) -> str:
+        """Return the shift end time."""
+        return self._data.get("shift_end")
+
+    @property
+    def duration(self) -> str:
+        """Return the shift duration."""
+        return self._data.get("duration")
+
+    @property
+    def period(self) -> int:
+        """Return the period number."""
+        return self._data.get("period")
 
     def fetch_data(self):
         """
         Fetch the data for the shift.
+
+        Note: Shift data is typically fetched via the Game endpoint.
+        This method raises NotImplementedError.
         """
-        # Implementation depends on how data is fetched from the API
-        raise NotImplementedError("fetch_data() must be implemented in subclasses")
-
-    def __eq__(self, other):
-        return self.shift_id == other.shift_id
-
-    @classmethod
-    def from_api(cls, data: dict, edgework_client: Edgework) -> "Shift":
-        """
-        Create a Shift object from API data.
-
-        Args:
-            data: The data dictionary from the API
-            edgework_client: The Edgework client
-
-        Returns:
-            A Shift object initialized with the provided data.
-        """
-        return cls(
-            edgework_client=None,
-            shift_id=data["id"],
-            game_id=data["gameId"],
-            player_id=data["playerId"],
-            first_name=data["firstName"],
-            last_name=data["lastName"],
-            period=data["period"],
-            shift_start=data["startTime"],
-            shift_end=data["endTime"],
-            shift_number=data["shiftNumber"],
-            team_id=data["teamId"],
-            team_abbrev=data["teamAbbrev"],
+        raise NotImplementedError(
+            "Shift data is fetched via GameClient. Use GameClient.get_shifts() instead."
         )
