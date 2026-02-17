@@ -5,6 +5,25 @@ All notable changes to Edgework project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - 2025-02-16
+
+### Added
+- **Player Client Enhancement**: Complete PlayerClient implementation with all missing endpoints
+  - Added `get_player_landing()` - Fetch comprehensive player profile with career/current stats
+  - Added `get_player_game_logs()` - Get game-by-game statistics for specific season
+  - Added `get_player_game_log_now()` - Get current season game logs
+  - Added `get_player_spotlight()` - Get featured/spotlight players
+  - Added `get_player()` - Get Player object by ID with full data
+  - Added `get_player_by_id()` - Get player with error handling
+  - Updated game_type parameter to use numeric values (2=Regular Season, 3=Playoffs, 1=Pre-season)
+  - Added comprehensive test suite with 19 tests (all passing)
+
+### New API Endpoints Supported:
+- `player/{player_id}/landing` - Player profile and statistics
+- `player/{player_id}/game-log/{season}/{game_type}` - Season game logs
+- `player/{player_id}/game-log/now` - Current season game logs
+- `player-spotlight` - Featured players
+
 ## [0.8.0] - 2025-02-16
 
 ### Added
