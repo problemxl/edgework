@@ -1,7 +1,7 @@
 """Player client for fetching player data from NHL APIs."""
 
 from datetime import datetime
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from edgework.http_client import HttpClient
 from edgework.models.player import Player
@@ -207,3 +207,121 @@ class PlayerClient:
             List of inactive Player objects
         """
         return self.get_all_players(active=False, limit=limit)
+
+    def get_player_landing(self, player_id: int) -> Dict:
+        """
+        Fetch player landing page data with comprehensive player information.
+
+        Args:
+            player_id: The NHL player ID
+
+        Returns:
+            Dictionary with player landing data including:
+            - Player profile information
+            - Career statistics
+            - Current season stats
+            - Recent games
+            - Player bio and media
+        """
+        response = self.client.get(f"player/{player_id}/landing", web=True)
+        data = response.json()
+
+        # Process the data with landing_to_dict for consistent formatting
+        processed_data = landing_to_dict(data)
+
+        # Ensure player_id is set
+        processed_data["player_id"] = player_id
+
+        return processed_data
+
+    def get_player_game_logs(
+        self, player_id: int, season: str, game_type: int = 2
+    ) -> Dict:
+        """
+        Fetch game-by-game statistics for a player in a specific season.
+
+        Args:
+            player_id: The NHL player ID
+            season: Season in format "YYYY-YYYY" (e.g., "2023-2024")
+            game_type: Game type - 2 for Regular Season (default),
+                      3 for Playoffs, 1 for Pre-season
+
+        Returns:
+            Dictionary with game logs including:
+            - Season statistics
+            - Game-by-game breakdown
+            - Home/away splits
+            - Monthly splits
+        """
+        # Convert season format (e.g., "2023-2024" -> "20232024")
+        try:
+            start_year, end_year = season.split("-")
+            season_id = f"{start_year}{end_year}"
+        except (ValueError, AttributeError):
+            raise ValueError(
+                f"Invalid season format: '{season}'. Expected format: 'YYYY-YYYY'"
+            )
+
+        response = self.client.get(
+            f"player/{player_id}/game-log/{season_id}/{game_type}", web=True
+        )
+        return response.json()
+
+    def get_player_game_log_now(self, player_id: int) -> Dict:
+        """
+        Fetch game-by-game statistics for the current season.
+
+        Args:
+            player_id: The NHL player ID
+
+        Returns:
+            Dictionary with current season game logs
+        """
+        response = self.client.get(f"player/{player_id}/game-log/now", web=True)
+        return response.json()
+
+    def get_player_spotlight(self) -> List[Dict]:
+        """
+        Fetch featured/spotlight players from the NHL.
+
+        Returns:
+            List of dictionaries with spotlight player information
+        """
+        response = self.client.get("player-spotlight", web=True)
+        data = response.json()
+
+        # Return list of spotlight players
+        if isinstance(data, list):
+            return data
+        elif isinstance(data, dict) and "spotlight" in data:
+            return data["spotlight"]
+        else:
+            return [data] if data else []
+
+    def get_player(self, player_id: int) -> Player:
+        """
+        Fetch player data by ID using the landing endpoint.
+
+        Args:
+            player_id: The NHL player ID
+
+        Returns:
+            Player object with comprehensive data
+        """
+        landing_data = self.get_player_landing(player_id)
+        return Player(edgework_client=self.client, **landing_data)
+
+    def get_player_by_id(self, player_id: int) -> Optional[Player]:
+        """
+        Get a player by their NHL ID.
+
+        Args:
+            player_id: The NHL player ID
+
+        Returns:
+            Player object if found, None otherwise
+        """
+        try:
+            return self.get_player(player_id)
+        except Exception:
+            return None
