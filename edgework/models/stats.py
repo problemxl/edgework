@@ -3,6 +3,7 @@ from datetime import datetime
 from urllib.parse import urlencode
 
 from edgework.models.base import BaseNHLModel
+from edgework.stats_reports import validate_report
 from edgework.utilities import dict_camel_to_snake
 
 # Development imports
@@ -213,30 +214,9 @@ class SkaterStats(BaseNHLModel):
             direction: Direction to sort (e.g. "DESC", "ASC")
             game_type: Type of game (e.g. 2 for regular season, 3 for playoffs)
         """
-        # Validate inputs using helper functions
-        valid_skater_reports = [
-            "summary",
-            "bios",
-            "faceoffpercentages",
-            "faceoffwins",
-            "goalsForAgainst",
-            "realtime",
-            "penalties",
-            "penaltyDetails",
-            "penaltyKill",
-            "penaltyShots",
-            "powerPlay",
-            "puckPossessions",
-            "summaryshooting",
-            "percentages",
-            "scoringRates",
-            "scoringpergame",
-            "shootout",
-            "shottype",
-            "timeonice",
-        ]
-
-        report = validate_report_type(report, valid_skater_reports)
+        # Validate inputs; report names come from the shared single source of
+        # truth (edgework.stats_reports), shared with StatsClient.
+        report = validate_report("skater", report)
         season = validate_season(season)
         limit, start = validate_limit_and_start(limit, start)
         sort_dict = validate_sort_direction(sort, direction)
@@ -331,20 +311,9 @@ class GoalieStats(BaseNHLModel):
             direction: Direction to sort (e.g. "DESC", "ASC")
             game_type: Type of game (e.g. 2 for regular season, 3 for playoffs)
         """
-        # Validate inputs using helper functions
-        valid_goalie_reports = [
-            "summary",
-            "advanced",
-            "bios",
-            "savesByStrength",
-            "startedVsRelieved",
-            "daysrest",
-            "shootout",
-            "penaltyShots",
-            "savePercentageByGametate",
-        ]
-
-        report = validate_report_type(report, valid_goalie_reports)
+        # Validate inputs; report names come from the shared single source of
+        # truth (edgework.stats_reports), shared with StatsClient.
+        report = validate_report("goalie", report)
         season = validate_season(season)
         limit, start = validate_limit_and_start(limit, start)
         sort_dict = validate_sort_direction(sort, direction)
@@ -435,28 +404,9 @@ class TeamStats(BaseNHLModel):
             direction: Direction to sort (e.g. "DESC", "ASC"). Default is "DESC".
             game_type: Type of game (e.g. 2 for regular season, 3 for playoffs). Default is 2.
         """
-        # Validate inputs using helper functions
-        valid_team_reports = [
-            "summary",
-            "faceoffpercentages",
-            "faceoffwins",
-            "goalsForAgainst",
-            "realtime",
-            "penalties",
-            "penaltyDetails",
-            "penaltyKill",
-            "powerPlay",
-            "puckPossessions",
-            "summaryshooting",
-            "percentages",
-            "scoringRates",
-            "scoringpergame",
-            "shootout",
-            "shottype",
-            "timeonice",
-        ]
-
-        report = validate_report_type(report, valid_team_reports)
+        # Validate inputs; report names come from the shared single source of
+        # truth (edgework.stats_reports), shared with StatsClient.
+        report = validate_report("team", report)
         season = validate_season(season)
         limit, start = validate_limit_and_start(limit, start)
         sort_dict = validate_sort_direction(sort, direction)

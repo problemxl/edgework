@@ -357,7 +357,7 @@ class TestStatsClientLeaders:
 
         assert "points" in data
         mock_client.get.assert_called_once_with(
-            "skater-stats-leaders/current", web=True
+            "skater-stats-leaders/current", params=None, web=True
         )
 
     def test_get_goalie_stats_leaders(self, mock_client):
@@ -372,7 +372,7 @@ class TestStatsClientLeaders:
 
         assert "wins" in data
         mock_client.get.assert_called_once_with(
-            "goalie-stats-leaders/current", web=True
+            "goalie-stats-leaders/current", params=None, web=True
         )
 
     def test_get_skater_stats_leaders_by_season(self, mock_client):
@@ -387,7 +387,7 @@ class TestStatsClientLeaders:
 
         assert "points" in data
         mock_client.get.assert_called_once_with(
-            "skater-stats-leaders/20232024/2", web=True
+            "skater-stats-leaders/20232024/2", params=None, web=True
         )
 
     def test_get_skater_stats_leaders_invalid_season(self, mock_client):
