@@ -1,11 +1,14 @@
 """Tests for schedule-related functionality in the Edgework client."""
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
 from edgework.clients.schedule_client import ScheduleClient
+from edgework.const import BASE_WEB_URL
+from edgework.endpoints import API_PATH
+from edgework.http_client import HttpClient
 from edgework.models.game import Game
 from edgework.models.schedule import Schedule, schedule_api_to_dict
 
@@ -471,6 +474,202 @@ class TestScheduleClient:
         """Test that get_schedule_for_date_range raises ValueError when start_date > end_date."""
         with pytest.raises(ValueError, match="Start date cannot be after end date"):
             self.schedule_client.get_schedule_for_date_range("2024-01-15", "2024-01-01")
+
+
+class TestClubScheduleRoutes:
+    """Mocked unit tests for club-schedule month/week routes (Task 2).
+
+    Regression coverage: prior public methods must construct the same
+    requests as before; the month/week variants gain optional month/date
+    parameters while keeping their "now" behavior when omitted.
+    """
+
+    def setup_method(self):
+        """Set up test fixtures before each test method."""
+        self.mock_http_client = Mock()
+        self.schedule_client = ScheduleClient(self.mock_http_client)
+        response = Mock()
+        response.json.return_value = {}
+        self.mock_http_client.get.return_value = response
+
+    def _calls(self):
+        """Return the list of (args, kwargs) made to the mocked client."""
+        return [
+            (call.args, call.kwargs)
+            for call in self.mock_http_client.get.call_args_list
+        ]
+
+    # -- regression: "now" behavior unchanged -----------------------------
+
+    def test_week_now_route_unchanged(self):
+        """get_schedule_for_team_for_week without a date still hits .../week/now."""
+        schedule = self.schedule_client.get_schedule_for_team_for_week("TOR")
+
+        self.mock_http_client.get.assert_called_once_with(
+            "club-schedule/TOR/week/now", web=True
+        )
+        assert isinstance(schedule, Schedule)
+
+    def test_month_now_route_unchanged(self):
+        """get_schedule_for_team_for_month without a month still hits .../month/now."""
+        schedule = self.schedule_client.get_schedule_for_team_for_month("TOR")
+
+        self.mock_http_client.get.assert_called_once_with(
+            "club-schedule/TOR/month/now", web=True
+        )
+        assert isinstance(schedule, Schedule)
+
+    def test_team_season_schedule_route_unchanged(self):
+        """get_schedule_for_team still hits club-schedule-season/{team}/now."""
+        self.schedule_client.get_schedule_for_team("TOR")
+
+        self.mock_http_client.get.assert_called_once_with(
+            "club-schedule-season/TOR/now", web=True
+        )
+
+    def test_get_schedule_now_route_unchanged(self):
+        """get_schedule still hits schedule/now."""
+        self.schedule_client.get_schedule()
+
+        self.mock_http_client.get.assert_called_once_with("schedule/now", web=True)
+
+    def test_get_schedule_for_date_route_unchanged(self):
+        """get_schedule_for_date still hits schedule/{date}."""
+        self.schedule_client.get_schedule_for_date("2024-01-01")
+
+        self.mock_http_client.get.assert_called_once_with(
+            "schedule/2024-01-01", web=True
+        )
+
+    def test_get_schedule_calendar_routes_unchanged(self):
+        """Calendar methods still hit schedule-calendar routes."""
+        self.schedule_client.get_schedule_calendar()
+        self.mock_http_client.get.assert_called_once_with(
+            "schedule-calendar/now", web=True
+        )
+
+        self.mock_http_client.get.reset_mock()
+        self.schedule_client.get_schedule_calendar_for_date("2024-01-01")
+        self.mock_http_client.get.assert_called_once_with(
+            "schedule-calendar/2024-01-01", web=True
+        )
+
+    # -- new: parameterized month/week routes -----------------------------
+
+    def test_week_route_with_date(self):
+        """A date string targets /v1/club-schedule/{team}/week/{date}."""
+        schedule = self.schedule_client.get_schedule_for_team_for_week(
+            "TOR", "2023-11-10"
+        )
+
+        self.mock_http_client.get.assert_called_once_with(
+            "club-schedule/TOR/week/2023-11-10", web=True
+        )
+        assert isinstance(schedule, Schedule)
+
+    def test_month_route_with_month(self):
+        """A month string targets /v1/club-schedule/{team}/month/{month}."""
+        schedule = self.schedule_client.get_schedule_for_team_for_month(
+            "TOR", "2023-11"
+        )
+
+        self.mock_http_client.get.assert_called_once_with(
+            "club-schedule/TOR/month/2023-11", web=True
+        )
+        assert isinstance(schedule, Schedule)
+
+    def test_week_accepts_date_objects(self):
+        """date/datetime inputs are normalized to YYYY-MM-DD strings."""
+        self.schedule_client.get_schedule_for_team_for_week("TOR", date(2023, 11, 10))
+        self.schedule_client.get_schedule_for_team_for_week(
+            "TOR", datetime(2023, 11, 10, 19, 0)
+        )
+
+        assert self._calls() == [
+            (("club-schedule/TOR/week/2023-11-10",), {"web": True}),
+            (("club-schedule/TOR/week/2023-11-10",), {"web": True}),
+        ]
+
+    def test_month_accepts_date_objects(self):
+        """date/datetime inputs are truncated to their YYYY-MM month."""
+        self.schedule_client.get_schedule_for_team_for_month("TOR", date(2023, 11, 1))
+        self.schedule_client.get_schedule_for_team_for_month(
+            "TOR", datetime(2023, 11, 30, 23, 59)
+        )
+
+        assert self._calls() == [
+            (("club-schedule/TOR/month/2023-11",), {"web": True}),
+            (("club-schedule/TOR/month/2023-11",), {"web": True}),
+        ]
+
+    def test_get_schedule_for_date_accepts_date_objects(self):
+        """The league schedule method also normalizes date objects."""
+        self.schedule_client.get_schedule_for_date(date(2024, 1, 1))
+
+        self.mock_http_client.get.assert_called_once_with(
+            "schedule/2024-01-01", web=True
+        )
+
+    def test_routes_match_endpoint_registry(self):
+        """Constructed routes must equal the documented registry templates."""
+        http_client = HttpClient()
+        http_client._client = Mock()
+        http_client._client.get.return_value = Mock(json=Mock(return_value={}))
+        schedule_client = ScheduleClient(http_client)
+
+        schedule_client.get_schedule_for_team_for_week("TOR", "2023-11-10")
+        week_url = http_client._client.get.call_args.args[0]
+        expected_week = (
+            f"{BASE_WEB_URL}"
+            f"{API_PATH['club_schedule_week'].format(
+                API_VERSION='v1', team='TOR', date='2023-11-10'
+            )}"
+        )
+        assert week_url == expected_week == (
+            f"{BASE_WEB_URL}/v1/club-schedule/TOR/week/2023-11-10"
+        )
+
+        http_client._client.get.reset_mock()
+        schedule_client.get_schedule_for_team_for_month("TOR", "2023-11")
+        month_url = http_client._client.get.call_args.args[0]
+        expected_month = (
+            f"{BASE_WEB_URL}"
+            f"{API_PATH['club_schedule_month'].format(
+                API_VERSION='v1', team='TOR', month='2023-11'
+            )}"
+        )
+        assert month_url == expected_month == (
+            f"{BASE_WEB_URL}/v1/club-schedule/TOR/month/2023-11"
+        )
+
+    # -- input validation --------------------------------------------------
+
+    def test_week_rejects_invalid_date(self):
+        """Week dates must be YYYY-MM-DD strings (or date objects)."""
+        with pytest.raises(ValueError, match="Invalid date format"):
+            self.schedule_client.get_schedule_for_team_for_week("TOR", "2023-11")
+
+        with pytest.raises(ValueError, match="Invalid date format"):
+            self.schedule_client.get_schedule_for_team_for_week("TOR", "11/10/2023")
+
+    def test_week_rejects_impossible_date(self):
+        """Calendar-invalid dates such as 2023-02-31 are rejected."""
+        with pytest.raises(ValueError, match="Invalid date format"):
+            self.schedule_client.get_schedule_for_team_for_week("TOR", "2023-02-31")
+
+    def test_month_rejects_invalid_month(self):
+        """Months must be YYYY-MM strings with a month between 01 and 12."""
+        for bad_month in ("11-2023", "2023-13", "2023-00", "202311", "2023-1"):
+            with pytest.raises(ValueError, match="Invalid month format"):
+                self.schedule_client.get_schedule_for_team_for_month("TOR", bad_month)
+
+    def test_date_validation_shared_across_methods(self):
+        """League schedule and calendar methods share the same validation."""
+        with pytest.raises(ValueError, match="Invalid date format"):
+            self.schedule_client.get_schedule_for_date("2024/01/01")
+
+        with pytest.raises(ValueError, match="Invalid date format"):
+            self.schedule_client.get_schedule_calendar_for_date("01/01/2024")
 
 
 class TestScheduleIntegration:

@@ -14,6 +14,7 @@ from edgework.models.stats import (
     validate_season,
     validate_sort_direction,
 )
+from edgework.utilities import validate_season_format
 
 
 class TestValidateSortDirection:
@@ -348,3 +349,69 @@ class TestValidationIntegration:
         limit_result, start_result = validate_limit_and_start(10000, 5000)
         assert limit_result == 10000
         assert start_result == 5000
+
+
+class TestSeasonFormatHelper:
+    """Tests for the shared season-normalization helper (Task 2).
+
+    ``edgework.utilities.validate_season_format`` is the single source of
+    truth for ``YYYY-YYYY`` -> ``YYYYYYYY`` conversion; the facade re-exports
+    it as ``edgework.edgework._validate_season_format`` for backward
+    compatibility.
+    """
+
+    def test_facade_reexports_the_shared_helper(self):
+        """The facade must not keep its own inline implementation."""
+        from edgework.edgework import _validate_season_format
+
+        assert _validate_season_format is validate_season_format
+
+    @pytest.mark.parametrize(
+        "season_str,expected_int",
+        [
+            ("2023-2024", 20232024),
+            ("2022-2023", 20222023),
+            ("1999-2000", 19992000),
+            ("1917-1918", 19171918),
+        ],
+    )
+    def test_valid_season_strings_convert_to_integer(self, season_str, expected_int):
+        """Valid 'YYYY-YYYY' strings convert to the YYYYYYYY integer format."""
+        assert validate_season_format(season_str) == expected_int
+
+    @pytest.mark.parametrize(
+        "invalid_season",
+        [
+            "2023",
+            "23-24",
+            "2023-24",
+            "2023/2024",
+            "2023_2024",
+            "2023 2024",
+            "abc-def",
+            "2023-abcd",
+            "",
+            "2023-",
+            "-2024",
+            "2022-2024",
+        ],
+    )
+    def test_invalid_season_strings_raise_value_error(self, invalid_season):
+        """Malformed or non-consecutive seasons are rejected."""
+        with pytest.raises(ValueError, match="Invalid season format"):
+            validate_season_format(invalid_season)
+
+    def test_non_string_seasons_raise_value_error(self):
+        """Non-string inputs (e.g. ints) are rejected."""
+        with pytest.raises(ValueError, match="Invalid season format"):
+            validate_season_format(20232024)
+
+    def test_team_client_uses_shared_helper(self):
+        """TeamClient normalizes 'YYYY-YYYY' seasons through this helper."""
+        from unittest.mock import Mock
+
+        from edgework.clients.team_client import TeamClient
+
+        team_client = TeamClient(Mock())
+        with pytest.raises(ValueError, match="Invalid season format"):
+            team_client.get_roster("TOR", "not-a-season")

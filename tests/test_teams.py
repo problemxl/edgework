@@ -1,8 +1,14 @@
 """Tests for team-related functionality in the Edgework client."""
 
+from unittest.mock import Mock
+
 import pytest
 
+from edgework.clients.team_client import TeamClient
+from edgework.const import STATS_API_URL
 from edgework.edgework import Edgework
+from edgework.endpoints import API_PATH
+from edgework.http_client import HttpClient
 from edgework.models.player import Player
 from edgework.models.team import Roster, Team
 
@@ -207,3 +213,250 @@ class TestTeamIntegration:
         """Clean up after each test method."""
         if hasattr(self.client, "close"):
             self.client.close()
+
+
+class TestTeamClientRoutes:
+    """Mocked unit tests for TeamClient route construction (Task 2).
+
+    Regression coverage: prior public methods must construct the same
+    requests as before, except the explicit ``/team/id/{id}`` fix.
+    """
+
+    def setup_method(self):
+        """Set up test fixtures before each test method."""
+        self.mock_http_client = Mock()
+        self.team_client = TeamClient(self.mock_http_client)
+
+    @staticmethod
+    def _response(payload):
+        """Build a mock HTTP response with the given JSON payload."""
+        response = Mock()
+        response.status_code = 200
+        response.json.return_value = payload
+        return response
+
+    # -- explicit fix: documented /{lang}/team/id/{id} route -------------
+
+    def test_get_team_uses_documented_team_id_route(self):
+        """get_team must request 'team/id/{id}' on the Stats API, not 'team/{id}'."""
+        self.mock_http_client.get.return_value = self._response(
+            {"id": 10, "fullName": "Toronto Maple Leafs", "triCode": "TOR"}
+        )
+
+        team = self.team_client.get_team(10)
+
+        self.mock_http_client.get.assert_called_once_with("team/id/10", web=False)
+        assert isinstance(team, Team)
+        assert team._data.get("team_id") == 10
+
+    def test_get_team_final_url_matches_stats_registry(self):
+        """End-to-end URL must equal the stats_team_by_id registry route."""
+        http_client = HttpClient()
+        http_client._client = Mock()
+        http_client._client.get.return_value = self._response({"id": 10})
+        team_client = TeamClient(http_client)
+
+        team_client.get_team(10)
+
+        expected = (
+            f"{STATS_API_URL}"
+            f"{API_PATH['stats_team_by_id'].format(lang='en', team_id=10).lstrip('/')}"
+        )
+        actual = http_client._client.get.call_args.args[0]
+        assert actual == expected == f"{STATS_API_URL}en/team/id/10"
+
+    # -- regression: prior routes unchanged ------------------------------
+
+    def test_get_teams_route_unchanged(self):
+        """get_teams still requests the /{lang}/team collection route."""
+        self.mock_http_client.get.return_value = self._response(
+            {"data": [{"id": 10, "fullName": "Toronto Maple Leafs"}]}
+        )
+
+        teams = self.team_client.get_teams()
+
+        self.mock_http_client.get.assert_called_once_with("team", web=False)
+        assert isinstance(teams, list)
+        assert all(isinstance(team, Team) for team in teams)
+
+    def test_get_roster_route_unchanged(self):
+        """get_roster still requests roster/{team}/current for current rosters."""
+        self.mock_http_client.get.return_value = self._response(
+            {"forwards": [], "defensemen": [], "goalies": []}
+        )
+
+        roster = self.team_client.get_roster("TOR")
+
+        self.mock_http_client.get.assert_called_once_with(
+            "roster/TOR/current", web=True
+        )
+        assert isinstance(roster, Roster)
+
+    def test_get_roster_season_route_unchanged(self):
+        """get_roster with an int season still requests roster/{team}/{season}."""
+        self.mock_http_client.get.return_value = self._response(
+            {"forwards": [], "defensemen": [], "goalies": []}
+        )
+
+        self.team_client.get_roster("TOR", 20232024)
+
+        self.mock_http_client.get.assert_called_once_with(
+            "roster/TOR/20232024", web=True
+        )
+
+    def test_get_team_stats_route_unchanged(self):
+        """get_team_stats keeps building club-stats routes."""
+        self.mock_http_client.get.return_value = self._response({"games": []})
+
+        result = self.team_client.get_team_stats("TOR")
+        self.mock_http_client.get.assert_called_once_with(
+            "club-stats/TOR/now", web=True
+        )
+        assert result == {"games": []}
+
+        self.mock_http_client.get.reset_mock()
+        self.mock_http_client.get.return_value = self._response({"games": []})
+        self.team_client.get_team_stats("TOR", 20232024, 3)
+        self.mock_http_client.get.assert_called_once_with(
+            "club-stats/TOR/20232024/3", web=True
+        )
+
+    def test_get_team_schedule_route_unchanged(self):
+        """get_team_schedule keeps building club-schedule-season routes."""
+        self.mock_http_client.get.return_value = self._response({"games": []})
+
+        self.team_client.get_team_schedule("TOR")
+        self.mock_http_client.get.assert_called_once_with(
+            "club-schedule-season/TOR/now", web=True
+        )
+
+        self.mock_http_client.get.reset_mock()
+        self.mock_http_client.get.return_value = self._response({"games": []})
+        self.team_client.get_team_schedule("TOR", 20232024)
+        self.mock_http_client.get.assert_called_once_with(
+            "club-schedule-season/TOR/20232024", web=True
+        )
+
+    def test_get_team_prospects_route_unchanged(self):
+        """get_team_prospects still requests prospects/{team}."""
+        self.mock_http_client.get.return_value = self._response({"prospects": []})
+
+        self.team_client.get_team_prospects("TOR")
+
+        self.mock_http_client.get.assert_called_once_with("prospects/TOR", web=True)
+
+    def test_get_scoreboard_route_unchanged(self):
+        """get_scoreboard still requests scoreboard/{team}/now."""
+        self.mock_http_client.get.return_value = self._response({"games": []})
+
+        self.team_client.get_scoreboard("TOR")
+
+        self.mock_http_client.get.assert_called_once_with(
+            "scoreboard/TOR/now", web=True
+        )
+
+    # -- new: /v1/club-stats-season/{team} and /v1/roster-season/{team} --
+
+    def test_get_club_stats_season_route(self):
+        """get_club_stats_season requests club-stats-season/{team} (raw dict)."""
+        payload = [{"seasonId": 20232024, "gameTypes": [2, 3]}]
+        self.mock_http_client.get.return_value = self._response(payload)
+
+        result = self.team_client.get_club_stats_season("TOR")
+
+        self.mock_http_client.get.assert_called_once_with(
+            "club-stats-season/TOR", web=True
+        )
+        assert result == payload
+
+    def test_get_roster_season_route(self):
+        """get_roster_season requests roster-season/{team} (raw dict)."""
+        payload = [{"id": 20232024}]
+        self.mock_http_client.get.return_value = self._response(payload)
+
+        result = self.team_client.get_roster_season("TOR")
+
+        self.mock_http_client.get.assert_called_once_with(
+            "roster-season/TOR", web=True
+        )
+        assert result == payload
+
+    # -- season normalization through the shared helper -------------------
+
+    def test_get_roster_accepts_dash_season_string(self):
+        """'YYYY-YYYY' season strings are normalized via the shared helper."""
+        self.mock_http_client.get.return_value = self._response(
+            {"forwards": [], "defensemen": [], "goalies": []}
+        )
+
+        self.team_client.get_roster("TOR", "2023-2024")
+
+        self.mock_http_client.get.assert_called_once_with(
+            "roster/TOR/20232024", web=True
+        )
+
+    def test_get_team_schedule_accepts_dash_season_string(self):
+        """'YYYY-YYYY' season strings are normalized for schedule requests."""
+        self.mock_http_client.get.return_value = self._response({"games": []})
+
+        self.team_client.get_team_schedule("TOR", "2023-2024")
+
+        self.mock_http_client.get.assert_called_once_with(
+            "club-schedule-season/TOR/20232024", web=True
+        )
+
+    def test_invalid_season_string_raises_value_error(self):
+        """Invalid 'YYYY-YYYY' strings raise ValueError from the shared helper."""
+        with pytest.raises(ValueError, match="Invalid season format"):
+            self.team_client.get_roster("TOR", "2023-24")
+
+        with pytest.raises(ValueError, match="Invalid season format"):
+            self.team_client.get_team_schedule("TOR", "2022-2024")
+
+
+class TestTeamModelLazyLoading:
+    """Team model lazy loading must use the documented /{lang}/team/id/{id} route."""
+
+    def setup_method(self):
+        """Set up test fixtures before each test method."""
+        self.mock_http_client = Mock()
+        self.mock_http_client.get.return_value = Mock(
+            status_code=200,
+            json=Mock(
+                return_value={
+                    "id": 10,
+                    "fullName": "Toronto Maple Leafs",
+                    "triCode": "TOR",
+                }
+            ),
+        )
+        self.team = Team(self.mock_http_client, 10)
+
+    def test_fetch_data_uses_documented_team_id_route(self):
+        """Team.fetch_data must request 'team/id/{id}' on the Stats API."""
+        self.team.fetch_data()
+
+        self.mock_http_client.get.assert_called_once_with("team/id/10", web=False)
+
+    def test_fetch_data_final_url_matches_stats_registry(self):
+        """The lazy-load URL must equal the stats_team_by_id registry route."""
+        http_client = HttpClient()
+        http_client._client = Mock()
+        http_client._client.get.return_value = self.mock_http_client.get.return_value
+        team = Team(http_client, 10)
+
+        team.fetch_data()
+
+        expected = (
+            f"{STATS_API_URL}"
+            f"{API_PATH['stats_team_by_id'].format(lang='en', team_id=10).lstrip('/')}"
+        )
+        actual = http_client._client.get.call_args.args[0]
+        assert actual == expected == f"{STATS_API_URL}en/team/id/10"
+
+    def test_fetch_data_updates_team_data(self):
+        """fetch_data merges the API payload into the model's data."""
+        self.team.fetch_data()
+
+        assert self.team._data.get("team_id") == 10
+        assert self.team._fetched is True

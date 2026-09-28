@@ -374,8 +374,10 @@ class Team(BaseNHLModel):
         if not self.obj_id:
             raise ValueError("No team ID available to fetch data")
 
-        # Use the NHL Stats API team endpoint
-        response = self._client.get(f"team/{self.obj_id}", web=False)
+        # Use the documented Stats API route /{lang}/team/id/{id}
+        # (registry key ``stats_team_by_id``); intentional duplication of
+        # TeamClient.get_team's route so lazy loading matches the client.
+        response = self._client.get(f"team/id/{self.obj_id}", web=False)
 
         if response.status_code != 200:
             raise Exception(
