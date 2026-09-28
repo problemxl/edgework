@@ -53,9 +53,11 @@ class _FakeResponse:
         self.text = "{}"
 
     def json(self):
+        """Return the configured fake response payload."""
         return self._payload
 
     def raise_for_status(self):
+        """Match the response API without raising an error."""
         return None
 
 
@@ -127,6 +129,7 @@ def _expected_url(entry: ManifestEntry, lang: str | None = None) -> str:
 
 
 def _placeholders(route: str) -> set[str]:
+    """Return placeholder names found in a route template."""
     return {
         field_name
         for _, field_name, _, _ in _FORMATTER.parse(route)
@@ -148,7 +151,8 @@ ALL_KEYS = [entry.registry_key for entry in ALL_ENTRIES]
 class TestCoverageCompleteness:
     """Every documented registry route is implemented and manifested."""
 
-    def test_every_registry_entry_is_in_manifest_or_excluded(self):
+    @staticmethod
+    def test_every_registry_entry_is_in_manifest_or_excluded():
         missing = sorted(
             set(API_PATH) - set(ENDPOINT_MANIFEST) - set(REGISTRY_EXCLUSIONS)
         )
@@ -157,25 +161,29 @@ class TestCoverageCompleteness:
             "(implement them or document the exclusion): " + ", ".join(missing)
         )
 
-    def test_every_manifest_key_exists_in_registry(self):
+    @staticmethod
+    def test_every_manifest_key_exists_in_registry():
         unknown = sorted(set(ENDPOINT_MANIFEST) - set(API_PATH))
         assert unknown == [], (
             "Manifest keys not present in the endpoint registry: "
             + ", ".join(unknown)
         )
 
-    def test_exclusions_reference_registry_keys(self):
+    @staticmethod
+    def test_exclusions_reference_registry_keys():
         unknown = sorted(set(REGISTRY_EXCLUSIONS) - set(API_PATH))
         assert unknown == [], (
             "Exclusions referencing non-existent registry keys: "
             + ", ".join(unknown)
         )
 
-    def test_no_key_is_both_manifested_and_excluded(self):
+    @staticmethod
+    def test_no_key_is_both_manifested_and_excluded():
         overlap = sorted(set(ENDPOINT_MANIFEST) & set(REGISTRY_EXCLUSIONS))
         assert overlap == [], f"Keys both manifested and excluded: {overlap}"
 
-    def test_manifest_size_matches_documented_route_count(self):
+    @staticmethod
+    def test_manifest_size_matches_documented_route_count():
         documented = len(API_PATH) - len(REGISTRY_EXCLUSIONS)
         assert len(ENDPOINT_MANIFEST) == documented
         assert documented > 0

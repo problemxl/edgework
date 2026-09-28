@@ -910,7 +910,7 @@ class TestGoalFrames:
         from edgework.endpoints import API_VERSION
 
         assert API_PATH["play_replay"] == (
-            f"/{{API_VERSION}}/ppt-replay/{{game_id}}/{{event_number}}"
+            "/{API_VERSION}/ppt-replay/{game_id}/{event_number}"
         )
         assert API_VERSION == "v1"
 

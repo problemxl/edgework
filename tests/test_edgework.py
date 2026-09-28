@@ -11,7 +11,6 @@ from edgework.clients.draft_client import DraftClient
 from edgework.clients.game_client import GameClient
 from edgework.clients.glossary_client import GlossaryClient
 from edgework.clients.network_client import NetworkClient
-from edgework.clients.player_client import PlayerClient
 from edgework.clients.playoff_client import PlayoffClient
 from edgework.clients.schedule_client import ScheduleClient
 from edgework.clients.shift_client import ShiftClient
@@ -39,9 +38,10 @@ def _make_player(player_id=8478402, last_name="McDavid"):
 class TestEdgeworkInitialization:
     """Test class for Edgework initialization."""
 
+    @staticmethod
     @patch("edgework.edgework.PlayerClient")
     @patch("edgework.edgework.HttpClient")
-    def test_init_default_user_agent(self, mock_http_client, mock_player_client):
+    def test_init_default_user_agent(mock_http_client, mock_player_client):
         """Test Edgework initialization with default user agent."""
         mock_client_instance = Mock()
         mock_http_client.return_value = mock_client_instance
@@ -59,22 +59,24 @@ class TestEdgeworkInitialization:
         assert isinstance(edgework._goalies, GoalieStats)
         assert isinstance(edgework._team_stats, TeamStats)
 
+    @staticmethod
     @patch("edgework.edgework.PlayerClient")
     @patch("edgework.edgework.HttpClient")
-    def test_init_custom_user_agent(self, mock_http_client, mock_player_client):
+    def test_init_custom_user_agent(mock_http_client, mock_player_client):
         """Test Edgework initialization with custom user agent."""
         custom_user_agent = "MyCustomAgent/2.0"
         mock_client_instance = Mock()
         mock_http_client.return_value = mock_client_instance
 
-        edgework = Edgework(user_agent=custom_user_agent)
+        Edgework(user_agent=custom_user_agent)
 
         # Verify HTTP client was created with custom user agent
         mock_http_client.assert_called_once_with(user_agent=custom_user_agent)
 
+    @staticmethod
     @patch("edgework.edgework.PlayerClient")
     @patch("edgework.edgework.HttpClient")
-    def test_init_exposes_all_clients(self, mock_http_client, mock_player_client):
+    def test_init_exposes_all_clients(mock_http_client, mock_player_client):
         """Test that the facade exposes every dedicated client."""
         mock_client_instance = Mock()
         mock_http_client.return_value = mock_client_instance
@@ -96,10 +98,11 @@ class TestEdgeworkInitialization:
         assert isinstance(edgework.glossary, GlossaryClient)
         assert isinstance(edgework.shifts, ShiftClient)
 
+    @staticmethod
     @patch("edgework.edgework.PlayerClient")
     @patch("edgework.edgework.HttpClient")
     def test_init_glossary_and_shift_clients_share_http_client(
-        self, mock_http_client, mock_player_client
+        mock_http_client, mock_player_client
     ):
         """Glossary and shift clients are wired with the shared HTTP client."""
         mock_client_instance = Mock()
@@ -110,10 +113,11 @@ class TestEdgeworkInitialization:
         assert edgework.glossary._client is mock_client_instance
         assert edgework.shifts._client is mock_client_instance
 
+    @staticmethod
     @patch("edgework.edgework.PlayerClient")
     @patch("edgework.edgework.HttpClient")
     def test_init_creates_stats_models_with_client(
-        self, mock_http_client, mock_player_client
+        mock_http_client, mock_player_client
     ):
         """Test that stats models are initialized with the HTTP client."""
         mock_client_instance = Mock()
@@ -244,17 +248,19 @@ class TestEdgeworkTeamScheduleDelegation:
 class TestEdgeworkContextManager:
     """Test class for Edgework context manager functionality."""
 
+    @staticmethod
     @patch("edgework.edgework.HttpClient")
     @patch("edgework.edgework.PlayerClient")
-    def test_context_manager_enter(self, mock_player_client, mock_http_client):
+    def test_context_manager_enter(mock_player_client, mock_http_client):
         """Test Edgework as context manager __enter__ method."""
         with Edgework() as edgework:
             assert isinstance(edgework, Edgework)
 
+    @staticmethod
     @patch("edgework.edgework.HttpClient")
     @patch("edgework.edgework.PlayerClient")
     def test_context_manager_exit_with_close_method(
-        self, mock_player_client, mock_http_client
+        mock_player_client, mock_http_client
     ):
         """Test Edgework context manager __exit__ calls close if available."""
         mock_client_instance = Mock()
@@ -266,10 +272,11 @@ class TestEdgeworkContextManager:
 
         mock_client_instance.close.assert_called_once()
 
+    @staticmethod
     @patch("edgework.edgework.HttpClient")
     @patch("edgework.edgework.PlayerClient")
     def test_context_manager_exit_without_close_method(
-        self, mock_player_client, mock_http_client
+        mock_player_client, mock_http_client
     ):
         """Test Edgework context manager __exit__ handles client without close method."""
         mock_client_instance = Mock()
@@ -281,9 +288,10 @@ class TestEdgeworkContextManager:
         with Edgework() as edgework:
             assert isinstance(edgework, Edgework)
 
+    @staticmethod
     @patch("edgework.edgework.HttpClient")
     @patch("edgework.edgework.PlayerClient")
-    def test_close_method_directly(self, mock_player_client, mock_http_client):
+    def test_close_method_directly(mock_player_client, mock_http_client):
         """Test calling close method directly."""
         mock_client_instance = Mock()
         mock_client_instance.close = Mock()
@@ -294,10 +302,11 @@ class TestEdgeworkContextManager:
 
         mock_client_instance.close.assert_called_once()
 
+    @staticmethod
     @patch("edgework.edgework.HttpClient")
     @patch("edgework.edgework.PlayerClient")
     def test_close_method_no_close_attribute(
-        self, mock_player_client, mock_http_client
+        mock_player_client, mock_http_client
     ):
         """Test close method when client doesn't have close attribute."""
         mock_client_instance = Mock()
@@ -321,6 +330,7 @@ class TestSeasonValidation:
         ):
             self.edgework = Edgework()
 
+    @staticmethod
     @pytest.mark.parametrize(
         "season_str,expected_int",
         [
@@ -331,10 +341,11 @@ class TestSeasonValidation:
             ("1999-2000", 19992000),
         ],
     )
-    def test_season_conversion_valid_formats(self, season_str, expected_int):
+    def test_season_conversion_valid_formats(season_str, expected_int):
         """Test season string conversion for various valid formats."""
         assert _validate_season_format(season_str) == expected_int
 
+    @staticmethod
     @pytest.mark.parametrize(
         "invalid_season",
         [
@@ -351,28 +362,31 @@ class TestSeasonValidation:
             "-2024",
         ],
     )
-    def test_season_conversion_invalid_formats(self, invalid_season):
+    def test_season_conversion_invalid_formats(invalid_season):
         """Test season string conversion for various invalid formats."""
         with pytest.raises(
             ValueError, match="Invalid season format. Expected 'YYYY-YYYY'"
         ):
             _validate_season_format(invalid_season)
 
-    def test_season_conversion_non_string(self):
+    @staticmethod
+    def test_season_conversion_non_string():
         """Test that non-string seasons are rejected."""
         with pytest.raises(
             ValueError, match="Invalid season format. Expected 'YYYY-YYYY'"
         ):
             _validate_season_format(20232024)
 
-    def test_season_conversion_mismatched_years(self):
+    @staticmethod
+    def test_season_conversion_mismatched_years():
         """Test that non-consecutive years are rejected."""
         with pytest.raises(
             ValueError, match="Invalid season format. Expected 'YYYY-YYYY'"
         ):
             _validate_season_format("2022-2024")
 
-    def test_roster_uses_shared_season_helper(self):
+    @staticmethod
+    def test_roster_uses_shared_season_helper():
         """Test that the facade converts seasons through the shared helper."""
         with (
             patch("edgework.edgework.HttpClient"),
@@ -390,10 +404,11 @@ class TestSeasonValidation:
 class TestEdgeworkIntegration:
     """Integration tests for Edgework class functionality."""
 
+    @staticmethod
     @patch("edgework.edgework.PlayerClient")
     @patch("edgework.edgework.HttpClient")
     def test_multiple_method_calls_same_instance(
-        self, mock_http_client, mock_player_client
+        mock_http_client, mock_player_client
     ):
         """Test that multiple method calls work on the same instance."""
         mock_client_instance = Mock()
@@ -417,10 +432,11 @@ class TestEdgeworkIntegration:
         assert standings_result is edgework.standings
         assert stats_result is edgework.stats
 
+    @staticmethod
     @patch("edgework.edgework.PlayerClient")
     @patch("edgework.edgework.HttpClient")
     def test_client_shared_across_stats_models(
-        self, mock_http_client, mock_player_client
+        mock_http_client, mock_player_client
     ):
         """Test that the HTTP client is shared across all stats models."""
         mock_client_instance = Mock()
@@ -434,7 +450,8 @@ class TestEdgeworkIntegration:
         assert edgework._team_stats._client == mock_client_instance
         assert edgework._client == mock_client_instance
 
-    def test_stats_models_are_different_instances(self):
+    @staticmethod
+    def test_stats_models_are_different_instances():
         """Test that stats models are different instances."""
         with (
             patch("edgework.edgework.HttpClient"),
@@ -446,10 +463,11 @@ class TestEdgeworkIntegration:
             assert edgework._goalies is not edgework._team_stats
             assert edgework._team_stats is not edgework._skaters
 
+    @staticmethod
     @patch("edgework.edgework.PlayerClient")
     @patch("edgework.edgework.HttpClient")
     def test_error_handling_preserves_instance_state(
-        self, mock_http_client, mock_player_client
+        mock_http_client, mock_player_client
     ):
         """Test that errors in one method don't affect instance state."""
         mock_client_instance = Mock()
@@ -470,9 +488,10 @@ class TestEdgeworkIntegration:
 class TestEdgeworkTypeHints:
     """Test class for type hints and return types."""
 
+    @staticmethod
     @patch("edgework.edgework.PlayerClient")
     @patch("edgework.edgework.HttpClient")
-    def test_get_all_players_return_type(self, mock_http_client, mock_player_client):
+    def test_get_all_players_return_type(mock_http_client, mock_player_client):
         """Test that get_all_players returns a list of Player instances."""
         mock_player_client.return_value.get_active_players.return_value = [
             _make_player()
@@ -484,9 +503,10 @@ class TestEdgeworkTypeHints:
         assert isinstance(result, list)
         assert all(isinstance(player, Player) for player in result)
 
+    @staticmethod
     @patch("edgework.edgework.PlayerClient")
     @patch("edgework.edgework.HttpClient")
-    def test_get_player_return_type(self, mock_http_client, mock_player_client):
+    def test_get_player_return_type(mock_http_client, mock_player_client):
         """Test that get_player returns a Player instance."""
         mock_player_client.return_value.get_player.return_value = _make_player()
 
@@ -495,9 +515,10 @@ class TestEdgeworkTypeHints:
 
         assert isinstance(result, Player)
 
+    @staticmethod
     @patch("edgework.edgework.PlayerClient")
     @patch("edgework.edgework.HttpClient")
-    def test_get_teams_return_type(self, mock_http_client, mock_player_client):
+    def test_get_teams_return_type(mock_http_client, mock_player_client):
         """Test that get_teams returns whatever the team client produces."""
         with patch("edgework.edgework.TeamClient") as mock_team_client:
             mock_team_client.return_value.get_teams.return_value = [Mock(spec=Team)]
@@ -507,9 +528,10 @@ class TestEdgeworkTypeHints:
 
             assert isinstance(result, list)
 
+    @staticmethod
     @patch("edgework.edgework.PlayerClient")
     @patch("edgework.edgework.HttpClient")
-    def test_get_roster_return_type(self, mock_http_client, mock_player_client):
+    def test_get_roster_return_type(mock_http_client, mock_player_client):
         """Test that get_roster returns whatever the team client produces."""
         with patch("edgework.edgework.TeamClient") as mock_team_client:
             mock_team_client.return_value.get_roster.return_value = Mock(spec=Roster)
@@ -519,7 +541,8 @@ class TestEdgeworkTypeHints:
 
             assert result is mock_team_client.return_value.get_roster.return_value
 
-    def test_context_manager_return_type(self):
+    @staticmethod
+    def test_context_manager_return_type():
         """Test that context manager returns Edgework instance."""
         with (
             patch("edgework.edgework.HttpClient"),
