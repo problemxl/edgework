@@ -5,6 +5,7 @@ from typing import Dict, List, Optional
 
 from edgework.http_client import HttpClient
 from edgework.models.player import Player
+from edgework.utilities import validate_season_format
 
 
 def api_to_dict(data: dict) -> dict:
@@ -253,14 +254,9 @@ class PlayerClient:
             - Home/away splits
             - Monthly splits
         """
-        # Convert season format (e.g., "2023-2024" -> "20232024")
-        try:
-            start_year, end_year = season.split("-")
-            season_id = f"{start_year}{end_year}"
-        except (ValueError, AttributeError):
-            raise ValueError(
-                f"Invalid season format: '{season}'. Expected format: 'YYYY-YYYY'"
-            )
+        # Shared season normalization ("2023-2024" -> 20232024); renders
+        # identically in the route while validation stays centralized.
+        season_id = validate_season_format(season)
 
         response = self.client.get(
             f"player/{player_id}/game-log/{season_id}/{game_type}", web=True

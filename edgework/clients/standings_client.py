@@ -6,6 +6,7 @@ from typing import Union
 import edgework.utilities as utilities
 from edgework.http_client import HttpClient
 from edgework.models.standings import Seeding, Standings
+from edgework.utilities import validate_season_format
 
 
 class StandingClient:
@@ -112,13 +113,8 @@ class StandingClient:
         Returns:
             Standings object containing season standings data.
         """
-        try:
-            start_year, end_year = season.split("-")
-            season_id = int(f"{start_year}{end_year}")
-        except (ValueError, AttributeError):
-            raise ValueError(
-                f"Invalid season format: '{season}'. Expected format: 'YYYY-YYYY'"
-            )
+        # Shared season normalization ("2023-2024" -> 20232024 int).
+        season_id = validate_season_format(season)
 
         response = self._client.get(
             "standings-season",

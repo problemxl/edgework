@@ -3,6 +3,7 @@
 from typing import Dict, List, Optional
 
 from edgework.http_client import HttpClient
+from edgework.utilities import validate_season_format
 
 
 class PlayoffClient:
@@ -48,13 +49,8 @@ class PlayoffClient:
             - Current playoff round
         """
         if season:
-            try:
-                start_year, end_year = season.split("-")
-                season_id = f"{start_year}{end_year}"
-            except (ValueError, AttributeError):
-                raise ValueError(
-                    f"Invalid season format: '{season}'. Expected format: 'YYYY-YYYY'"
-                )
+            # Shared season normalization ("2023-2024" -> 20232024).
+            season_id = validate_season_format(season)
             response = self._client.get(
                 f"playoff-series/carousel/{season_id}/", web=True
             )
@@ -78,13 +74,8 @@ class PlayoffClient:
             - Venue details
             - Series status
         """
-        try:
-            start_year, end_year = season.split("-")
-            season_id = f"{start_year}{end_year}"
-        except (ValueError, AttributeError):
-            raise ValueError(
-                f"Invalid season format: '{season}'. Expected format: 'YYYY-YYYY'"
-            )
+        # Shared season normalization ("2023-2024" -> 20232024).
+        season_id = validate_season_format(season)
 
         response = self._client.get(
             f"schedule/playoff-series/{season_id}/{series_letter}/", web=True
@@ -116,7 +107,10 @@ class PlayoffClient:
         Returns:
             List of series dictionaries for that round
         """
-        bracket = self.get_playoff_bracket(int(season.split("-")[1]))
+        # Shared season normalization ("2023-2024" -> 20232024); the bracket
+        # route takes the season's end year.
+        season_id = validate_season_format(season)
+        bracket = self.get_playoff_bracket(season_id % 10000)
         series_list = []
 
         # Navigate bracket structure based on round

@@ -86,8 +86,13 @@ class Game(BaseNHLModel):
 
     @classmethod
     def get_game(cls, game_id: int, client: HttpClient):
-        response = client.get(f"gamecenter/{game_id}/boxscore", web=True)
-        data = response.json()
+        # Intentional delegation: GameClient owns the gamecenter boxscore
+        # route (registry key ``game_boxscore``); this classmethod reuses it
+        # so both paths issue identical requests. The model keeps its own
+        # (smaller) field mapping via ``from_api``.
+        from edgework.clients.game_client import GameClient
+
+        data = GameClient(client).get_game_boxscore(game_id)
         return cls.from_api(data, client)
 
     def fetch_data(self):
@@ -104,8 +109,13 @@ class Game(BaseNHLModel):
         if not self.obj_id:
             raise ValueError("No game ID available to fetch data")
 
-        response = self._client.get(f"gamecenter/{self.obj_id}/boxscore", web=True)
-        data = response.json()
+        # Intentional delegation: GameClient owns the gamecenter boxscore
+        # route (registry key ``game_boxscore``); lazy refresh reuses it so
+        # model and client construct identical requests. Local import avoids
+        # the models.game <-> game_client import cycle.
+        from edgework.clients.game_client import GameClient
+
+        data = GameClient(self._client).get_game_boxscore(self.obj_id)
 
         game_dict = {
             "game_id": data.get("id"),
@@ -135,12 +145,14 @@ class Game(BaseNHLModel):
         return ShiftClient(self._client).get_shifts(self.game_id)
 
     def _get_play_by_play(self):
-        """Get the play-by-play data for the game."""
-        response = self._client.get(
-            f"gamecenter/{self.game_id}/play-by-play",
-            web=True,
-        )
-        data = response.json()
-        play_by_play = PlayByPlay.from_api(data, self._client)
-        self._play_by_play = play_by_play
-        return play_by_play
+        """Get the play-by-play data for the game.
+
+        Intentional delegation: GameClient owns the gamecenter play-by-play
+        route (registry key ``play_by_play``); the model produces an
+        identical request through it. The WSC play-by-play is a distinct
+        route (``GameClient.get_wsc_play_by_play``).
+        """
+        # Local import avoids the models.game <-> game_client import cycle.
+        from edgework.clients.game_client import GameClient
+
+        return GameClient(self._client).get_play_by_play(self.game_id)

@@ -4,6 +4,7 @@ from typing import Dict, List, Optional
 
 from edgework.http_client import HttpClient
 from edgework.models.draft import Draft, Draftee, DraftRanking
+from edgework.utilities import validate_season_format
 
 
 class DraftClient:
@@ -31,13 +32,8 @@ class DraftClient:
             Draft object containing draft picks data.
         """
         if season:
-            try:
-                start_year, end_year = season.split("-")
-                season_id = f"{start_year}{end_year}"
-            except (ValueError, AttributeError):
-                raise ValueError(
-                    f"Invalid season format: '{season}'. Expected format: 'YYYY-YYYY'"
-                )
+            # Shared season normalization ("2023-2024" -> 20232024).
+            season_id = validate_season_format(season)
             path = f"draft/picks/{season_id}/{round_num}"
         else:
             path = "draft/picks/now"
@@ -67,13 +63,8 @@ class DraftClient:
             DraftRanking object containing draft rankings data.
         """
         if season:
-            try:
-                start_year, end_year = season.split("-")
-                season_id = f"{start_year}{end_year}"
-            except (ValueError, AttributeError):
-                raise ValueError(
-                    f"Invalid season format: '{season}'. Expected format: 'YYYY-YYYY'"
-                )
+            # Shared season normalization ("2023-2024" -> 20232024).
+            season_id = validate_season_format(season)
             path = f"draft/rankings/{season_id}/{prospect_category}"
         else:
             path = "draft/rankings/now"
