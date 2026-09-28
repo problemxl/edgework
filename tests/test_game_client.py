@@ -7,7 +7,7 @@ import pytest
 
 from edgework.clients.game_client import GameClient
 from edgework.clients.shift_client import ShiftClient
-from edgework.const import BASE_WEB_URL, STATS_API_URL
+from edgework.const import BASE_WEB_URL
 from edgework.endpoints import API_PATH, format_endpoint
 from edgework.http_client import HttpClient
 from edgework.models.game import Game
@@ -447,7 +447,8 @@ class TestGameClientPartnerGame:
 class TestGameClientShiftDelegation:
     """GameClient shift methods must delegate to the canonical ShiftClient."""
 
-    def test_get_shifts_delegates_to_shift_client(self):
+    @staticmethod
+    def test_get_shifts_delegates_to_shift_client():
         """get_shifts issues the canonical shiftcharts request."""
         http_client = Mock(spec=HttpClient)
         http_client.get.return_value = Mock(
@@ -468,7 +469,8 @@ class TestGameClientShiftDelegation:
         assert isinstance(shifts[0], Shift)
         assert shifts[0].player_id == 8478402
 
-    def test_get_shifts_request_identical_to_shift_client(self):
+    @staticmethod
+    def test_get_shifts_request_identical_to_shift_client():
         """GameClient and ShiftClient must construct byte-identical requests."""
         game_http = Mock(spec=HttpClient)
         game_http.get.return_value = Mock(json=Mock(return_value={"data": []}))

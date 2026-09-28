@@ -2,7 +2,6 @@
 
 from unittest.mock import Mock, patch
 
-import pytest
 
 from edgework.clients.glossary_client import GlossaryClient
 from edgework.const import STATS_API_URL
@@ -55,7 +54,8 @@ class TestGlossaryClient:
 
         self.http_client.get.assert_called_once_with("glossary", web=False, lang="fr")
 
-    def test_final_url_matches_stats_registry(self):
+    @staticmethod
+    def test_final_url_matches_stats_registry():
         """End-to-end URL must equal the stats_glossary registry route."""
         http_client = HttpClient()
         http_client._client = Mock()
@@ -74,7 +74,8 @@ class TestGlossaryClient:
 class TestGlossaryFacadeExposure:
     """The Edgework facade must expose a working GlossaryClient."""
 
-    def test_facade_exposes_glossary_client(self):
+    @staticmethod
+    def test_facade_exposes_glossary_client():
         """edgework.glossary is a GlossaryClient sharing the facade HTTP client."""
         with patch("edgework.edgework.HttpClient") as mock_http_client:
             edgework = Edgework()
@@ -82,7 +83,8 @@ class TestGlossaryFacadeExposure:
             assert isinstance(edgework.glossary, GlossaryClient)
             assert edgework.glossary._client is mock_http_client.return_value
 
-    def test_facade_glossary_returns_glossary_model(self):
+    @staticmethod
+    def test_facade_glossary_returns_glossary_model():
         """Requests through the facade produce a Glossary with Term entries."""
         with patch("edgework.edgework.HttpClient") as mock_http_client:
             http_instance = mock_http_client.return_value
