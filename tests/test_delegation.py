@@ -70,6 +70,7 @@ class TestGameModelDelegation:
     """Game model access paths construct identical requests to clients."""
 
     def test_game_shifts_route_matches_shift_client(self):
+        """Verify test game shifts route matches shift client."""
         model_client = _mock_http_client(SHIFT_PAYLOAD)
         client_client = _mock_http_client(SHIFT_PAYLOAD)
 
@@ -88,6 +89,7 @@ class TestGameModelDelegation:
         assert _captured_url(model_client) == expected
 
     def test_game_play_by_play_route_matches_game_client(self):
+        """Verify test game play by play route matches game client."""
         model_client = _mock_http_client({})
         client_client = _mock_http_client({})
 
@@ -101,6 +103,7 @@ class TestGameModelDelegation:
         )
 
     def test_game_fetch_data_route_matches_game_client_boxscore(self):
+        """Verify test game fetch data route matches game client boxscore."""
         model_client = _mock_http_client(BOXSCORE_PAYLOAD)
         client_client = _mock_http_client(BOXSCORE_PAYLOAD)
 
@@ -114,6 +117,7 @@ class TestGameModelDelegation:
         )
 
     def test_game_get_game_classmethod_route_matches_game_client(self):
+        """Verify test game get game classmethod route matches game client."""
         model_client = _mock_http_client(BOXSCORE_PAYLOAD)
         client_client = _mock_http_client(BOXSCORE_PAYLOAD)
 
@@ -123,6 +127,7 @@ class TestGameModelDelegation:
         assert _captured_url(model_client) == _captured_url(client_client)
 
     def test_fetch_data_and_get_game_are_equivalent(self):
+        """Verify test fetch data and get game are equivalent."""
         model_client = _mock_http_client(BOXSCORE_PAYLOAD)
         game = Game(model_client, obj_id=GAME_ID)
         game.fetch_data()
@@ -136,6 +141,7 @@ class TestSeasonNormalizationMigration:
     """Migrated clients build identical routes via the shared helper."""
 
     def test_player_game_log_route_unchanged(self):
+        """Verify test player game log route unchanged."""
         http_client = _mock_http_client({})
         PlayerClient(http_client).get_player_game_logs(8478402, "2023-2024")
 
@@ -147,6 +153,7 @@ class TestSeasonNormalizationMigration:
         )
 
     def test_playoff_carousel_route_unchanged(self):
+        """Verify test playoff carousel route unchanged."""
         http_client = _mock_http_client({})
         PlayoffClient(http_client).get_playoff_series_carousel("2023-2024")
 
@@ -155,6 +162,7 @@ class TestSeasonNormalizationMigration:
         )
 
     def test_playoff_carousel_now_has_no_season(self):
+        """Verify test playoff carousel now has no season."""
         http_client = _mock_http_client({})
         PlayoffClient(http_client).get_playoff_series_carousel()
 
@@ -163,6 +171,7 @@ class TestSeasonNormalizationMigration:
         )
 
     def test_playoff_series_schedule_route_unchanged(self):
+        """Verify test playoff series schedule route unchanged."""
         http_client = _mock_http_client({})
         PlayoffClient(http_client).get_playoff_series_schedule("2023-2024", "A")
 
@@ -171,6 +180,7 @@ class TestSeasonNormalizationMigration:
         )
 
     def test_playoff_series_by_round_uses_season_end_year(self):
+        """Verify test playoff series by round uses season end year."""
         http_client = _mock_http_client({"rounds": []})
         series = PlayoffClient(http_client).get_playoff_series_by_round(
             "2019-2020", 1
@@ -182,6 +192,7 @@ class TestSeasonNormalizationMigration:
         assert series == []
 
     def test_draft_picks_route_matches_documentation(self):
+        """Verify test draft picks route matches documentation."""
         http_client = _mock_http_client(
             {"draftYear": 2024, "rounds": [], "picks": []}
         )
@@ -194,6 +205,7 @@ class TestSeasonNormalizationMigration:
         )
 
     def test_draft_rankings_route_matches_documentation(self):
+        """Verify test draft rankings route matches documentation."""
         http_client = _mock_http_client({"rankings": []})
         DraftClient(http_client).get_draft_rankings(season="2023-2024")
 
@@ -204,6 +216,7 @@ class TestSeasonNormalizationMigration:
         )
 
     def test_standings_season_query_unchanged(self):
+        """Verify test standings season query unchanged."""
         http_client = _mock_http_client({"data": []})
         StandingClient(http_client).get_standings_for_season("2023-2024")
 

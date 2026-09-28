@@ -105,6 +105,7 @@ class TestConfigLazyFetch:
         assert config.title == "from server"
 
     def test_non_dict_payload_rejected(self):
+        """Verify test non dict payload rejected."""
         http_client = _mock_http_client(["unexpected", "list"])
         config = Config(http_client)
 
@@ -116,6 +117,7 @@ class TestConfigNotLocalRegistry:
     """The local API_PATH registry must not be stored as server config."""
 
     def test_registry_keys_not_stored(self):
+        """Verify test registry keys not stored."""
         http_client = _mock_http_client(CONFIG_PAYLOAD)
         config = Config(http_client)
         config.fetch_data()
@@ -126,6 +128,7 @@ class TestConfigNotLocalRegistry:
         assert "api_url" not in config._data
 
     def test_local_registry_dict_not_referenced_from_data(self):
+        """Verify test local registry dict not referenced from data."""
         from edgework.endpoints import API_PATH
 
         http_client = _mock_http_client(CONFIG_PAYLOAD)
@@ -141,6 +144,7 @@ class TestConfigDelegation:
 
     @pytest.mark.parametrize("lang", ["en", "fr", "fi"])
     def test_model_and_client_urls_are_identical(self, lang):
+        """Verify test model and client urls are identical."""
         model_client = _mock_http_client(CONFIG_PAYLOAD)
         client_client = _mock_http_client(CONFIG_PAYLOAD)
 
