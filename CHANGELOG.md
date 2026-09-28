@@ -5,6 +5,20 @@ All notable changes to Edgework project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0] - 2026-09-28
+
+### Added
+- Complete NHL endpoint coverage, backed by a registry-to-client coverage manifest and contract tests.
+- `EdgeClient`, exposed as `client.edge`, with NHL Edge landing, detail, comparison, detail-metric, and top-10 endpoints.
+- Goal Visualizer support through `get_goal_frames()`, plus puck and player tracking frame helpers.
+- NHL Edge endpoint research documentation and expanded API/client usage documentation.
+
+### Changed
+- Extended existing NHL clients, endpoint routing, HTTP handling, and models to support the complete endpoint surface.
+
+### Tests
+- Full suite: 967 passed, 9 skipped.
+
 ## [0.10.0] - 2025-02-16
 
 ### Added
