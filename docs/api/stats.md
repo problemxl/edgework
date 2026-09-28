@@ -4,15 +4,15 @@ Statistical functionality in Edgework.
 
 ## Statistics Methods
 
-::: edgework.Edgework.skater_stats
+::: edgework.clients.stats_client.StatsClient.get_skaters_stats
     options:
       show_root_heading: false
 
-::: edgework.Edgework.goalie_stats
+::: edgework.clients.stats_client.StatsClient.get_goalies_stats
     options:
       show_root_heading: false
 
-::: edgework.Edgework.team_stats
+::: edgework.clients.stats_client.StatsClient.get_team_stats
     options:
       show_root_heading: false
 

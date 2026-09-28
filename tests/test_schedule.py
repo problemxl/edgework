@@ -619,11 +619,8 @@ class TestClubScheduleRoutes:
 
         schedule_client.get_schedule_for_team_for_week("TOR", "2023-11-10")
         week_url = http_client._client.get.call_args.args[0]
-        expected_week = (
-            f"{BASE_WEB_URL}"
-            f"{API_PATH['club_schedule_week'].format(
-                API_VERSION='v1', team='TOR', date='2023-11-10'
-            )}"
+        expected_week = BASE_WEB_URL + API_PATH["club_schedule_week"].format(
+            API_VERSION="v1", team="TOR", date="2023-11-10"
         )
         assert week_url == expected_week == (
             f"{BASE_WEB_URL}/v1/club-schedule/TOR/week/2023-11-10"
@@ -632,11 +629,8 @@ class TestClubScheduleRoutes:
         http_client._client.get.reset_mock()
         schedule_client.get_schedule_for_team_for_month("TOR", "2023-11")
         month_url = http_client._client.get.call_args.args[0]
-        expected_month = (
-            f"{BASE_WEB_URL}"
-            f"{API_PATH['club_schedule_month'].format(
-                API_VERSION='v1', team='TOR', month='2023-11'
-            )}"
+        expected_month = BASE_WEB_URL + API_PATH["club_schedule_month"].format(
+            API_VERSION="v1", team="TOR", month="2023-11"
         )
         assert month_url == expected_month == (
             f"{BASE_WEB_URL}/v1/club-schedule/TOR/month/2023-11"
