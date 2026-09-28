@@ -139,6 +139,22 @@ class TestBackwardCompatibility:
         assert _last_request_url(client) == "https://example.com/data"
         assert client._client.get.call_args.kwargs["params"] == {"q": "1"}
 
+    def test_get_raw_forwards_headers(self, client):
+        """Sprites-host calls need Referer: https://www.nhl.com/ (403 without)."""
+        client.get_raw(
+            "https://wsr.nhle.com/sprites/20252026/2025020740/ev95.json",
+            headers={"Referer": "https://www.nhl.com/"},
+        )
+        assert client._client.get.call_args.kwargs["headers"] == {
+            "Referer": "https://www.nhl.com/"
+        }
+
+    def test_get_raw_headers_default_to_none(self, client):
+        """Omitting headers leaves the request headers untouched (httpx merges
+        per-request headers over the client defaults when provided)."""
+        client.get_raw("https://example.com/data")
+        assert client._client.get.call_args.kwargs["headers"] is None
+
     def test_query_params_not_embedded_in_route_for_new_callers(self, client):
         client.get("players", params={"start": 0, "limit": 100})
         url = _last_request_url(client)

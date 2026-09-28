@@ -165,6 +165,12 @@ class GameClient:
 
         Targets the documented ``/ppt-replay/{game-id}/{event-number}`` route.
 
+        Delegation note: following ``goal.pptReplayUrl`` from this metadata
+        to the actual tracking frames lives in
+        :meth:`edgework.clients.edge_client.EdgeClient.get_goal_frames`
+        (the sprites host needs a Referer header); this method stays the
+        metadata-only owner of the route.
+
         Args:
             game_id: The NHL game ID.
             event_number: The event number within the game.

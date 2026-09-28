@@ -95,7 +95,10 @@ class HttpClient:
         return response
 
     def get_raw(
-        self, url: str, params: Optional[Dict[str, Any]] = None
+        self,
+        url: str,
+        params: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, str]] = None,
     ) -> httpx.Response:
         """
         Make a GET request to a raw URL.
@@ -103,11 +106,15 @@ class HttpClient:
         Args:
             url: Full URL to request
             params: Optional query parameters
+            headers: Optional headers merged over the client defaults
+                (per-request values win on conflicts). The NHL sprites host
+                (``wsr.nhle.com``) requires ``Referer: https://www.nhl.com/``
+                — a user agent alone is answered with 403.
 
         Returns:
             httpx.Response object
         """
-        response = self._client.get(url, params=params)
+        response = self._client.get(url, params=params, headers=headers)
         response.raise_for_status()
         return response
 

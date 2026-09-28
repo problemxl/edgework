@@ -10,6 +10,12 @@ Covers Task E2 scope: the ten view-detail routes (including the plural
 ``team-zone-time-details``) and eight top-10 leaderboards with their
 validated path parameters — notably the goalie route's metric-first order
 and the three-parameter shot-location / skating-distance forms.
+
+Covers Task E3 scope: the Goal Visualizer — ``get_goal_frames`` chains the
+``ppt-replay`` metadata route to the sprites host (which requires the
+``Referer: https://www.nhl.com/`` header and 403s without it), returns
+``None`` when ``pptReplayUrl`` is absent, and the pure frame helpers
+``puck_frames`` / ``player_frames`` (puck entity key "1", inch coordinates).
 """
 
 from unittest.mock import Mock, patch
@@ -20,14 +26,19 @@ from edgework.clients.edge_client import (
     DISTANCE_PARAM,
     DISTANCE_SORT,
     GOALIE_METRIC,
+    PUCK_ENTITY_KEY,
     SHOT_LOCATION_FILTER,
     SHOT_METRIC,
     SITUATION,
     SORT,
+    SPRITES_REFERER,
     ZONE,
     EdgeClient,
     _edge_path,
+    _ppt_replay_path,
     _validate_choice,
+    player_frames,
+    puck_frames,
 )
 from edgework.edgework import Edgework
 from edgework.endpoints import API_PATH, format_endpoint
@@ -37,6 +48,9 @@ SEASON = "20252026"
 PLAYER_ID = 8478402  # Connor McDavid
 GOALIE_ID = 8481740
 TEAM_ID = 14  # Tampa Bay
+GAME_ID = 2025020740  # BUF @ EDM, 2025-26 regular season
+EVENT_ID = 95
+SPRITES_URL = f"https://wsr.nhle.com/sprites/{SEASON}/{GAME_ID}/ev{EVENT_ID}.json"
 
 
 def _response(payload):
@@ -54,6 +68,68 @@ LANDING_PAYLOAD = {
         {"id": 20252026, "gameTypes": [2, 3]},
     ],
 }
+
+PPT_METADATA = {
+    "gameId": GAME_ID,
+    "goal": {
+        "eventId": EVENT_ID,
+        "pptReplayUrl": SPRITES_URL,
+    },
+}
+
+# Sprite frame fixture in the exact shape served by wsr.nhle.com: one dict
+# per frame with a decisecond ``timeStamp`` and an ``onIce`` entity mapping
+# keyed "1" for the puck and "{teamId digit}{sweaterNumber}" for players.
+# Coordinates are inches on the 2400×1020 rink grid.
+TRACKING_FRAMES = [
+    {
+        "timeStamp": 17685233789,
+        "onIce": {
+            "1": {
+                "id": 1,
+                "playerId": "",
+                "x": 2352.46,
+                "y": 390.10,
+                "sweaterNumber": "",
+                "teamId": "",
+                "teamAbbrev": "",
+            },
+            "7006": {
+                "id": 7006,
+                "playerId": 8484145,
+                "x": 2364.78,
+                "y": 713.54,
+                "sweaterNumber": 6,
+                "teamId": 7,
+                "teamAbbrev": "BUF",
+            },
+            "22097": {
+                "id": 22097,
+                "playerId": PLAYER_ID,
+                "x": 1800.0,
+                "y": 500.0,
+                "sweaterNumber": 97,
+                "teamId": 22,
+                "teamAbbrev": "EDM",
+            },
+        },
+    },
+    {
+        "timeStamp": 17685233799,
+        "onIce": {
+            "1": {"id": 1, "playerId": "", "x": 2330.0, "y": 388.0},
+            "7006": {
+                "id": 7006,
+                "playerId": 8484145,
+                "x": 2360.0,
+                "y": 710.0,
+                "sweaterNumber": 6,
+                "teamId": 7,
+                "teamAbbrev": "BUF",
+            },
+        },
+    },
+]
 
 
 @pytest.fixture
@@ -691,6 +767,131 @@ class TestCompareFanOut:
             edge.compare("referee", 1, 2)
         # No request may be emitted for an invalid entity.
         edge._client.get.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# Goal Visualizer: get_goal_frames (Task E3)
+# ---------------------------------------------------------------------------
+
+
+class TestGoalFrames:
+    """``get_goal_frames`` chains ppt-replay metadata → sprites frames."""
+
+    def test_full_pipeline_sends_referer(self, mock_client, edge):
+        mock_client.get.return_value = _response(PPT_METADATA)
+        mock_client.get_raw.return_value = _response(TRACKING_FRAMES)
+
+        result = edge.get_goal_frames(GAME_ID, EVENT_ID)
+
+        # Step 1: metadata via the canonical play_replay route.
+        mock_client.get.assert_called_once_with(
+            f"ppt-replay/{GAME_ID}/{EVENT_ID}", web=True, params={}
+        )
+        # Step 2: the sprites host 403s without the Referer header.
+        mock_client.get_raw.assert_called_once_with(
+            SPRITES_URL, headers={"Referer": SPRITES_REFERER}
+        )
+        assert result == TRACKING_FRAMES
+
+    def test_returns_none_when_ppt_replay_url_absent(self, mock_client, edge):
+        """Preseason/no-coverage goals omit pptReplayUrl — return None."""
+        mock_client.get.return_value = _response(
+            {"gameId": GAME_ID, "goal": {"eventId": EVENT_ID}}
+        )
+
+        assert edge.get_goal_frames(GAME_ID, EVENT_ID) is None
+        mock_client.get.assert_called_once()
+        mock_client.get_raw.assert_not_called()
+
+    def test_returns_none_for_empty_payload(self, mock_client, edge):
+        mock_client.get.return_value = _response({})
+
+        assert edge.get_goal_frames(GAME_ID, EVENT_ID) is None
+        mock_client.get_raw.assert_not_called()
+
+    def test_returns_none_for_empty_url(self, mock_client, edge):
+        mock_client.get.return_value = _response({"goal": {"pptReplayUrl": ""}})
+
+        assert edge.get_goal_frames(GAME_ID, EVENT_ID) is None
+        mock_client.get_raw.assert_not_called()
+
+    def test_returns_none_for_non_dict_payload(self, mock_client, edge):
+        mock_client.get.return_value = _response([])
+
+        assert edge.get_goal_frames(GAME_ID, EVENT_ID) is None
+        mock_client.get_raw.assert_not_called()
+
+    def test_ppt_replay_path_comes_from_the_registry(self):
+        """_ppt_replay_path reuses the play_replay entry (no duplicated route)."""
+        assert _ppt_replay_path(GAME_ID, EVENT_ID) == f"ppt-replay/{GAME_ID}/{EVENT_ID}"
+        from edgework.endpoints import API_VERSION
+
+        assert API_PATH["play_replay"] == (
+            f"/{{API_VERSION}}/ppt-replay/{{game_id}}/{{event_number}}"
+        )
+        assert API_VERSION == "v1"
+
+
+# ---------------------------------------------------------------------------
+# Goal Visualizer: pure frame helpers (Task E3)
+# ---------------------------------------------------------------------------
+
+
+class TestFrameHelpers:
+    """``puck_frames`` / ``player_frames`` parse the sprite frame format."""
+
+    def test_puck_frames_extracts_entity_key_one(self):
+        assert puck_frames(TRACKING_FRAMES) == [
+            (17685233789, 2352.46, 390.10),
+            (17685233799, 2330.0, 388.0),
+        ]
+
+    def test_puck_frames_empty_input(self):
+        assert puck_frames([]) == []
+
+    def test_puck_frames_skips_frame_without_puck(self):
+        frames = [{"timeStamp": 1, "onIce": {}}, TRACKING_FRAMES[0]]
+
+        assert puck_frames(frames) == [(17685233789, 2352.46, 390.10)]
+
+    def test_puck_frames_handles_missing_on_ice(self):
+        assert puck_frames([{"timeStamp": 1}]) == []
+
+    def test_puck_entity_key_is_one(self):
+        assert PUCK_ENTITY_KEY == "1"
+
+    def test_player_frames_returns_all_players(self):
+        tracks = player_frames(TRACKING_FRAMES)
+
+        assert set(tracks) == {8484145, PLAYER_ID}
+        assert tracks[8484145] == [
+            (17685233789, 2364.78, 713.54),
+            (17685233799, 2360.0, 710.0),
+        ]
+        assert tracks[PLAYER_ID] == [(17685233789, 1800.0, 500.0)]
+
+    def test_player_frames_single_player(self):
+        assert player_frames(TRACKING_FRAMES, player_id=8484145) == [
+            (17685233789, 2364.78, 713.54),
+            (17685233799, 2360.0, 710.0),
+        ]
+
+    def test_player_frames_unknown_player_is_empty_list(self):
+        assert player_frames(TRACKING_FRAMES, player_id=1234567) == []
+
+    def test_player_frames_exclude_the_puck(self):
+        """The puck has no playerId — it must not appear in player tracks."""
+        tracks = player_frames(TRACKING_FRAMES)
+
+        assert PUCK_ENTITY_KEY not in {str(pid) for pid in tracks}
+        assert all(frames for frames in tracks.values())
+
+    def test_coordinates_are_inch_grid(self):
+        """Fixture sanity: coordinates stay inside the 2400×1020 inch rink."""
+        for frame in TRACKING_FRAMES:
+            for entity in frame["onIce"].values():
+                assert 0 <= entity["x"] <= 2400
+                assert 0 <= entity["y"] <= 1020
 
 
 # ---------------------------------------------------------------------------
