@@ -269,9 +269,11 @@ class TestEdgeRegistry:
         ],
     )
     def test_edge_routes_registered(self, key, expected):
+        """Verify test edge routes registered."""
         assert API_PATH[key] == expected
 
-    def test_team_routes_use_team_id_placeholder(self):
+    @staticmethod
+    def test_team_routes_use_team_id_placeholder():
         """Skater/goalie carry {player-id}; team routes carry {team-id}."""
         assert "{player-id}" in API_PATH["edge_skater_detail"]
         assert "{player-id}" in API_PATH["edge_goalie_detail"]
@@ -284,7 +286,9 @@ class TestEdgeRegistry:
         assert "{team-id}" in API_PATH["edge_team_shot_speed_detail"]
         assert "{team-id}" in API_PATH["edge_team_zone_time_details"]
 
-    def test_format_endpoint_substitutes_edge_route(self):
+    @staticmethod
+    def test_format_endpoint_substitutes_edge_route():
+        """Verify test format endpoint substitutes edge route."""
         route = format_endpoint(
             "edge_skater_landing", season=SEASON, **{"game-type": 2}
         )
@@ -299,30 +303,39 @@ class TestEdgeRegistry:
 class TestEdgePath:
     """``_edge_path`` derives client paths from the registry templates."""
 
-    def test_explicit_season_keeps_game_type(self):
+    @staticmethod
+    def test_explicit_season_keeps_game_type():
+        """Verify test explicit season keeps game type."""
         path = _edge_path("edge_skater_landing", SEASON, 2)
         assert path == f"edge/skater-landing/{SEASON}/2"
 
-    def test_playoffs_game_type_substitution(self):
+    @staticmethod
+    def test_playoffs_game_type_substitution():
+        """Verify test playoffs game type substitution."""
         path = _edge_path("edge_skater_landing", SEASON, 3)
         assert path == f"edge/skater-landing/{SEASON}/3"
 
     @pytest.mark.parametrize("now", ["now", "NOW"])
     def test_now_replaces_season_and_game_type(self, now):
+        """Verify test now replaces season and game type."""
         path = _edge_path("edge_skater_landing", now, 2)
         assert path == "edge/skater-landing/now"
         assert not path.endswith("/2")
 
-    def test_now_with_entity_id(self):
+    @staticmethod
+    def test_now_with_entity_id():
+        """Verify test now with entity id."""
         path = _edge_path("edge_skater_detail", "now", 2, **{"player-id": PLAYER_ID})
         assert path == f"edge/skater-detail/{PLAYER_ID}/now"
 
-    def test_now_with_team_id_containing_game_type_digit(self):
+    @staticmethod
+    def test_now_with_team_id_containing_game_type_digit():
         """The tail split must not trip over ids that contain the digits."""
         path = _edge_path("edge_team_detail", "now", 2, **{"team-id": 22})
         assert path == "edge/team-detail/22/now"
 
-    def test_version_segment_stripped(self):
+    @staticmethod
+    def test_version_segment_stripped():
         """HttpClient.get(web=True) prepends /v1 itself — paths omit it."""
         path = _edge_path("edge_team_comparison", SEASON, 2, **{"team-id": TEAM_ID})
         assert not path.startswith("v1/")
@@ -338,6 +351,7 @@ class TestEdgeLanding:
     """Landing methods target the canonical routes and return raw dicts."""
 
     def test_get_skater_landing_defaults_to_now(self, mock_client, edge):
+        """Verify test get skater landing defaults to now."""
         mock_client.get.return_value = _response(LANDING_PAYLOAD)
 
         result = edge.get_skater_landing()
@@ -354,6 +368,7 @@ class TestEdgeLanding:
         ]
     )
     def test_goalie_and_team_landing_routes(self, mock_client, edge, method, route):
+        """Verify test goalie and team landing routes."""
         mock_client.get.return_value = _response({})
 
         getattr(edge, method)(season=SEASON, game_type=3)
@@ -369,6 +384,7 @@ class TestEdgeLanding:
         assert edge.get_team_landing() == []
 
     def test_season_and_game_type_forwarded(self, mock_client, edge):
+        """Verify test season and game type forwarded."""
         mock_client.get.return_value = _response({})
 
         edge.get_skater_landing(season=SEASON, game_type=3)
@@ -382,6 +398,7 @@ class TestAvailableSeasons:
     """``get_available_seasons`` exposes ``seasonsWithEdgeStats``."""
 
     def test_returns_seasons_with_edge_stats(self, mock_client, edge):
+        """Verify test returns seasons with edge stats."""
         mock_client.get.return_value = _response(LANDING_PAYLOAD)
 
         seasons = edge.get_available_seasons()
@@ -393,11 +410,13 @@ class TestAvailableSeasons:
         )
 
     def test_missing_field_returns_empty_list(self, mock_client, edge):
+        """Verify test missing field returns empty list."""
         mock_client.get.return_value = _response({})
 
         assert edge.get_available_seasons() == []
 
     def test_none_field_returns_empty_list(self, mock_client, edge):
+        """Verify test none field returns empty list."""
         mock_client.get.return_value = _response({"seasonsWithEdgeStats": None})
 
         assert edge.get_available_seasons() == []
@@ -412,6 +431,7 @@ class TestEdgeDetail:
     """Detail methods substitute entity ids into the canonical routes."""
 
     def test_get_skater_detail_defaults_to_now(self, mock_client, edge):
+        """Verify test get skater detail defaults to now."""
         mock_client.get.return_value = _response({"player": {}, "stats": {}})
 
         edge.get_skater_detail(PLAYER_ID)
@@ -421,6 +441,7 @@ class TestEdgeDetail:
         )
 
     def test_get_goalie_detail_explicit_season(self, mock_client, edge):
+        """Verify test get goalie detail explicit season."""
         mock_client.get.return_value = _response({"player": {}, "stats": {}})
 
         edge.get_goalie_detail(GOALIE_ID, season=SEASON, game_type=3)
@@ -430,6 +451,7 @@ class TestEdgeDetail:
         )
 
     def test_get_team_detail_uses_team_id(self, mock_client, edge):
+        """Verify test get team detail uses team id."""
         mock_client.get.return_value = _response({"team": {}})
 
         edge.get_team_detail(TEAM_ID, season=SEASON)
@@ -439,6 +461,7 @@ class TestEdgeDetail:
         )
 
     def test_empty_detail_passes_through(self, mock_client, edge):
+        """Verify test empty detail passes through."""
         mock_client.get.return_value = _response([])
 
         assert edge.get_skater_detail(PLAYER_ID) == []
@@ -460,6 +483,7 @@ class TestEdgeComparison:
         ]
     )
     def test_comparison_routes(self, mock_client, edge, method, route, entity_id):
+        """Verify test comparison routes."""
         mock_client.get.return_value = _response({})
 
         getattr(edge, method)(entity_id, season=SEASON)
@@ -469,6 +493,7 @@ class TestEdgeComparison:
         )
 
     def test_comparison_now(self, mock_client, edge):
+        """Verify test comparison now."""
         mock_client.get.return_value = _response({})
 
         edge.get_skater_comparison(PLAYER_ID)
@@ -503,6 +528,7 @@ class TestEdgeViewDetail:
     def test_view_detail_defaults_to_now(
         self, mock_client, edge, method, route, entity_id, entity_param
     ):
+        """Verify test view detail defaults to now."""
         mock_client.get.return_value = _response({})
 
         getattr(edge, method)(entity_id)
@@ -520,6 +546,7 @@ class TestEdgeViewDetail:
     def test_view_detail_season_and_game_type(
         self, mock_client, edge, method, route, entity_id
     ):
+        """Verify test view detail season and game type."""
         mock_client.get.return_value = _response({})
 
         getattr(edge, method)(entity_id, season=SEASON, game_type=3)
@@ -528,7 +555,8 @@ class TestEdgeViewDetail:
             f"{route}/{entity_id}/{SEASON}/3", web=True, params={}
         )
 
-    def test_zone_time_details_route_is_plural(self):
+    @staticmethod
+    def test_zone_time_details_route_is_plural():
         """team-zone-time-details is the only Edge route spelled -details."""
         assert "team-zone-time-details" in API_PATH["edge_team_zone_time_details"]
         assert "edge_team_zone_time_detail" not in API_PATH
@@ -567,6 +595,7 @@ class TestEdgeTop10:
         assert result == []
 
     def test_speed_top10_explicit_season_and_playoffs(self, mock_client, edge):
+        """Verify test speed top10 explicit season and playoffs."""
         mock_client.get.return_value = _response([])
 
         edge.get_skater_shot_speed_top_10(
@@ -586,6 +615,7 @@ class TestEdgeTop10:
     def test_shot_location_top10_three_param_form(
         self, mock_client, edge, method, route
     ):
+        """Verify test shot location top10 three param form."""
         """Shot-location routes: {situation}/{metric}/{filter} then tail."""
         mock_client.get.return_value = _response([])
 
@@ -667,11 +697,13 @@ class TestEdgeParamValidation:
         ]
     )
     def test_invalid_params_raise_and_skip_http(self, mock_client, edge, call):
+        """Verify test invalid params raise and skip http."""
         with pytest.raises(ValueError):
             call(edge)
         mock_client.get.assert_not_called()
 
     def test_invalid_situation_message_names_choice(self, edge):
+        """Verify test invalid situation message names choice."""
         with pytest.raises(ValueError, match="situation must be one of") as excinfo:
             edge.get_team_zone_time_top_10(situation="5v5")
         assert "'all', 'es', 'pk', 'pp'" in str(excinfo.value)
@@ -690,18 +722,22 @@ class TestEdgeParamValidation:
         ]
     )
     def test_params_normalized_case_insensitively(self, mock_client, edge, call):
+        """Verify test params normalized case insensitively."""
         mock_client.get.return_value = _response([])
 
         call(edge)
 
         mock_client.get.assert_called_once()
 
-    def test_validation_helper(self):
+    @staticmethod
+    def test_validation_helper():
+        """Verify test validation helper."""
         assert _validate_choice("zone", "OFFENSIVE", ZONE) == "offensive"
         with pytest.raises(ValueError, match="zone must be one of"):
             _validate_choice("zone", "garbage", ZONE)
 
-    def test_param_enums_contents(self):
+    @staticmethod
+    def test_param_enums_contents():
         """Module-level enums match the researched option lists."""
         assert SITUATION == frozenset({"all", "es", "pp", "pk"})
         assert SORT == frozenset({"max", "avg"})
@@ -722,6 +758,7 @@ class TestCompareFanOut:
     """``compare()`` fetches both sides with exactly two HTTP requests."""
 
     def test_compare_returns_a_and_b(self, mock_client, edge):
+        """Verify test compare returns a and b."""
         payload_a = {"playerId": PLAYER_ID, "shotSpeedDetails": []}
         payload_b = {"playerId": 8478402 + 1, "shotSpeedDetails": []}
         mock_client.get.side_effect = [_response(payload_a), _response(payload_b)]
@@ -741,6 +778,7 @@ class TestCompareFanOut:
     def test_compare_dispatches_to_entity_route(
         self, mock_client, edge, entity, route, entity_id
     ):
+        """Verify test compare dispatches to entity route."""
         mock_client.get.return_value = _response({})
 
         edge.compare(entity, entity_id, entity_id + 1)
@@ -752,6 +790,7 @@ class TestCompareFanOut:
         ]
 
     def test_compare_forwards_season_and_game_type(self, mock_client, edge):
+        """Verify test compare forwards season and game type."""
         mock_client.get.return_value = _response({})
 
         edge.compare("team", TEAM_ID, TEAM_ID + 1, season=SEASON, game_type=3)
@@ -763,6 +802,7 @@ class TestCompareFanOut:
         ]
 
     def test_compare_rejects_unknown_entity(self, edge):
+        """Verify test compare rejects unknown entity."""
         with pytest.raises(ValueError, match="entity must be one of"):
             edge.compare("referee", 1, 2)
         # No request may be emitted for an invalid entity.
@@ -778,6 +818,7 @@ class TestGoalFrames:
     """``get_goal_frames`` chains ppt-replay metadata → sprites frames."""
 
     def test_full_pipeline_sends_referer(self, mock_client, edge):
+        """Verify test full pipeline sends referer."""
         mock_client.get.return_value = _response(PPT_METADATA)
         mock_client.get_raw.return_value = _response(TRACKING_FRAMES)
 
@@ -804,24 +845,28 @@ class TestGoalFrames:
         mock_client.get_raw.assert_not_called()
 
     def test_returns_none_for_empty_payload(self, mock_client, edge):
+        """Verify test returns none for empty payload."""
         mock_client.get.return_value = _response({})
 
         assert edge.get_goal_frames(GAME_ID, EVENT_ID) is None
         mock_client.get_raw.assert_not_called()
 
     def test_returns_none_for_empty_url(self, mock_client, edge):
+        """Verify test returns none for empty url."""
         mock_client.get.return_value = _response({"goal": {"pptReplayUrl": ""}})
 
         assert edge.get_goal_frames(GAME_ID, EVENT_ID) is None
         mock_client.get_raw.assert_not_called()
 
     def test_returns_none_for_non_dict_payload(self, mock_client, edge):
+        """Verify test returns none for non dict payload."""
         mock_client.get.return_value = _response([])
 
         assert edge.get_goal_frames(GAME_ID, EVENT_ID) is None
         mock_client.get_raw.assert_not_called()
 
-    def test_ppt_replay_path_comes_from_the_registry(self):
+    @staticmethod
+    def test_ppt_replay_path_comes_from_the_registry():
         """_ppt_replay_path reuses the play_replay entry (no duplicated route)."""
         assert _ppt_replay_path(GAME_ID, EVENT_ID) == f"ppt-replay/{GAME_ID}/{EVENT_ID}"
         from edgework.endpoints import API_VERSION
@@ -840,27 +885,39 @@ class TestGoalFrames:
 class TestFrameHelpers:
     """``puck_frames`` / ``player_frames`` parse the sprite frame format."""
 
-    def test_puck_frames_extracts_entity_key_one(self):
+    @staticmethod
+    def test_puck_frames_extracts_entity_key_one():
+        """Verify test puck frames extracts entity key one."""
         assert puck_frames(TRACKING_FRAMES) == [
             (17685233789, 2352.46, 390.10),
             (17685233799, 2330.0, 388.0),
         ]
 
-    def test_puck_frames_empty_input(self):
+    @staticmethod
+    def test_puck_frames_empty_input():
+        """Verify test puck frames empty input."""
         assert puck_frames([]) == []
 
-    def test_puck_frames_skips_frame_without_puck(self):
+    @staticmethod
+    def test_puck_frames_skips_frame_without_puck():
+        """Verify test puck frames skips frame without puck."""
         frames = [{"timeStamp": 1, "onIce": {}}, TRACKING_FRAMES[0]]
 
         assert puck_frames(frames) == [(17685233789, 2352.46, 390.10)]
 
-    def test_puck_frames_handles_missing_on_ice(self):
+    @staticmethod
+    def test_puck_frames_handles_missing_on_ice():
+        """Verify test puck frames handles missing on ice."""
         assert puck_frames([{"timeStamp": 1}]) == []
 
-    def test_puck_entity_key_is_one(self):
+    @staticmethod
+    def test_puck_entity_key_is_one():
+        """Verify test puck entity key is one."""
         assert PUCK_ENTITY_KEY == "1"
 
-    def test_player_frames_returns_all_players(self):
+    @staticmethod
+    def test_player_frames_returns_all_players():
+        """Verify test player frames returns all players."""
         tracks = player_frames(TRACKING_FRAMES)
 
         assert set(tracks) == {8484145, PLAYER_ID}
@@ -870,23 +927,29 @@ class TestFrameHelpers:
         ]
         assert tracks[PLAYER_ID] == [(17685233789, 1800.0, 500.0)]
 
-    def test_player_frames_single_player(self):
+    @staticmethod
+    def test_player_frames_single_player():
+        """Verify test player frames single player."""
         assert player_frames(TRACKING_FRAMES, player_id=8484145) == [
             (17685233789, 2364.78, 713.54),
             (17685233799, 2360.0, 710.0),
         ]
 
-    def test_player_frames_unknown_player_is_empty_list(self):
+    @staticmethod
+    def test_player_frames_unknown_player_is_empty_list():
+        """Verify test player frames unknown player is empty list."""
         assert player_frames(TRACKING_FRAMES, player_id=1234567) == []
 
-    def test_player_frames_exclude_the_puck(self):
+    @staticmethod
+    def test_player_frames_exclude_the_puck():
         """The puck has no playerId — it must not appear in player tracks."""
         tracks = player_frames(TRACKING_FRAMES)
 
         assert PUCK_ENTITY_KEY not in {str(pid) for pid in tracks}
         assert all(frames for frames in tracks.values())
 
-    def test_coordinates_are_inch_grid(self):
+    @staticmethod
+    def test_coordinates_are_inch_grid():
         """Fixture sanity: coordinates stay inside the 2400×1020 inch rink."""
         for frame in TRACKING_FRAMES:
             for entity in frame["onIce"].values():
@@ -904,6 +967,7 @@ class TestEdgeFacade:
 
     @patch("edgework.edgework.HttpClient")
     def test_facade_exposes_edge_client(self, mock_http_client):
+        """Verify test facade exposes edge client."""
         mock_http_client.return_value = Mock(spec=HttpClient)
 
         edgework = Edgework()
