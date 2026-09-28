@@ -8,7 +8,8 @@ from edgework.models.play_by_play import PlayByPlay
 class TestPlayFromApi:
     """Test Play.from_api() method."""
 
-    def test_from_api_goal_play(self):
+    @staticmethod
+    def test_from_api_goal_play():
         """Test creating a Play object from goal play data."""
         play_data = {
             "eventId": 159,
@@ -51,7 +52,8 @@ class TestPlayFromApi:
         assert play._data.get("type_desc_key") == "goal"
         assert play._fetched is True
 
-    def test_from_api_penalty_play(self):
+    @staticmethod
+    def test_from_api_penalty_play():
         """Test creating a Play object from penalty play data."""
         play_data = {
             "eventId": 200,
@@ -83,7 +85,8 @@ class TestPlayFromApi:
         assert play._data.get("event_id") == 200
         assert play._fetched is True
 
-    def test_from_api_shot_play(self):
+    @staticmethod
+    def test_from_api_shot_play():
         """Test creating a Play object from shot play data."""
         play_data = {
             "eventId": 300,
@@ -120,7 +123,8 @@ class TestPlayFromApi:
 class TestPlayProperties:
     """Test Play properties."""
 
-    def test_is_goal(self):
+    @staticmethod
+    def test_is_goal():
         """Test is_goal property."""
         mock_client = MagicMock()
 
@@ -130,7 +134,8 @@ class TestPlayProperties:
         penalty_play = Play(edgework_client=mock_client, type_desc_key="penalty")
         assert penalty_play.is_goal is False
 
-    def test_is_penalty(self):
+    @staticmethod
+    def test_is_penalty():
         """Test is_penalty property."""
         mock_client = MagicMock()
 
@@ -140,7 +145,8 @@ class TestPlayProperties:
         goal_play = Play(edgework_client=mock_client, type_desc_key="goal")
         assert goal_play.is_penalty is False
 
-    def test_is_shot(self):
+    @staticmethod
+    def test_is_shot():
         """Test is_shot property."""
         mock_client = MagicMock()
 
@@ -156,7 +162,8 @@ class TestPlayProperties:
         faceoff = Play(edgework_client=mock_client, type_desc_key="faceoff")
         assert faceoff.is_shot is False
 
-    def test_goal_details(self):
+    @staticmethod
+    def test_goal_details():
         """Test goal_details property."""
         mock_client = MagicMock()
 
@@ -172,7 +179,8 @@ class TestPlayProperties:
         )
         assert penalty_play.goal_details is None
 
-    def test_scoring_player_id(self):
+    @staticmethod
+    def test_scoring_player_id():
         """Test scoring_player_id property."""
         mock_client = MagicMock()
 
@@ -188,7 +196,8 @@ class TestPlayProperties:
         )
         assert no_goal_play.scoring_player_id is None
 
-    def test_assist_player_ids(self):
+    @staticmethod
+    def test_assist_player_ids():
         """Test assist_player_ids property."""
         mock_client = MagicMock()
 
@@ -218,7 +227,8 @@ class TestPlayProperties:
 class TestPlayStringRepresentations:
     """Test Play string representations."""
 
-    def test_str_representation(self):
+    @staticmethod
+    def test_str_representation():
         """Test __str__ method."""
         mock_client = MagicMock()
 
@@ -234,7 +244,8 @@ class TestPlayStringRepresentations:
         assert "Period 1 @ 00:43: goal" in result
         assert "ID: 159" in result
 
-    def test_repr_representation(self):
+    @staticmethod
+    def test_repr_representation():
         """Test __repr__ method."""
         mock_client = MagicMock()
 
@@ -252,7 +263,8 @@ class TestPlayStringRepresentations:
 class TestPlayByPlayFromApi:
     """Test PlayByPlay.from_api() method."""
 
-    def test_from_api_basic(self):
+    @staticmethod
+    def test_from_api_basic():
         """Test creating a PlayByPlay object from API data."""
         api_data = {
             "id": 2024020705,
@@ -308,7 +320,8 @@ class TestPlayByPlayFromApi:
         assert len(play_by_play._data.get("plays")) == 2
         assert play_by_play._fetched is True
 
-    def test_from_api_empty_plays(self):
+    @staticmethod
+    def test_from_api_empty_plays():
         """Test creating a PlayByPlay object with no plays."""
         api_data = {
             "id": 2024020705,
@@ -325,7 +338,8 @@ class TestPlayByPlayFromApi:
 class TestPlayByPlayProperties:
     """Test PlayByPlay properties."""
 
-    def test_plays_property_lazy_loading(self):
+    @staticmethod
+    def test_plays_property_lazy_loading():
         """Test plays property creates Play objects lazily."""
         mock_client = MagicMock()
 
@@ -346,7 +360,8 @@ class TestPlayByPlayProperties:
         assert len(play_by_play.plays) == 1
         assert isinstance(play_by_play.plays[0], Play)
 
-    def test_goals_property(self):
+    @staticmethod
+    def test_goals_property():
         """Test goals property filters for goals only."""
         mock_client = MagicMock()
 
@@ -382,7 +397,8 @@ class TestPlayByPlayProperties:
         assert len(goals) == 2
         assert all(goal.is_goal for goal in goals)
 
-    def test_penalties_property(self):
+    @staticmethod
+    def test_penalties_property():
         """Test penalties property filters for penalties only."""
         mock_client = MagicMock()
 
@@ -413,7 +429,8 @@ class TestPlayByPlayProperties:
         assert len(penalties) == 2
         assert all(penalty.is_penalty for penalty in penalties)
 
-    def test_shots_property(self):
+    @staticmethod
+    def test_shots_property():
         """Test shots property filters for shots only."""
         mock_client = MagicMock()
 
@@ -449,7 +466,8 @@ class TestPlayByPlayProperties:
         assert len(shots) == 3
         assert all(shot.is_shot for shot in shots)
 
-    def test_total_plays_property(self):
+    @staticmethod
+    def test_total_plays_property():
         """Test total_plays property."""
         mock_client = MagicMock()
 
@@ -468,7 +486,8 @@ class TestPlayByPlayProperties:
         play_by_play = PlayByPlay.from_api(api_data, mock_client)
         assert play_by_play.total_plays == 10
 
-    def test_get_plays_by_period(self):
+    @staticmethod
+    def test_get_plays_by_period():
         """Test get_plays_by_period method."""
         mock_client = MagicMock()
 
@@ -503,7 +522,8 @@ class TestPlayByPlayProperties:
         period_2_plays = play_by_play.get_plays_by_period(2)
         assert len(period_2_plays) == 2
 
-    def test_get_plays_by_team(self):
+    @staticmethod
+    def test_get_plays_by_team():
         """Test get_plays_by_team method."""
         mock_client = MagicMock()
 
@@ -530,7 +550,8 @@ class TestPlayByPlayProperties:
         team_7_plays = play_by_play.get_plays_by_team(7)
         assert len(team_7_plays) == 1
 
-    def test_get_plays_by_player(self):
+    @staticmethod
+    def test_get_plays_by_player():
         """Test get_plays_by_player method."""
         mock_client = MagicMock()
 
@@ -561,7 +582,8 @@ class TestPlayByPlayProperties:
 class TestPlayByPlayStringRepresentations:
     """Test PlayByPlay string representations."""
 
-    def test_str_representation(self):
+    @staticmethod
+    def test_str_representation():
         """Test __str__ method."""
         mock_client = MagicMock()
 
@@ -576,7 +598,8 @@ class TestPlayByPlayStringRepresentations:
         assert "game_id=2024020705" in result
         assert "0 plays" in result
 
-    def test_repr_representation(self):
+    @staticmethod
+    def test_repr_representation():
         """Test __repr__ method."""
         mock_client = MagicMock()
 

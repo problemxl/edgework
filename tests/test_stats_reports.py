@@ -27,23 +27,32 @@ class TestCanonicalReports:
     """Every canonical report name is accepted for its family."""
 
     @pytest.mark.parametrize("report", SKATER_REPORTS)
-    def test_skater_reports_accepted(self, report):
+    @staticmethod
+    def test_skater_reports_accepted(report):
+        """Verify skater reports accepted."""
         assert validate_report("skater", report) == report
 
     @pytest.mark.parametrize("report", GOALIE_REPORTS)
-    def test_goalie_reports_accepted(self, report):
+    @staticmethod
+    def test_goalie_reports_accepted(report):
+        """Verify goalie reports accepted."""
         assert validate_report("goalie", report) == report
 
     @pytest.mark.parametrize("report", TEAM_REPORTS)
-    def test_team_reports_accepted(self, report):
+    @staticmethod
+    def test_team_reports_accepted(report):
+        """Verify team reports accepted."""
         assert validate_report("team", report) == report
 
-    def test_reports_for_returns_canonical_tuples(self):
+    @staticmethod
+    def test_reports_for_returns_canonical_tuples():
+        """Verify reports for returns canonical tuples."""
         assert reports_for("skater") == SKATER_REPORTS
         assert reports_for("goalie") == GOALIE_REPORTS
         assert reports_for("team") == TEAM_REPORTS
 
-    def test_aliases_disjoint_from_canonical(self):
+    @staticmethod
+    def test_aliases_disjoint_from_canonical():
         """Legacy aliases are spellings *outside* the canonical lists."""
         assert SKATER_REPORT_ALIASES.isdisjoint(SKATER_REPORTS)
         assert GOALIE_REPORT_ALIASES.isdisjoint(GOALIE_REPORTS)
@@ -56,17 +65,23 @@ class TestLegacyReportAliases:
     @pytest.mark.parametrize(
         "report", sorted(SKATER_REPORT_ALIASES | {"penaltykill", "powerplay"})
     )
-    def test_skater_aliases_and_canonical_case_variants(self, report):
+    @staticmethod
+    def test_skater_aliases_and_canonical_case_variants(report):
+        """Verify skater aliases and canonical case variants."""
         assert validate_report("skater", report) == report
 
     @pytest.mark.parametrize("report", sorted(GOALIE_REPORT_ALIASES))
-    def test_goalie_aliases_accepted(self, report):
+    @staticmethod
+    def test_goalie_aliases_accepted(report):
+        """Verify goalie aliases accepted."""
         assert validate_report("goalie", report) == report
 
     @pytest.mark.parametrize(
         "report", sorted(TEAM_REPORT_ALIASES | {"penaltykill", "powerplay"})
     )
-    def test_team_aliases_accepted(self, report):
+    @staticmethod
+    def test_team_aliases_accepted(report):
+        """Verify team aliases accepted."""
         assert validate_report("team", report) == report
 
 
@@ -74,34 +89,47 @@ class TestReportRejection:
     """Unsupported report names and families are rejected."""
 
     @pytest.mark.parametrize("family", ["skater", "goalie", "team"])
-    def test_unsupported_report_rejected(self, family):
+    @staticmethod
+    def test_unsupported_report_rejected(family):
+        """Verify unsupported report rejected."""
         with pytest.raises(ValueError, match="Unsupported"):
             validate_report(family, "not_a_report")
 
-    def test_cross_family_report_rejected(self):
+    @staticmethod
+    def test_cross_family_report_rejected():
         """'advanced' is goalie-only; 'goalgames' is team-only."""
         with pytest.raises(ValueError):
             validate_report("skater", "advanced")
         with pytest.raises(ValueError):
             validate_report("goalie", "goalgames")
 
-    def test_skater_alias_rejected_for_goalie(self):
+    @staticmethod
+    def test_skater_alias_rejected_for_goalie():
+        """Verify skater alias rejected for goalie."""
         with pytest.raises(ValueError):
             validate_report("goalie", "penaltyDetails")
 
-    def test_non_string_report_rejected(self):
+    @staticmethod
+    def test_non_string_report_rejected():
+        """Verify non string report rejected."""
         with pytest.raises(ValueError):
             validate_report("skater", 123)
 
-    def test_empty_report_rejected(self):
+    @staticmethod
+    def test_empty_report_rejected():
+        """Verify empty report rejected."""
         with pytest.raises(ValueError):
             validate_report("team", "")
 
-    def test_unknown_family_rejected(self):
+    @staticmethod
+    def test_unknown_family_rejected():
+        """Verify unknown family rejected."""
         with pytest.raises(ValueError, match="Unknown report family"):
             validate_report("referee", "summary")
 
-    def test_unknown_family_rejected_by_reports_for(self):
+    @staticmethod
+    def test_unknown_family_rejected_by_reports_for():
+        """Verify unknown family rejected by reports for."""
         with pytest.raises(ValueError, match="Unknown report family"):
             reports_for("referee")
 
@@ -118,23 +146,28 @@ class TestModelsValidateAgainstSharedSource:
         client.get.return_value = response
         return client
 
+    @staticmethod
     def test_skater_model_accepts_canonical_and_alias(
-        self, mock_client: Mock
+        mock_client: Mock
     ):
+        """Verify skater model accepts canonical and alias."""
         for report in ("summary", "powerPlay", "penaltyDetails"):
             stats = SkaterStats(mock_client, obj_id=1)
             stats.fetch_data(report=report, season=20232024)
         assert mock_client.get.call_count == 3
 
+    @staticmethod
     def test_goalie_model_accepts_canonical_and_alias(
-        self, mock_client: Mock
+        mock_client: Mock
     ):
+        """Verify goalie model accepts canonical and alias."""
         for report in ("summary", "savePercentageByGametate"):
             stats = GoalieStats(mock_client, obj_id=1)
             stats.fetch_data(report=report, season=20232024)
         assert mock_client.get.call_count == 2
 
-    def test_team_model_alias_keeps_wire_format(self, mock_client: Mock):
+    @staticmethod
+    def test_team_model_alias_keeps_wire_format(mock_client: Mock):
         """Legacy aliases pass through unchanged (no silent remapping)."""
         stats = TeamStats(mock_client, obj_id=10)
         stats.fetch_data(report="powerPlay", season=20232024)
@@ -150,9 +183,11 @@ class TestModelsValidateAgainstSharedSource:
         "model_cls,family",
         [(SkaterStats, "skater"), (GoalieStats, "goalie"), (TeamStats, "team")],
     )
+    @staticmethod
     def test_models_reject_unsupported_reports(
-        self, mock_client: Mock, model_cls, family
+        mock_client: Mock, model_cls, family
     ):
+        """Verify models reject unsupported reports."""
         stats = model_cls(mock_client, obj_id=1)
         with pytest.raises(ValueError, match=f"Unsupported {family} report"):
             stats.fetch_data(report="not_a_report", season=20232024)

@@ -12,7 +12,8 @@ from edgework.models.draft import Draft, Draftee, DraftRanking
 class TestDraftee:
     """Test class for Draftee model."""
 
-    def test_draftee_init(self):
+    @staticmethod
+    def test_draftee_init():
         """Test Draftee initialization."""
         data = {
             "player_id": 8478402,
@@ -36,7 +37,8 @@ class TestDraftee:
         assert draftee.overall_pick == 1
         assert draftee.team_abbrev == "EDM"
 
-    def test_draftee_defaults(self):
+    @staticmethod
+    def test_draftee_defaults():
         """Test Draftee default values."""
         draftee = Draftee()
 
@@ -46,7 +48,8 @@ class TestDraftee:
         assert draftee.position == ""
         assert draftee.team_abbrev == ""
 
-    def test_draftee_str(self):
+    @staticmethod
+    def test_draftee_str():
         """Test Draftee string representation."""
         draftee = Draftee(
             first_name="Connor",
@@ -64,7 +67,8 @@ class TestDraftee:
 class TestDraftRanking:
     """Test class for DraftRanking model."""
 
-    def test_draft_ranking_init(self):
+    @staticmethod
+    def test_draft_ranking_init():
         """Test DraftRanking initialization."""
         rankings_data = [
             {
@@ -85,7 +89,8 @@ class TestDraftRanking:
         assert len(ranking) == 2
         assert len(ranking.rankings) == 2
 
-    def test_draft_ranking_prospects(self):
+    @staticmethod
+    def test_draft_ranking_prospects():
         """Test getting prospects as Draftee objects."""
         rankings_data = [
             {
@@ -102,7 +107,8 @@ class TestDraftRanking:
         assert prospects[0].first_name == "John"
         assert prospects[0].position == "C"
 
-    def test_draft_ranking_top_prospects(self):
+    @staticmethod
+    def test_draft_ranking_top_prospects():
         """Test getting top prospects."""
         rankings_data = [
             {
@@ -129,7 +135,8 @@ class TestDraftRanking:
 
         assert len(top) == 2
 
-    def test_draft_ranking_get_by_rank(self):
+    @staticmethod
+    def test_draft_ranking_get_by_rank():
         """Test getting prospect by rank."""
         rankings_data = [
             {
@@ -148,7 +155,8 @@ class TestDraftRanking:
         # Out of range
         assert ranking.get_prospect_by_rank(99) is None
 
-    def test_draft_ranking_iteration(self):
+    @staticmethod
+    def test_draft_ranking_iteration():
         """Test DraftRanking iteration."""
         rankings_data = [
             {
@@ -174,7 +182,8 @@ class TestDraftRanking:
 class TestDraft:
     """Test class for Draft model."""
 
-    def test_draft_init(self):
+    @staticmethod
+    def test_draft_init():
         """Test Draft initialization."""
         picks_data = [
             {
@@ -198,7 +207,8 @@ class TestDraft:
         assert draft.total_picks == 2
         assert len(draft.get_picks()) == 2
 
-    def test_draft_get_picks_by_round(self):
+    @staticmethod
+    def test_draft_get_picks_by_round():
         """Test filtering picks by round."""
         picks_data = [
             {
@@ -222,7 +232,8 @@ class TestDraft:
         assert len(round1) == 1
         assert round1[0].round == 1
 
-    def test_draft_get_picks_by_team(self):
+    @staticmethod
+    def test_draft_get_picks_by_team():
         """Test filtering picks by team."""
         picks_data = [
             {
@@ -246,7 +257,8 @@ class TestDraft:
         assert len(tor_picks) == 1
         assert tor_picks[0].team_abbrev == "TOR"
 
-    def test_draft_get_pick_by_overall(self):
+    @staticmethod
+    def test_draft_get_pick_by_overall():
         """Test getting pick by overall number."""
         picks_data = [
             {"playerId": 1, "firstName": "First", "lastName": "Pick", "overallPick": 1},
@@ -267,7 +279,8 @@ class TestDraft:
         # Not found
         assert draft.get_pick_by_overall(999) is None
 
-    def test_draft_iteration(self):
+    @staticmethod
+    def test_draft_iteration():
         """Test Draft iteration."""
         picks_data = [
             {"playerId": 1, "firstName": "P1", "lastName": "Name"},
@@ -340,12 +353,14 @@ class TestDraftClient:
         }
         return response
 
-    def test_client_init(self, mock_client):
+    @staticmethod
+    def test_client_init(mock_client):
         """Test DraftClient initialization."""
         client = DraftClient(mock_client)
         assert client._client == mock_client
 
-    def test_get_draft_picks_current(self, mock_client, mock_draft_picks_response):
+    @staticmethod
+    def test_get_draft_picks_current(mock_client, mock_draft_picks_response):
         """Test fetching current draft picks."""
         mock_client.get.return_value = mock_draft_picks_response
         client = DraftClient(mock_client)
@@ -356,7 +371,8 @@ class TestDraftClient:
         assert draft.total_picks == 2
         mock_client.get.assert_called_with("draft/picks/now", web=True, params={})
 
-    def test_get_draft_picks_for_season(self, mock_client, mock_draft_picks_response):
+    @staticmethod
+    def test_get_draft_picks_for_season(mock_client, mock_draft_picks_response):
         """Test fetching draft picks for specific season."""
         mock_client.get.return_value = mock_draft_picks_response
         client = DraftClient(mock_client)
@@ -369,13 +385,15 @@ class TestDraftClient:
             "draft/picks/2023/all", web=True, params={}
         )
 
-    def test_get_draft_picks_invalid_season(self, mock_client):
+    @staticmethod
+    def test_get_draft_picks_invalid_season(mock_client):
         """Test invalid season format."""
         client = DraftClient(mock_client)
         with pytest.raises(ValueError):
             client.get_draft_picks(season="invalid")
 
-    def test_get_draft_rankings_current(self, mock_client, mock_rankings_response):
+    @staticmethod
+    def test_get_draft_rankings_current(mock_client, mock_rankings_response):
         """Test fetching current draft rankings."""
         mock_client.get.return_value = mock_rankings_response
         client = DraftClient(mock_client)
@@ -385,7 +403,8 @@ class TestDraftClient:
         assert len(rankings) == 2
         mock_client.get.assert_called_with("draft/rankings/now", web=True, params={})
 
-    def test_get_draft_rankings_for_season(self, mock_client, mock_rankings_response):
+    @staticmethod
+    def test_get_draft_rankings_for_season(mock_client, mock_rankings_response):
         """Test fetching draft rankings for specific season."""
         mock_client.get.return_value = mock_rankings_response
         client = DraftClient(mock_client)
@@ -398,7 +417,8 @@ class TestDraftClient:
             "draft/rankings/2024/all", web=True, params={}
         )
 
-    def test_get_draft_tracker_picks(self, mock_client):
+    @staticmethod
+    def test_get_draft_tracker_picks(mock_client):
         """Test fetching draft tracker picks."""
         response = Mock()
         response.status_code = 200
@@ -423,7 +443,8 @@ class TestDraftLiveAPI:
         return HttpClient()
 
     @pytest.mark.live_api
-    def test_get_current_draft_picks(self, real_client):
+    @staticmethod
+    def test_get_current_draft_picks(real_client):
         """Test fetching current draft picks from NHL API."""
         client = DraftClient(real_client)
         draft = client.get_draft_picks()
@@ -439,7 +460,8 @@ class TestDraftLiveAPI:
         assert first_pick.last_name
 
     @pytest.mark.live_api
-    def test_get_draft_rankings(self, real_client):
+    @staticmethod
+    def test_get_draft_rankings(real_client):
         """Test fetching draft rankings from NHL API."""
         client = DraftClient(real_client)
         rankings = client.get_draft_rankings()
@@ -451,7 +473,8 @@ class TestDraftLiveAPI:
         assert len(top_prospects) <= 5
 
     @pytest.mark.live_api
-    def test_get_draftee_info(self, real_client):
+    @staticmethod
+    def test_get_draftee_info(real_client):
         """Test fetching draftee information for a known player."""
         client = DraftClient(real_client)
         # Connor McDavid (2015 #1 overall)

@@ -13,7 +13,8 @@ from edgework.models.standings import Seeding, Standings
 class TestSeeding:
     """Test class for Seeding model."""
 
-    def test_seeding_init_with_data(self):
+    @staticmethod
+    def test_seeding_init_with_data():
         """Test Seeding initialization with team data."""
         data = {
             "conference_abbrev": "E",
@@ -41,7 +42,8 @@ class TestSeeding:
         assert seeding.is_clinched is True
         assert seeding.is_in_playoffs is True
 
-    def test_seeding_default_values(self):
+    @staticmethod
+    def test_seeding_default_values():
         """Test Seeding default values when data is missing."""
         seeding = Seeding()
 
@@ -52,7 +54,8 @@ class TestSeeding:
         assert seeding.is_clinched is False
         assert seeding.is_in_playoffs is False
 
-    def test_seeding_str(self):
+    @staticmethod
+    def test_seeding_str():
         """Test Seeding string representation."""
         data = {
             "team_abbrev": "TOR",
@@ -67,7 +70,8 @@ class TestSeeding:
         assert "TOR" in str_repr
         assert "102" in str_repr
 
-    def test_seeding_fetch_data_raises(self):
+    @staticmethod
+    def test_seeding_fetch_data_raises():
         """Test that fetch_data raises NotImplementedError."""
         seeding = Seeding()
         with pytest.raises(NotImplementedError):
@@ -77,7 +81,8 @@ class TestSeeding:
 class TestStandings:
     """Test class for Standings model."""
 
-    def test_standings_init(self):
+    @staticmethod
+    def test_standings_init():
         """Test Standings initialization."""
         date = datetime(2024, 1, 15)
         seedings = [
@@ -91,7 +96,8 @@ class TestStandings:
         assert len(standings) == 3
         assert standings.season == 20232024
 
-    def test_standings_east_standings(self):
+    @staticmethod
+    def test_standings_east_standings():
         """Test filtering Eastern Conference standings."""
         seedings = [
             Seeding(team_abbrev="TOR", points=102, conference_abbrev="E"),
@@ -104,7 +110,8 @@ class TestStandings:
         assert len(east) == 2
         assert all(s.conference_abbrev == "E" for s in east)
 
-    def test_standings_west_standings(self):
+    @staticmethod
+    def test_standings_west_standings():
         """Test filtering Western Conference standings."""
         seedings = [
             Seeding(team_abbrev="TOR", points=102, conference_abbrev="E"),
@@ -117,7 +124,8 @@ class TestStandings:
         assert len(west) == 2
         assert all(s.conference_abbrev == "W" for s in west)
 
-    def test_standings_get_team_standing(self):
+    @staticmethod
+    def test_standings_get_team_standing():
         """Test getting a specific team standing."""
         seedings = [
             Seeding(team_abbrev="TOR", points=102),
@@ -130,7 +138,8 @@ class TestStandings:
         assert team.team_abbrev == "TOR"
         assert team.points == 102
 
-    def test_standings_get_team_standing_not_found(self):
+    @staticmethod
+    def test_standings_get_team_standing_not_found():
         """Test getting a team that doesn't exist."""
         seedings = [Seeding(team_abbrev="TOR", points=102)]
         standings = Standings(seedings=seedings)
@@ -138,7 +147,8 @@ class TestStandings:
 
         assert team is None
 
-    def test_standings_get_division_standings(self):
+    @staticmethod
+    def test_standings_get_division_standings():
         """Test filtering by division."""
         seedings = [
             Seeding(team_abbrev="TOR", points=102, division_abbrev="ATL"),
@@ -151,7 +161,8 @@ class TestStandings:
         assert len(atlantic) == 2
         assert all(s.division_abbrev == "ATL" for s in atlantic)
 
-    def test_standings_iteration(self):
+    @staticmethod
+    def test_standings_iteration():
         """Test that Standings is iterable."""
         seedings = [
             Seeding(team_abbrev="TOR", points=102),
@@ -162,7 +173,8 @@ class TestStandings:
         teams = list(standings)
         assert len(teams) == 2
 
-    def test_standings_str(self):
+    @staticmethod
+    def test_standings_str():
         """Test Standings string representation."""
         date = datetime(2024, 1, 15)
         seedings = [Seeding(team_abbrev="TOR", points=102)]
@@ -173,7 +185,8 @@ class TestStandings:
         assert "2024-01-15" in str_repr
         assert "1 teams" in str_repr
 
-    def test_standings_fetch_data_raises(self):
+    @staticmethod
+    def test_standings_fetch_data_raises():
         """Test that fetch_data raises NotImplementedError."""
         standings = Standings()
         with pytest.raises(NotImplementedError):
@@ -223,29 +236,34 @@ class TestStandingClient:
         }
         return response
 
-    def test_client_init(self, mock_client):
+    @staticmethod
+    def test_client_init(mock_client):
         """Test StandingClient initialization."""
         client = StandingClient(mock_client)
         assert client._client == mock_client
 
-    def test_validate_date_now(self, mock_client):
+    @staticmethod
+    def test_validate_date_now(mock_client):
         """Test date validation with 'now'."""
         client = StandingClient(mock_client)
         assert client._validate_date("now") == "now"
         assert client._validate_date(None) == "now"
 
-    def test_validate_date_datetime(self, mock_client):
+    @staticmethod
+    def test_validate_date_datetime(mock_client):
         """Test date validation with datetime object."""
         client = StandingClient(mock_client)
         date = datetime(2024, 1, 15)
         assert client._validate_date(date) == "2024-01-15"
 
-    def test_validate_date_string(self, mock_client):
+    @staticmethod
+    def test_validate_date_string(mock_client):
         """Test date validation with valid string."""
         client = StandingClient(mock_client)
         assert client._validate_date("2024-01-15") == "2024-01-15"
 
-    def test_validate_date_invalid_format(self, mock_client):
+    @staticmethod
+    def test_validate_date_invalid_format(mock_client):
         """Test date validation with invalid format."""
         client = StandingClient(mock_client)
         with pytest.raises(ValueError):
@@ -255,7 +273,8 @@ class TestStandingClient:
         with pytest.raises(ValueError):
             client._validate_date("abcd-01-15")  # Non-numeric
 
-    def test_get_standings(self, mock_client, mock_standings_response):
+    @staticmethod
+    def test_get_standings(mock_client, mock_standings_response):
         """Test fetching current standings."""
         mock_client.get.return_value = mock_standings_response
         client = StandingClient(mock_client)
@@ -266,7 +285,8 @@ class TestStandingClient:
         assert standings.get_team_standing("TOR").points == 102
         assert standings.get_team_standing("EDM").points == 96
 
-    def test_get_standings_for_date(self, mock_client, mock_standings_response):
+    @staticmethod
+    def test_get_standings_for_date(mock_client, mock_standings_response):
         """Test fetching standings for specific date."""
         mock_client.get.return_value = mock_standings_response
         client = StandingClient(mock_client)
@@ -276,7 +296,8 @@ class TestStandingClient:
         mock_client.get.assert_called_once()
         assert standings.date.strftime("%Y-%m-%d") == "2024-01-15"
 
-    def test_get_standings_empty_response(self, mock_client):
+    @staticmethod
+    def test_get_standings_empty_response(mock_client):
         """Test fetching standings with empty response."""
         response = Mock()
         response.status_code = 200
@@ -298,7 +319,8 @@ class TestStandingsLiveAPI:
         return HttpClient()
 
     @pytest.mark.live_api
-    def test_get_standings_live(self, real_client):
+    @staticmethod
+    def test_get_standings_live(real_client):
         """Test fetching live standings from NHL API."""
         client = StandingClient(real_client)
         standings = client.get_standings()
@@ -317,7 +339,8 @@ class TestStandingsLiveAPI:
         assert first_team.games_played is not None
 
     @pytest.mark.live_api
-    def test_get_standings_for_specific_date(self, real_client):
+    @staticmethod
+    def test_get_standings_for_specific_date(real_client):
         """Test fetching standings for a specific historical date."""
         client = StandingClient(real_client)
         standings = client.get_standings("2024-01-15")
@@ -326,7 +349,8 @@ class TestStandingsLiveAPI:
         assert standings.date.strftime("%Y-%m-%d") == "2024-01-15"
 
     @pytest.mark.live_api
-    def test_team_standing_filters(self, real_client):
+    @staticmethod
+    def test_team_standing_filters(real_client):
         """Test filtering standings by conference and division."""
         client = StandingClient(real_client)
         standings = client.get_standings()

@@ -16,7 +16,8 @@ from edgework.models.schedule import Schedule, schedule_api_to_dict
 class TestScheduleApiToDict:
     """Test class for schedule_api_to_dict function."""
 
-    def test_schedule_api_to_dict_basic(self):
+    @staticmethod
+    def test_schedule_api_to_dict_basic():
         """Test schedule_api_to_dict with basic API data."""
         api_data = {
             "previousStartDate": "2024-06-01T00:00:00Z",
@@ -38,7 +39,8 @@ class TestScheduleApiToDict:
         assert result["playoff_end_date"] == "2025-06-30T00:00:00Z"
         assert result["number_of_games"] == 2
 
-    def test_schedule_api_to_dict_with_game_week(self):
+    @staticmethod
+    def test_schedule_api_to_dict_with_game_week():
         """Test schedule_api_to_dict with gameWeek structure."""
         api_data = {
             "gameWeek": [{"games": [{"id": 1}, {"id": 2}]}, {"games": [{"id": 3}]}]
@@ -49,7 +51,8 @@ class TestScheduleApiToDict:
         assert result["games"] == [{"id": 1}, {"id": 2}, {"id": 3}]
         assert result["number_of_games"] == 3
 
-    def test_schedule_api_to_dict_empty_data(self):
+    @staticmethod
+    def test_schedule_api_to_dict_empty_data():
         """Test schedule_api_to_dict with empty data."""
         api_data = {}
 
@@ -191,7 +194,8 @@ class TestSchedule:
         assert schedule._data["number_of_games"] == 1
         assert isinstance(schedule._data["regular_season_start_date"], datetime)
 
-    def test_fetch_data_without_client(self):
+    @staticmethod
+    def test_fetch_data_without_client():
         """Test fetch_data raises error without client."""
         schedule = Schedule(None)
 
@@ -223,7 +227,8 @@ class TestSchedule:
         assert games[0] == mock_game
         mock_game_class.from_api.assert_called_once_with(game_data, self.mock_client)
 
-    def test_games_property_without_client(self):
+    @staticmethod
+    def test_games_property_without_client():
         """Test games property without client returns empty list."""
         schedule = Schedule(None, games=[{"id": 1}])
 
@@ -610,7 +615,8 @@ class TestClubScheduleRoutes:
             "schedule/2024-01-01", web=True
         )
 
-    def test_routes_match_endpoint_registry(self):
+    @staticmethod
+    def test_routes_match_endpoint_registry():
         """Constructed routes must equal the documented registry templates."""
         http_client = HttpClient()
         http_client._client = Mock()

@@ -56,26 +56,30 @@ def _mock_http_client(payload=None):
 class TestShiftChartQueryBuilder:
     """Tests for the shared shiftcharts route/query builder."""
 
-    def test_documented_game_filter(self):
+    @staticmethod
+    def test_documented_game_filter():
         """The documented filter is cayenneExp=gameId={game_id}."""
         assert build_shiftcharts_query(game_id=GAME_ID) == {
             "cayenneExp": f"gameId={GAME_ID}"
         }
 
-    def test_raw_cayenne_expression_escape_hatch(self):
+    @staticmethod
+    def test_raw_cayenne_expression_escape_hatch():
         """A raw Cayenne expression is passed through as the filter."""
         assert build_shiftcharts_query(cayenne_exp="playerId=8478402") == {
             "cayenneExp": "playerId=8478402"
         }
 
-    def test_game_id_takes_precedence(self):
+    @staticmethod
+    def test_game_id_takes_precedence():
         """An explicit game_id wins over a raw expression."""
         query = build_shiftcharts_query(
             game_id=GAME_ID, cayenne_exp="playerId=8478402"
         )
         assert query == {"cayenneExp": f"gameId={GAME_ID}"}
 
-    def test_query_requires_a_filter(self):
+    @staticmethod
+    def test_query_requires_a_filter():
         """Requests without any filter are rejected."""
         with pytest.raises(ValueError, match="requires a filter"):
             build_shiftcharts_query()
@@ -130,7 +134,8 @@ class TestShiftClientRoutes:
 
         self.http_client.get.assert_not_called()
 
-    def test_final_url_matches_stats_registry(self):
+    @staticmethod
+    def test_final_url_matches_stats_registry():
         """End-to-end URL must equal the stats_shiftcharts registry route."""
         http_client = _mock_http_client(_shift_payload())
         ShiftClient(http_client).get_shifts(GAME_ID)
@@ -193,7 +198,8 @@ class TestGameModelShiftDelegation:
 class TestFacadeShiftAccess:
     """The Edgework facade must expose the canonical ShiftClient."""
 
-    def test_facade_exposes_shift_client(self):
+    @staticmethod
+    def test_facade_exposes_shift_client():
         """edgework.shifts is a ShiftClient sharing the facade HTTP client."""
         with patch("edgework.edgework.HttpClient") as mock_http_client:
             edgework = Edgework()
@@ -201,7 +207,8 @@ class TestFacadeShiftAccess:
             assert isinstance(edgework.shifts, ShiftClient)
             assert edgework.shifts._client is mock_http_client.return_value
 
-    def test_facade_shift_client_issues_documented_request(self):
+    @staticmethod
+    def test_facade_shift_client_issues_documented_request():
         """Requests through the facade match the canonical shiftcharts route."""
         with patch("edgework.edgework.HttpClient") as mock_http_client:
             http_instance = mock_http_client.return_value

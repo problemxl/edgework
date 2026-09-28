@@ -100,12 +100,14 @@ class TestGameClient:
         }
         return response
 
-    def test_client_init(self, mock_client):
+    @staticmethod
+    def test_client_init(mock_client):
         """Test GameClient initialization."""
         client = GameClient(mock_client)
         assert client._client == mock_client
 
-    def test_get_game(self, mock_client, mock_game_response):
+    @staticmethod
+    def test_get_game(mock_client, mock_game_response):
         """Test fetching a game boxscore."""
         mock_client.get.return_value = mock_game_response
         client = GameClient(mock_client)
@@ -120,7 +122,8 @@ class TestGameClient:
             "gamecenter/2023020001/boxscore", web=True
         )
 
-    def test_get_play_by_play(self, mock_client):
+    @staticmethod
+    def test_get_play_by_play(mock_client):
         """Test fetching play-by-play data."""
         pbp_response = Mock()
         pbp_response.status_code = 200
@@ -137,7 +140,8 @@ class TestGameClient:
 
         assert isinstance(pbp, PlayByPlay)
 
-    def test_get_game_landing(self, mock_client, mock_landing_response):
+    @staticmethod
+    def test_get_game_landing(mock_client, mock_landing_response):
         """Test fetching game landing data."""
         mock_client.get.return_value = mock_landing_response
         client = GameClient(mock_client)
@@ -150,7 +154,8 @@ class TestGameClient:
             "gamecenter/2023020001/landing", web=True
         )
 
-    def test_get_game_boxscore(self, mock_client, mock_game_response):
+    @staticmethod
+    def test_get_game_boxscore(mock_client, mock_game_response):
         """Test fetching game boxscore as dictionary."""
         mock_client.get.return_value = mock_game_response
         client = GameClient(mock_client)
@@ -160,7 +165,8 @@ class TestGameClient:
         assert data["id"] == 2023020001
         assert data["awayTeam"]["abbrev"] == "NJD"
 
-    def test_get_game_story(self, mock_client):
+    @staticmethod
+    def test_get_game_story(mock_client):
         """Test fetching game story."""
         response = Mock()
         response.status_code = 200
@@ -173,7 +179,8 @@ class TestGameClient:
         assert data["summary"] == "Game story content"
         mock_client.get.assert_called_once_with("wsc/game-story/2023020001", web=True)
 
-    def test_get_game_right_rail(self, mock_client):
+    @staticmethod
+    def test_get_game_right_rail(mock_client):
         """Test fetching game right rail data."""
         response = Mock()
         response.status_code = 200
@@ -188,7 +195,8 @@ class TestGameClient:
             "gamecenter/2023020001/right-rail", web=True
         )
 
-    def test_get_score_current(self, mock_client, mock_score_response):
+    @staticmethod
+    def test_get_score_current(mock_client, mock_score_response):
         """Test fetching current scores."""
         mock_client.get.return_value = mock_score_response
         client = GameClient(mock_client)
@@ -198,7 +206,8 @@ class TestGameClient:
         assert "games" in data
         mock_client.get.assert_called_once_with("score/now", web=True)
 
-    def test_get_score_for_date(self, mock_client, mock_score_response):
+    @staticmethod
+    def test_get_score_for_date(mock_client, mock_score_response):
         """Test fetching scores for specific date."""
         mock_client.get.return_value = mock_score_response
         client = GameClient(mock_client)
@@ -209,7 +218,8 @@ class TestGameClient:
         assert "games" in data
         mock_client.get.assert_called_once_with("score/2023-10-10", web=True)
 
-    def test_get_score_for_date_string(self, mock_client, mock_score_response):
+    @staticmethod
+    def test_get_score_for_date_string(mock_client, mock_score_response):
         """Test fetching scores for date as string."""
         mock_client.get.return_value = mock_score_response
         client = GameClient(mock_client)
@@ -219,7 +229,8 @@ class TestGameClient:
         assert "games" in data
         mock_client.get.assert_called_once_with("score/2023-10-10", web=True)
 
-    def test_get_scoreboard(self, mock_client):
+    @staticmethod
+    def test_get_scoreboard(mock_client):
         """Test fetching scoreboard."""
         response = Mock()
         response.status_code = 200
@@ -232,7 +243,8 @@ class TestGameClient:
         assert data["scoreboard"] == []
         mock_client.get.assert_called_once_with("scoreboard/now", web=True)
 
-    def test_get_where_to_watch(self, mock_client):
+    @staticmethod
+    def test_get_where_to_watch(mock_client):
         """Test fetching where to watch."""
         response = Mock()
         response.status_code = 200
@@ -245,7 +257,8 @@ class TestGameClient:
         assert data["broadcasts"] == []
         mock_client.get.assert_called_once_with("partner-game/US/now", web=True)
 
-    def test_get_where_to_watch_default(self, mock_client):
+    @staticmethod
+    def test_get_where_to_watch_default(mock_client):
         """Test fetching where to watch with default country."""
         response = Mock()
         response.status_code = 200
@@ -492,7 +505,8 @@ class TestGameClientLiveAPI:
         return HttpClient()
 
     @pytest.mark.live_api
-    def test_get_game_live(self, real_client):
+    @staticmethod
+    def test_get_game_live(real_client):
         """Test fetching a real game."""
         client = GameClient(real_client)
         # Use a game from recent season (2024-25 season opener)
@@ -502,7 +516,8 @@ class TestGameClientLiveAPI:
         assert "game_date" in game._data
 
     @pytest.mark.live_api
-    def test_get_play_by_play_live(self, real_client):
+    @staticmethod
+    def test_get_play_by_play_live(real_client):
         """Test fetching real play-by-play data."""
         client = GameClient(real_client)
         pbp = client.get_play_by_play(2024020001)
@@ -511,7 +526,8 @@ class TestGameClientLiveAPI:
         assert pbp._data.get("game_id") == 2024020001
 
     @pytest.mark.live_api
-    def test_get_game_landing_live(self, real_client):
+    @staticmethod
+    def test_get_game_landing_live(real_client):
         """Test fetching real game landing data."""
         client = GameClient(real_client)
         data = client.get_game_landing(2024020001)
@@ -521,7 +537,8 @@ class TestGameClientLiveAPI:
         assert "homeTeam" in data
 
     @pytest.mark.live_api
-    def test_get_score_current_live(self, real_client):
+    @staticmethod
+    def test_get_score_current_live(real_client):
         """Test fetching current scores."""
         client = GameClient(real_client)
         data = client.get_score()
@@ -529,7 +546,8 @@ class TestGameClientLiveAPI:
         assert "games" in data or "gameWeek" in data
 
     @pytest.mark.live_api
-    def test_get_scoreboard_live(self, real_client):
+    @staticmethod
+    def test_get_scoreboard_live(real_client):
         """Test fetching current scoreboard."""
         client = GameClient(real_client)
         data = client.get_scoreboard()
@@ -538,7 +556,8 @@ class TestGameClientLiveAPI:
         assert isinstance(data, dict)
 
     @pytest.mark.live_api
-    def test_get_current_games(self, real_client):
+    @staticmethod
+    def test_get_current_games(real_client):
         """Test fetching current games."""
         client = GameClient(real_client)
         games = client.get_current_games()

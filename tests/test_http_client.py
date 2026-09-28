@@ -187,8 +187,10 @@ class TestBackwardCompatibility:
 
     @staticmethod
     def test_get_raw_headers_default_to_none(client):
-        """Omitting headers leaves the request headers untouched (httpx merges
-        per-request headers over the client defaults when provided)."""
+        """Omitting headers leaves request headers untouched.
+
+        Httpx merges per-request headers over client defaults when provided.
+        """
         client.get_raw("https://example.com/data")
         assert client._client.get.call_args.kwargs["headers"] is None
 

@@ -13,7 +13,8 @@ from edgework.models.player import Player
 class TestApiToDict:
     """Test api_to_dict conversion function."""
 
-    def test_api_to_dict_basic(self):
+    @staticmethod
+    def test_api_to_dict_basic():
         """Test basic player data conversion."""
         data = {
             "playerId": "8478402",
@@ -35,7 +36,8 @@ class TestApiToDict:
         assert result["current_team_id"] == 22
         assert result["current_team_abbr"] == "EDM"
 
-    def test_api_to_dict_single_name(self):
+    @staticmethod
+    def test_api_to_dict_single_name():
         """Test player with single name."""
         data = {"playerId": "123", "name": "Mario"}
         result = api_to_dict(data)
@@ -43,7 +45,8 @@ class TestApiToDict:
         assert result["first_name"] == "Mario"
         assert result["last_name"] == ""
 
-    def test_api_to_dict_no_name(self):
+    @staticmethod
+    def test_api_to_dict_no_name():
         """Test player with no name."""
         data = {"playerId": "456"}
         result = api_to_dict(data)
@@ -55,7 +58,8 @@ class TestApiToDict:
 class TestLandingToDict:
     """Test landing_to_dict conversion function."""
 
-    def test_landing_to_dict_basic(self):
+    @staticmethod
+    def test_landing_to_dict_basic():
         """Test basic landing data conversion."""
         data = {
             "firstName": {"default": "Connor"},
@@ -72,7 +76,8 @@ class TestLandingToDict:
         assert result["height"] == "6' 1\""
         assert result["weight"] == 193
 
-    def test_landing_to_dict_draft_details(self):
+    @staticmethod
+    def test_landing_to_dict_draft_details():
         """Test draft details processing."""
         data = {
             "draftDetails": {
@@ -164,12 +169,14 @@ class TestPlayerClient:
         ]
         return response
 
-    def test_client_init(self, mock_client):
+    @staticmethod
+    def test_client_init(mock_client):
         """Test PlayerClient initialization."""
         client = PlayerClient(mock_client)
         assert client.client == mock_client
 
-    def test_get_all_players(self, mock_client, mock_player_search_response):
+    @staticmethod
+    def test_get_all_players(mock_client, mock_player_search_response):
         """Test fetching all players."""
         mock_client.get_raw.return_value = mock_player_search_response
         client = PlayerClient(mock_client)
@@ -180,7 +187,8 @@ class TestPlayerClient:
         assert players[0].obj_id == 8478402
         assert players[1].obj_id == 8477934
 
-    def test_get_active_players(self, mock_client, mock_player_search_response):
+    @staticmethod
+    def test_get_active_players(mock_client, mock_player_search_response):
         """Test fetching active players."""
         mock_client.get_raw.return_value = mock_player_search_response
         client = PlayerClient(mock_client)
@@ -189,7 +197,8 @@ class TestPlayerClient:
 
         assert len(players) == 2
 
-    def test_get_player_landing(self, mock_client, mock_player_landing_response):
+    @staticmethod
+    def test_get_player_landing(mock_client, mock_player_landing_response):
         """Test fetching player landing data."""
         mock_client.get.return_value = mock_player_landing_response
         client = PlayerClient(mock_client)
@@ -201,7 +210,8 @@ class TestPlayerClient:
         assert data["player_id"] == 8478402
         mock_client.get.assert_called_once_with("player/8478402/landing", web=True)
 
-    def test_get_player(self, mock_client, mock_player_landing_response):
+    @staticmethod
+    def test_get_player(mock_client, mock_player_landing_response):
         """Test fetching player by ID."""
         mock_client.get.return_value = mock_player_landing_response
         client = PlayerClient(mock_client)
@@ -211,7 +221,8 @@ class TestPlayerClient:
         assert isinstance(player, Player)
         assert player._data["first_name"] == "Connor"
 
-    def test_get_player_game_logs(self, mock_client, mock_game_log_response):
+    @staticmethod
+    def test_get_player_game_logs(mock_client, mock_game_log_response):
         """Test fetching player game logs."""
         mock_client.get.return_value = mock_game_log_response
         client = PlayerClient(mock_client)
@@ -224,14 +235,16 @@ class TestPlayerClient:
             "player/8478402/game-log/20232024/2", web=True
         )
 
-    def test_get_player_game_logs_invalid_season(self, mock_client):
+    @staticmethod
+    def test_get_player_game_logs_invalid_season(mock_client):
         """Test game logs with invalid season format."""
         client = PlayerClient(mock_client)
 
         with pytest.raises(ValueError):
             client.get_player_game_logs(8478402, "invalid")
 
-    def test_get_player_game_log_now(self, mock_client, mock_game_log_response):
+    @staticmethod
+    def test_get_player_game_log_now(mock_client, mock_game_log_response):
         """Test fetching current season game logs."""
         mock_client.get.return_value = mock_game_log_response
         client = PlayerClient(mock_client)
@@ -241,7 +254,8 @@ class TestPlayerClient:
         assert data["gameTypeId"] == 2
         mock_client.get.assert_called_once_with("player/8478402/game-log/now", web=True)
 
-    def test_get_player_spotlight(self, mock_client, mock_spotlight_response):
+    @staticmethod
+    def test_get_player_spotlight(mock_client, mock_spotlight_response):
         """Test fetching player spotlight."""
         mock_client.get.return_value = mock_spotlight_response
         client = PlayerClient(mock_client)
@@ -251,7 +265,8 @@ class TestPlayerClient:
         assert len(data) == 2
         mock_client.get.assert_called_once_with("player-spotlight", web=True)
 
-    def test_get_player_by_id(self, mock_client, mock_player_landing_response):
+    @staticmethod
+    def test_get_player_by_id(mock_client, mock_player_landing_response):
         """Test getting player by ID with error handling."""
         mock_client.get.return_value = mock_player_landing_response
         client = PlayerClient(mock_client)
@@ -274,7 +289,8 @@ class TestPlayerClientLiveAPI:
         return HttpClient()
 
     @pytest.mark.live_api
-    def test_get_player_landing_live(self, real_client):
+    @staticmethod
+    def test_get_player_landing_live(real_client):
         """Test fetching real player landing data."""
         client = PlayerClient(real_client)
         data = client.get_player_landing(8478402)
@@ -284,7 +300,8 @@ class TestPlayerClientLiveAPI:
         assert "position" in data
 
     @pytest.mark.live_api
-    def test_get_player_game_logs_live(self, real_client):
+    @staticmethod
+    def test_get_player_game_logs_live(real_client):
         """Test fetching real player game logs."""
         client = PlayerClient(real_client)
         data = client.get_player_game_logs(8478402, "2023-2024")
@@ -293,7 +310,8 @@ class TestPlayerClientLiveAPI:
         assert "gameLog" in data
 
     @pytest.mark.live_api
-    def test_get_player_game_log_now_live(self, real_client):
+    @staticmethod
+    def test_get_player_game_log_now_live(real_client):
         """Test fetching current season game logs."""
         client = PlayerClient(real_client)
         data = client.get_player_game_log_now(8478402)
@@ -302,7 +320,8 @@ class TestPlayerClientLiveAPI:
         assert "gameLog" in data
 
     @pytest.mark.live_api
-    def test_get_player_spotlight_live(self, real_client):
+    @staticmethod
+    def test_get_player_spotlight_live(real_client):
         """Test fetching player spotlight."""
         client = PlayerClient(real_client)
         data = client.get_player_spotlight()

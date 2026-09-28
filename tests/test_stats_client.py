@@ -84,8 +84,9 @@ class TestStatsReportQueries:
             ("get_team_stats", "stats_team_report", "wins"),
         ],
     )
+    @staticmethod
     def test_report_default_query(
-        self, http_client, method_name, registry_key, default_sort
+        http_client, method_name, registry_key, default_sort
     ):
         """Default report request hits /{lang}/{family}/{report} in params."""
         getattr(StatsClient(http_client), method_name)(season=SEASON)
@@ -109,7 +110,8 @@ class TestStatsReportQueries:
         )
         assert url == f"{expected_base}?{expected_query}"
 
-    def test_report_language_prefix(self):
+    @staticmethod
+    def test_report_language_prefix():
         """A non-default language is used for the Stats API route."""
         http_client = _mock_http_client(_skater_payload())
         StatsClient(http_client).get_skaters_stats(season=SEASON, lang="fr")
@@ -117,7 +119,9 @@ class TestStatsReportQueries:
         url = _captured_url(http_client)
         assert url.startswith(f"{STATS_API_URL}fr/skater/summary?")
 
-    def test_goalie_report_language_registry_url(self):
+    @staticmethod
+    def test_goalie_report_language_registry_url():
+        """Verify goalie report language registry url."""
         http_client = _mock_http_client(_skater_payload())
         StatsClient(http_client).get_goalies_stats(season=SEASON, lang="fr")
 
@@ -130,7 +134,9 @@ class TestStatsReportQueries:
         assert _captured_url(http_client).startswith(expected_base + "?")
 
     @pytest.mark.parametrize("game_type", [2, 3])
-    def test_game_type_appended_to_cayenne(self, game_type):
+    @staticmethod
+    def test_game_type_appended_to_cayenne(game_type):
+        """Verify game type appended to cayenne."""
         http_client = _mock_http_client(_skater_payload())
         StatsClient(http_client).get_skaters_stats(
             season=SEASON, game_type=game_type
@@ -141,7 +147,9 @@ class TestStatsReportQueries:
             f"seasonId={SEASON} and gameTypeId={game_type}"
         )
 
-    def test_invalid_game_type_rejected(self):
+    @staticmethod
+    def test_invalid_game_type_rejected():
+        """Verify invalid game type rejected."""
         http_client = _mock_http_client(_skater_payload())
         with pytest.raises(ValueError, match="Game type"):
             StatsClient(http_client).get_skaters_stats(
@@ -149,7 +157,8 @@ class TestStatsReportQueries:
             )
         http_client._client.get.assert_not_called()
 
-    def test_cayenne_exp_escape_hatch_overrides_season(self):
+    @staticmethod
+    def test_cayenne_exp_escape_hatch_overrides_season():
         """A raw cayenne_exp replaces the built season expression."""
         http_client = _mock_http_client(_skater_payload())
         StatsClient(http_client).get_skaters_stats(
@@ -159,7 +168,8 @@ class TestStatsReportQueries:
         query = _query_of(_captured_url(http_client))
         assert query["cayenneExp"] == "playerId=8478402"
 
-    def test_default_season_computed_when_none(self):
+    @staticmethod
+    def test_default_season_computed_when_none():
         """season=None computes the current season (October 2023 -> 20232024)."""
         http_client = _mock_http_client(_skater_payload())
         with patch("edgework.models.stats.datetime") as mock_datetime:
@@ -173,9 +183,11 @@ class TestStatsReportQueries:
         "method_name",
         ["get_skaters_stats", "get_goalies_stats", "get_team_stats"],
     )
+    @staticmethod
     def test_invalid_report_rejected_without_request(
-        self, http_client, method_name
+        http_client, method_name
     ):
+        """Verify invalid report rejected without request."""
         client = StatsClient(http_client)
         if method_name == "get_skaters_stats":
             call = lambda: client.get_skaters_stats(report="not_a_report")
@@ -192,7 +204,8 @@ class TestStatsReportQueries:
             call()
         http_client._client.get.assert_not_called()
 
-    def test_alias_report_passes_through_in_route(self):
+    @staticmethod
+    def test_alias_report_passes_through_in_route():
         """Legacy alias names keep their historical wire format."""
         http_client = _mock_http_client({"data": []})
         StatsClient(http_client).get_skaters_stats(
@@ -202,7 +215,9 @@ class TestStatsReportQueries:
         url = _captured_url(http_client)
         assert url.startswith(f"{STATS_API_URL}en/skater/powerPlay?")
 
-    def test_dir_and_fact_cayenne_exp_params(self):
+    @staticmethod
+    def test_dir_and_fact_cayenne_exp_params():
+        """Verify dir and fact cayenne exp params."""
         http_client = _mock_http_client(_skater_payload())
         StatsClient(http_client).get_skaters_stats(
             season=SEASON,
@@ -214,7 +229,9 @@ class TestStatsReportQueries:
         assert query["dir"] == "ASC"
         assert query["factCayenneExp"] == "points>=50"
 
-    def test_include_and_exclude_sent_as_params(self):
+    @staticmethod
+    def test_include_and_exclude_sent_as_params():
+        """Verify include and exclude sent as params."""
         http_client = _mock_http_client(_skater_payload())
         StatsClient(http_client).get_skaters_stats(
             season=SEASON,
@@ -226,7 +243,9 @@ class TestStatsReportQueries:
         assert query.get_list("include") == ["playoffs", "regularSeason"]
         assert query["exclude"] == "shootouts"
 
-    def test_extra_params_escape_hatch(self):
+    @staticmethod
+    def test_extra_params_escape_hatch():
+        """Verify extra params escape hatch."""
         http_client = _mock_http_client(_skater_payload())
         StatsClient(http_client).get_skaters_stats(
             season=SEASON, extra_params={"customKey": "customValue"}
@@ -243,7 +262,9 @@ class TestStatsReportQueries:
             ({"start": -1}, "Start must be"),
         ],
     )
-    def test_limit_start_validation(self, kwargs, match):
+    @staticmethod
+    def test_limit_start_validation(kwargs, match):
+        """Verify limit start validation."""
         http_client = _mock_http_client(_skater_payload())
         with pytest.raises(ValueError, match=match):
             StatsClient(http_client).get_skaters_stats(
@@ -251,7 +272,8 @@ class TestStatsReportQueries:
             )
         http_client._client.get.assert_not_called()
 
-    def test_legacy_positional_call_order_preserved(self):
+    @staticmethod
+    def test_legacy_positional_call_order_preserved():
         """The original positional signature keeps working."""
         http_client = _mock_http_client(_skater_payload())
         StatsClient(http_client).get_skaters_stats(
@@ -272,7 +294,9 @@ class TestStatsReportQueries:
 class TestStatsReportModels:
     """Report rows become stats models with the client bound."""
 
-    def test_rows_become_models_with_client_bound(self):
+    @staticmethod
+    def test_rows_become_models_with_client_bound():
+        """Verify rows become models with client bound."""
         http_client = _mock_http_client(_skater_payload())
         stats = StatsClient(http_client).get_skaters_stats(season=SEASON)
 
@@ -314,14 +338,17 @@ class TestStatsReportModels:
             ),
         ],
     )
-    def test_goalie_and_team_rows(self, payload, model_cls, method):
+    @staticmethod
+    def test_goalie_and_team_rows(payload, model_cls, method):
+        """Verify goalie and team rows."""
         http_client = _mock_http_client(payload)
         stats = getattr(StatsClient(http_client), method)(season=SEASON)
 
         assert isinstance(stats[0], model_cls)
         assert stats[0]._client is http_client
 
-    def test_attribute_access_does_not_refetch(self):
+    @staticmethod
+    def test_attribute_access_does_not_refetch():
         """Loaded rows serve attributes from _data without a second request."""
         http_client = _mock_http_client(_skater_payload())
         stats = StatsClient(http_client).get_skaters_stats(season=SEASON)
@@ -388,9 +415,11 @@ class TestStatsResources:
             ),
         ],
     )
+    @staticmethod
     def test_resource_route_matches_registry(
-        self, http_client, call, registry_key, format_kwargs
+        http_client, call, registry_key, format_kwargs
     ):
+        """Verify resource route matches registry."""
         call(StatsClient(http_client))
 
         expected = STATS_API_URL + format_endpoint(
@@ -398,7 +427,8 @@ class TestStatsResources:
         ).lstrip("/")
         assert _captured_url(http_client) == expected
 
-    def test_resource_language_prefix(self):
+    @staticmethod
+    def test_resource_language_prefix():
         """Non-default languages flow into the registry template."""
         http_client = _mock_http_client({"data": []})
         StatsClient(http_client).get_franchises(lang="fr")
@@ -408,7 +438,9 @@ class TestStatsResources:
         ).lstrip("/")
         assert _captured_url(http_client) == expected
 
-    def test_players_pagination_params(self):
+    @staticmethod
+    def test_players_pagination_params():
+        """Verify players pagination params."""
         http_client = _mock_http_client({"data": [], "total": 0})
         StatsClient(http_client).get_players(limit=10, start=5)
 
@@ -418,20 +450,25 @@ class TestStatsResources:
         assert query["limit"] == "10"
         assert query["start"] == "5"
 
-    def test_players_without_pagination_has_no_query(self):
+    @staticmethod
+    def test_players_without_pagination_has_no_query():
+        """Verify players without pagination has no query."""
         http_client = _mock_http_client({"data": [], "total": 0})
         StatsClient(http_client).get_players()
 
         assert "?" not in _captured_url(http_client)
 
-    def test_content_module_template_key_substituted(self):
+    @staticmethod
+    def test_content_module_template_key_substituted():
+        """Verify content module template key substituted."""
         http_client = _mock_http_client({})
         StatsClient(http_client).get_content_module("my-template-key")
 
         url = _captured_url(http_client)
         assert url == f"{STATS_API_URL}en/content/module/my-template-key"
 
-    def test_ping_hits_root_route_without_language(self):
+    @staticmethod
+    def test_ping_hits_root_route_without_language():
         """``/ping`` is a root Stats route (no language prefix)."""
         http_client = _mock_http_client({})
         StatsClient(http_client).ping()
@@ -439,7 +476,9 @@ class TestStatsResources:
         expected = STATS_API_URL + format_endpoint("stats_ping").lstrip("/")
         assert _captured_url(http_client) == expected
 
-    def test_resources_return_raw_json(self):
+    @staticmethod
+    def test_resources_return_raw_json():
+        """Verify resources return raw json."""
         payload = [{"franchiseId": 1}, {"franchiseId": 2}]
         http_client = _mock_http_client(payload)
 
@@ -460,7 +499,8 @@ class TestLeaderboards:
     def http_client(self):
         return _mock_http_client({"points": []})
 
-    def test_current_skater_leaders_default(self, http_client):
+    @staticmethod
+    def test_current_skater_leaders_default(http_client):
         """No categories/limit -> the documented route with no query."""
         StatsClient(http_client).get_skater_stats_leaders()
 
@@ -468,14 +508,18 @@ class TestLeaderboards:
         assert _captured_url(http_client) == expected
         assert "?" not in _captured_url(http_client)
 
-    def test_current_goalie_leaders_default(self):
+    @staticmethod
+    def test_current_goalie_leaders_default():
+        """Verify current goalie leaders default."""
         http_client = _mock_http_client({"wins": []})
         StatsClient(http_client).get_goalie_stats_leaders()
 
         expected = BASE_WEB_URL + format_endpoint("goalie_stats_now")
         assert _captured_url(http_client) == expected
 
-    def test_single_category(self, http_client):
+    @staticmethod
+    def test_single_category(http_client):
+        """Verify single category."""
         StatsClient(http_client).get_skater_stats_leaders(
             categories="goals", limit=5
         )
@@ -484,7 +528,9 @@ class TestLeaderboards:
         assert query["categories"] == "goals"
         assert query["limit"] == "5"
 
-    def test_multi_category_joined_with_commas(self, http_client):
+    @staticmethod
+    def test_multi_category_joined_with_commas(http_client):
+        """Verify multi category joined with commas."""
         StatsClient(http_client).get_skater_stats_leaders(
             categories=["goals", "assists", "points"]
         )
@@ -493,27 +539,34 @@ class TestLeaderboards:
         assert query["categories"] == "goals,assists,points"
         assert "limit" not in query
 
-    def test_limit_boundary_of_one_accepted(self, http_client):
+    @staticmethod
+    def test_limit_boundary_of_one_accepted(http_client):
+        """Verify limit boundary of one accepted."""
         StatsClient(http_client).get_skater_stats_leaders(limit=1)
 
         query = _query_of(_captured_url(http_client))
         assert query["limit"] == "1"
 
     @pytest.mark.parametrize("limit", [0, -5, "10", True])
-    def test_invalid_limit_rejected(self, http_client, limit):
+    @staticmethod
+    def test_invalid_limit_rejected(http_client, limit):
+        """Verify invalid limit rejected."""
         with pytest.raises(ValueError, match="limit must be"):
             StatsClient(http_client).get_skater_stats_leaders(limit=limit)
         http_client._client.get.assert_not_called()
 
-    def test_invalid_categories_type_rejected(self, http_client):
+    @staticmethod
+    def test_invalid_categories_type_rejected(http_client):
+        """Verify invalid categories type rejected."""
         with pytest.raises(ValueError, match="categories must be"):
             StatsClient(http_client).get_skater_stats_leaders(
                 categories={"goals": True}
             )
         http_client._client.get.assert_not_called()
 
+    @staticmethod
     def test_deprecated_positional_game_type_warns_and_ignored(
-        self, http_client
+        http_client
     ):
         """Legacy positional call (old signature was game_type) still works."""
         with pytest.warns(DeprecationWarning, match="game_type"):
@@ -522,13 +575,16 @@ class TestLeaderboards:
         expected = BASE_WEB_URL + format_endpoint("skater_stats_now")
         assert _captured_url(http_client) == expected
 
-    def test_empty_category_list_omits_param(self, http_client):
+    @staticmethod
+    def test_empty_category_list_omits_param(http_client):
+        """Verify empty category list omits param."""
         StatsClient(http_client).get_skater_stats_leaders(categories=[])
 
         assert "?" not in _captured_url(http_client)
 
+    @staticmethod
     def test_deprecated_game_type_on_current_warns_and_ignored(
-        self, http_client
+        http_client
     ):
         """game_type is unused by /current: warns, request unchanged."""
         with pytest.warns(DeprecationWarning, match="game_type"):
@@ -537,9 +593,11 @@ class TestLeaderboards:
         expected = BASE_WEB_URL + format_endpoint("skater_stats_now")
         assert _captured_url(http_client) == expected
 
+    @staticmethod
     def test_skater_leaders_by_season_with_categories_and_limit(
-        self, http_client
+        http_client
     ):
+        """Verify skater leaders by season with categories and limit."""
         StatsClient(http_client).get_skater_stats_leaders_by_season(
             "2023-2024", 2, categories="assists", limit=3
         )
@@ -550,7 +608,9 @@ class TestLeaderboards:
         assert query["categories"] == "assists"
         assert query["limit"] == "3"
 
-    def test_skater_leaders_by_season_registry_url(self, http_client):
+    @staticmethod
+    def test_skater_leaders_by_season_registry_url(http_client):
+        """Verify skater leaders by season registry url."""
         StatsClient(http_client).get_skater_stats_leaders_by_season(
             "2022-2023", 3
         )
@@ -562,7 +622,9 @@ class TestLeaderboards:
         )
         assert _captured_url(http_client) == expected
 
-    def test_goalie_leaders_by_season_with_categories(self):
+    @staticmethod
+    def test_goalie_leaders_by_season_with_categories():
+        """Verify goalie leaders by season with categories."""
         http_client = _mock_http_client({"wins": []})
         StatsClient(http_client).get_goalie_stats_leaders_by_season(
             "2023-2024", categories=["wins", "gaa"]
@@ -574,7 +636,9 @@ class TestLeaderboards:
         )
         assert _query_of(url)["categories"] == "wins,gaa"
 
-    def test_leaders_by_season_invalid_season_rejected(self, http_client):
+    @staticmethod
+    def test_leaders_by_season_invalid_season_rejected(http_client):
+        """Verify leaders by season invalid season rejected."""
         with pytest.raises(ValueError):
             StatsClient(http_client).get_skater_stats_leaders_by_season(
                 "invalid"

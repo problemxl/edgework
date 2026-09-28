@@ -167,7 +167,8 @@ class TestPlayersMethod:
         assert len(player_set) == 2, "Set should contain only unique players"
 
     @pytest.mark.live_api
-    def test_players_active_only_live(self):
+    @staticmethod
+    def test_players_active_only_live():
         """Test get_all_players with the live API."""
         client = Edgework()
         players = client.get_all_players(active_only=True)
@@ -229,7 +230,8 @@ class TestPlayerFetchData:
         assert player._data["draft_round"] == 1
         assert player._data["draft_overall_pick"] == 1
 
-    def test_fetch_data_no_client(self):
+    @staticmethod
+    def test_fetch_data_no_client():
         """Test fetch_data raises ValueError when no client is available."""
         player = Player(edgework_client=None, obj_id=8478402)
 
@@ -272,7 +274,8 @@ class TestPlayerFetchData:
         assert player._data["position"] == "C"
 
     @pytest.mark.live_api
-    def test_fetch_data_live_api(self):
+    @staticmethod
+    def test_fetch_data_live_api():
         """Test fetch_data with live API call."""
         client = Edgework()
 
@@ -296,7 +299,8 @@ class TestPlayerFetchData:
 class TestLandingToDict:
     """Test class for the landing_to_dict function."""
 
-    def test_simple_camel_to_snake_conversion(self):
+    @staticmethod
+    def test_simple_camel_to_snake_conversion():
         """Test basic camelCase to snake_case conversion."""
         data = {
             "playerId": 12345,
@@ -314,7 +318,8 @@ class TestLandingToDict:
         assert result["is_active"] is True
         assert result["sweater_number"] == 99
 
-    def test_nested_dict_with_default_extraction(self):
+    @staticmethod
+    def test_nested_dict_with_default_extraction():
         """Test extraction of 'default' values from nested dictionaries."""
         data = {
             "firstName": {"default": "Connor", "fr": "Connor"},
@@ -330,7 +335,8 @@ class TestLandingToDict:
         assert result["birth_city"] == "Richmond Hill"
         assert result["simple_field"] == "not_nested"
 
-    def test_draft_details_special_handling(self):
+    @staticmethod
+    def test_draft_details_special_handling():
         """Test special handling of draftDetails nested object."""
         data = {
             "playerId": 8478402,
@@ -352,7 +358,8 @@ class TestLandingToDict:
         assert result["draft_pick_in_round"] == 1
         assert result["draft_team_abbrev"] == "EDM"
 
-    def test_date_string_parsing(self):
+    @staticmethod
+    def test_date_string_parsing():
         """Test automatic parsing of date strings."""
         data = {
             "birthDate": "1997-01-13",
@@ -368,7 +375,8 @@ class TestLandingToDict:
         assert result["iso_timestamp"] == datetime(2023, 12, 25, 15, 30, 0)
         assert result["not_a_date"] == "just_a_string"
 
-    def test_nested_object_flattening(self):
+    @staticmethod
+    def test_nested_object_flattening():
         """Test flattening of complex nested objects."""
         data = {
             "careerTotals": {
@@ -389,7 +397,8 @@ class TestLandingToDict:
         assert result["career_totals_playoffs_games_played"] == 79
         assert result["career_totals_playoffs_goals"] == 42
 
-    def test_list_handling(self):
+    @staticmethod
+    def test_list_handling():
         """Test handling of lists in the data."""
         data = {
             "awards": ["Hart Trophy", "Art Ross Trophy"],
@@ -405,7 +414,8 @@ class TestLandingToDict:
         assert result["teams"][0]["name"] == "Team1"
         assert result["simple_list"] == [1, 2, 3]
 
-    def test_null_and_empty_values(self):
+    @staticmethod
+    def test_null_and_empty_values():
         """Test handling of null and empty values."""
         data = {
             "nullField": None,
@@ -425,7 +435,8 @@ class TestLandingToDict:
         assert result["empty_list"] == []
         # Empty dicts are processed but result in no additional fields
 
-    def test_complex_real_world_structure(self):
+    @staticmethod
+    def test_complex_real_world_structure():
         """Test with a complex structure similar to real NHL API response."""
         data = {
             "playerId": 8478402,
@@ -477,7 +488,8 @@ class TestLandingToDict:
         # Verify awards list
         assert result["awards"] == ["Hart Trophy", "Art Ross Trophy"]
 
-    def test_camel_to_snake_edge_cases(self):
+    @staticmethod
+    def test_camel_to_snake_edge_cases():
         """Test edge cases in camelCase to snake_case conversion."""
         data = {
             "HTML": "html",
