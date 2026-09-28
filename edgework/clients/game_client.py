@@ -1,11 +1,15 @@
 """Game client for fetching NHL game data."""
 
+from __future__ import annotations
+
 import warnings
 from datetime import datetime
-from typing import Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
 from edgework.http_client import HttpClient
-from edgework.models.game import Game
+
+if TYPE_CHECKING:
+    from edgework.models.game import Game
 from edgework.models.game_events import GameEvent
 from edgework.models.play_by_play import PlayByPlay
 from edgework.models.shift import Shift
@@ -29,6 +33,8 @@ class GameClient:
         Returns:
             Game object with boxscore data.
         """
+        from edgework.models.game import Game
+
         response = self._client.get(f"gamecenter/{game_id}/boxscore", web=True)
         data = response.json()
 
