@@ -67,13 +67,13 @@ class Edgework:
         >>> player = client.players.get_player(8478402)
     """
 
-    def __init__(self, user_agent: str = "EdgeworkClient/0.10.0"):
+    def __init__(self, user_agent: str = "EdgeworkClient/2.0"):
         """
         Initializes the Edgework API client with all sub-clients.
 
         Args:
             user_agent (str, optional): The User-Agent string for requests.
-                Defaults to "EdgeworkClient/0.10.0".
+                Defaults to "EdgeworkClient/2.0".
         """
         self._client = HttpClient(user_agent=user_agent)
 

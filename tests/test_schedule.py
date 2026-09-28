@@ -495,13 +495,16 @@ class TestScheduleIntegration:
         # schedule = self.client.get_schedule()
         # assert isinstance(schedule, Schedule)
 
+    @pytest.mark.live_api
     def test_get_schedule_for_date_range_live_api(self):
         """Test get_schedule_for_date_range with live API."""
         if not self.has_client:
             pytest.skip("Edgework client not available")
 
         # Use a small date range to avoid too many API calls
-        schedule = self.client.get_schedule_for_date_range("2024-01-01", "2024-01-07")
+        schedule = self.client.schedule.get_schedule_for_date_range(
+            "2024-01-01", "2024-01-07"
+        )
 
         assert schedule is not None
         assert len(schedule._data["games"]) >= 0
