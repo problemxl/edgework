@@ -53,6 +53,7 @@ you never need to construct the sub-clients yourself:
 | `client.utility` | `UtilityClient` | Season, meta, location, OpenAPI spec |
 | `client.glossary` | `GlossaryClient` | Stats API glossary |
 | `client.shifts` | `ShiftClient` | Shift charts (canonical wrapper) |
+| `client.edge` | `EdgeClient` | NHL Edge tracking, comparisons, Goal Visualizer |
 
 ### Players
 
@@ -93,6 +94,67 @@ story = client.games.get_game_story(2023020204)          # -> dict
 goal = client.games.get_goal_replay(2023020204, 12)      # -> dict
 play = client.games.get_play_replay(2023020204, 12)      # -> dict
 ```
+
+### NHL Edge (tracking data)
+
+`client.edge` wraps the NHL Edge tracking endpoints (`/v1/edge/...`,
+reverse-engineered — see
+`docs/research/nhl-edge-endpoints.md` for provenance). All methods return
+raw payloads (`dict`/`list`); empty result sets are legitimate (`[]`) and
+passed through.
+
+```python
+# Season leaderboards (landing pages). season="now" (default) resolves the
+# current season; tracking data exists only from 2024-25 onward.
+landing = client.edge.get_skater_landing()               # -> dict
+seasons = client.edge.get_available_seasons()            # -> [{"id": 20242025, "gameTypes": [2, 3]}, ...]
+
+# Percentile detail vs league average
+skater = client.edge.get_skater_detail(8478402)          # -> dict
+team = client.edge.get_team_detail(14, season="20252026")
+
+# Comparison payloads — fetch both sides yourself, or use the fan-out helper:
+pair = client.edge.compare("skater", 8482095, 8478402)   # -> {"a": {...}, "b": {...}}  (2 requests)
+one = client.edge.get_goalie_comparison(8476979)         # -> dict
+
+# Top-10 leaderboards — path params are validated, invalid values raise
+# ValueError *before* any request:
+fastest = client.edge.get_skater_shot_speed_top_10(situation="all", sort="max")
+zones = client.edge.get_team_zone_time_top_10(zone="offensive")
+goalie_saves = client.edge.get_goalie_shot_location_top_10(metric="save-pctg")
+```
+
+Validated enums: `situation` = `all|es|pp|pk` · `sort` = `max|avg` ·
+shot-location `metric` = `sog|goals` · zone-time `zone` =
+`offensive|defensive|neutral` · goalie `metric` = `save-pctg|saves|goals-against`.
+Note the goalie top-10 puts the **metric first** (mirroring its route), and
+many situation/sort combinations legitimately return `[]`.
+
+#### Goal Visualizer (Puck & Player Tracking replays)
+
+The per-goal animated 2D rink replay: `get_goal_frames` fetches the goal
+metadata from the `/v1/ppt-replay/{game_id}/{event_id}` route (the same one
+`client.games.get_play_replay` uses), reads `goal.pptReplayUrl`, then fetches
+the frame list from the sprites host — which **requires the header**
+`Referer: https://www.nhl.com/` (Edgework sends it for you; a user agent
+alone is answered with 403).
+
+```python
+frames = client.edge.get_goal_frames(game_id=2025020740, event_id=95)
+# -> list of raw frames, or None when the goal has no pptReplayUrl
+#    (preseason / no tracking coverage) — this is not an error.
+
+from edgework.clients.edge_client import puck_frames, player_frames
+
+puck = puck_frames(frames)            # [(timestamp, x, y), ...]
+tracks = player_frames(frames)        # {playerId: [(timestamp, x, y), ...]}
+one = player_frames(frames, player_id=8484145)   # [(timestamp, x, y), ...]
+```
+
+Frame units: coordinates are **inches** on a 2400×1020 rink grid (200 ft ×
+85 ft; divide by 12 for feet), timestamps are decisecond counters at 10 fps
+(~140 frames ≈ 14 s of play leading to the score). The puck is entity key
+`"1"`; players are matched on their NHL `playerId` field.
 
 ### Stats (Stats API)
 
@@ -188,6 +250,9 @@ These are **different endpoints** and historically confused with each other:
 | Draft picks / rankings | `Draft` / `DraftRanking` |
 | Glossary / shifts | `Glossary` / `list[Shift]` or `list[dict]` |
 | Gamecenter, scores, replays, meta, utility | raw `dict` (no stable models) |
+| Edge landings/details/comparisons | raw `dict` (schemas vary per metric view) |
+| Edge top-10 leaderboards | raw `list` (`[]` when no data) |
+| `EdgeClient.get_goal_frames` | `list` of frames, or `None` when no coverage |
 
 ## Language Handling
 

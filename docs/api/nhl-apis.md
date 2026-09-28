@@ -20,6 +20,8 @@ access NHL data including:
 - Game schedules and results
 - League standings
 - Historical data
+- NHL Edge tracking statistics (shot speed, skating speed/distance, zone
+  time, shot/save locations, Goal Visualizer replays — 2024-25 onward)
 
 ## The two APIs
 
@@ -135,6 +137,72 @@ single source of truth shared by the client and the stats models.
 | `/{lang}/shiftcharts` | `stats_shiftcharts` | `ShiftClient.get_shiftcharts` |
 | `/{lang}/glossary` | `stats_glossary` | `GlossaryClient.get_glossary` |
 | `/{lang}/content/module/{template_key}` | `stats_content_module` | `StatsClient.get_content_module` |
+
+## Coverage matrix — NHL Edge (Web API host)
+
+The NHL Edge routes (puck- and player-tracking statistics) are also served
+by the Web API, under `/v1/edge/...`. They are documented separately because
+they are **reverse-engineered from the NHL Edge web app** — the full
+endpoint catalog, response schemas and quirks live in the research notes,
+[`docs/research/nhl-edge-endpoints.md`](../research/nhl-edge-endpoints.md),
+which is the provenance for everything below.
+
+Composite helpers are excluded from this matrix per the manifest rules —
+their canonical routes are already listed:
+
+- `EdgeClient.compare(entity, id_a, id_b, ...)` fans out to the three
+  `*-comparison` routes, once per compared entity.
+- `EdgeClient.get_available_seasons()` reads `seasonsWithEdgeStats` off the
+  `edge_skater_landing` route.
+- `EdgeClient.get_goal_frames(game_id, event_id)` chains the already-listed
+  `/v1/ppt-replay/{game_id}/{event_number}` route to the
+  `pptReplayUrl` on the sprites host.
+
+| Documented route | Registry key | Implemented by |
+|---|---|---|
+| `/v1/edge/skater-landing/{season}/{game-type}` | `edge_skater_landing` | `EdgeClient.get_skater_landing` |
+| `/v1/edge/goalie-landing/{season}/{game-type}` | `edge_goalie_landing` | `EdgeClient.get_goalie_landing` |
+| `/v1/edge/team-landing/{season}/{game-type}` | `edge_team_landing` | `EdgeClient.get_team_landing` |
+| `/v1/edge/skater-detail/{player-id}/{season}/{game-type}` | `edge_skater_detail` | `EdgeClient.get_skater_detail` |
+| `/v1/edge/goalie-detail/{player-id}/{season}/{game-type}` | `edge_goalie_detail` | `EdgeClient.get_goalie_detail` |
+| `/v1/edge/team-detail/{team-id}/{season}/{game-type}` | `edge_team_detail` | `EdgeClient.get_team_detail` |
+| `/v1/edge/skater-comparison/{player-id}/{season}/{game-type}` | `edge_skater_comparison` | `EdgeClient.get_skater_comparison` |
+| `/v1/edge/goalie-comparison/{player-id}/{season}/{game-type}` | `edge_goalie_comparison` | `EdgeClient.get_goalie_comparison` |
+| `/v1/edge/team-comparison/{team-id}/{season}/{game-type}` | `edge_team_comparison` | `EdgeClient.get_team_comparison` |
+| `/v1/edge/skater-shot-speed-detail/{player-id}/{season}/{game-type}` | `edge_skater_shot_speed_detail` | `EdgeClient.get_skater_shot_speed_detail` |
+| `/v1/edge/skater-skating-speed-detail/{player-id}/{season}/{game-type}` | `edge_skater_skating_speed_detail` | `EdgeClient.get_skater_skating_speed_detail` |
+| `/v1/edge/skater-skating-distance-detail/{player-id}/{season}/{game-type}` | `edge_skater_skating_distance_detail` | `EdgeClient.get_skater_skating_distance_detail` |
+| `/v1/edge/skater-shot-location-detail/{player-id}/{season}/{game-type}` | `edge_skater_shot_location_detail` | `EdgeClient.get_skater_shot_location_detail` |
+| `/v1/edge/goalie-shot-location-detail/{player-id}/{season}/{game-type}` | `edge_goalie_shot_location_detail` | `EdgeClient.get_goalie_shot_location_detail` |
+| `/v1/edge/team-shot-speed-detail/{team-id}/{season}/{game-type}` | `edge_team_shot_speed_detail` | `EdgeClient.get_team_shot_speed_detail` |
+| `/v1/edge/team-skating-speed-detail/{team-id}/{season}/{game-type}` | `edge_team_skating_speed_detail` | `EdgeClient.get_team_skating_speed_detail` |
+| `/v1/edge/team-skating-distance-detail/{team-id}/{season}/{game-type}` | `edge_team_skating_distance_detail` | `EdgeClient.get_team_skating_distance_detail` |
+| `/v1/edge/team-shot-location-detail/{team-id}/{season}/{game-type}` | `edge_team_shot_location_detail` | `EdgeClient.get_team_shot_location_detail` |
+| `/v1/edge/team-zone-time-details/{team-id}/{season}/{game-type}` | `edge_team_zone_time_details` | `EdgeClient.get_team_zone_time_details` |
+| `/v1/edge/skater-shot-speed-top-10/{situation}/{sort}/{season}/{game-type}` | `edge_skater_shot_speed_top_10` | `EdgeClient.get_skater_shot_speed_top_10` |
+| `/v1/edge/team-shot-speed-top-10/{situation}/{sort}/{season}/{game-type}` | `edge_team_shot_speed_top_10` | `EdgeClient.get_team_shot_speed_top_10` |
+| `/v1/edge/team-skating-speed-top-10/{situation}/{sort}/{season}/{game-type}` | `edge_team_skating_speed_top_10` | `EdgeClient.get_team_skating_speed_top_10` |
+| `/v1/edge/skater-shot-location-top-10/{situation}/{metric}/{filter}/{season}/{game-type}` | `edge_skater_shot_location_top_10` | `EdgeClient.get_skater_shot_location_top_10` |
+| `/v1/edge/team-shot-location-top-10/{situation}/{metric}/{filter}/{season}/{game-type}` | `edge_team_shot_location_top_10` | `EdgeClient.get_team_shot_location_top_10` |
+| `/v1/edge/team-skating-distance-top-10/{situation}/{param}/{sort}/{season}/{game-type}` | `edge_team_skating_distance_top_10` | `EdgeClient.get_team_skating_distance_top_10` |
+| `/v1/edge/team-zone-time-top-10/{situation}/{zone}/{season}/{game-type}` | `edge_team_zone_time_top_10` | `EdgeClient.get_team_zone_time_top_10` |
+| `/v1/edge/goalie-shot-location-top-10/{metric}/{situation}/{season}/{game-type}` | `edge_goalie_shot_location_top_10` | `EdgeClient.get_goalie_shot_location_top_10` |
+
+Edge data-availability caveats:
+
+- Tracking data exists only from **2024-25** onward, and the goalie
+  shot-location family (detail + top-10) only from **2025-26**. Discover
+  valid seasons via `EdgeClient.get_available_seasons()`
+  (`seasonsWithEdgeStats`) instead of hard-coding a season list.
+- **Empty is legitimate**: a valid route with no data returns `[]` with HTTP
+  200, never a 404 — clients pass empty arrays through as-is.
+- `season="now"` (the method default) replaces the whole
+  `{season}/{game-type}` tail: the API 307-redirects `/now` to the resolved
+  current season and `httpx` follows redirects. The coverage tests exercise
+  the explicit-season form because the registry template cannot express the
+  `now` collapse.
+- The Goal Visualizer sprites host (`wsr.nhle.com`) requires
+  `Referer: https://www.nhl.com/` — a user agent alone is answered with 403.
 
 ## How endpoint availability is verified
 

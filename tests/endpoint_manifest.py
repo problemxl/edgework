@@ -96,6 +96,16 @@ def _report_row(skater_id: int = 8478402) -> dict:
     return {"skaterId": skater_id, "points": 20}
 
 
+def _edge_seasons() -> list:
+    """``seasonsWithEdgeStats`` — tracking data exists from 2024-25 on."""
+    return [{"id": 20242025, "gameTypes": [2, 3]}]
+
+
+def _edge_measure(imperial: float, metric: float) -> dict:
+    """Edge measures arrive as imperial/metric pairs (see the research doc)."""
+    return {"imperial": imperial, "metric": metric}
+
+
 @dataclass(frozen=True)
 class ManifestEntry:
     """One canonical documented route and its implementing client method.
@@ -722,6 +732,14 @@ ENDPOINT_MANIFEST: dict[str, ManifestEntry] = {
         endpoint_params={"game_id": 2023020204, "event_number": 12},
         payload={},
         returns=(dict,),
+        also_implemented_by=(
+            "edgework.clients.edge_client.EdgeClient.get_goal_frames",
+        ),
+        note=(
+            "EdgeClient.get_goal_frames is a composite consumer: it chains "
+            "this route to the pptReplayUrl on the sprites host (with a "
+            "Referer header) — manifested here, excluded there."
+        ),
     ),
     "openapi_spec": ManifestEntry(
         registry_key="openapi_spec",
@@ -730,6 +748,481 @@ ENDPOINT_MANIFEST: dict[str, ManifestEntry] = {
         payload={"openapi": "3.0.1", "paths": {}},
         returns=(dict,),
         note="Served outside the /v1 namespace; HttpClient must not double-prefix /v1.",
+    ),
+    # ---------------------------------------------------------------------------
+    # NHL Edge (api-web.nhle.com /v1/edge/...) — canonical documented routes
+    #
+    # Reverse-engineered from the NHL Edge web app; the full catalog, response
+    # schemas and quirks live in ``docs/research/nhl-edge-endpoints.md``. The
+    # mock payloads below are minimal shapes derived from that research — Edge
+    # responses carry no stable model, so the clients return them as-is.
+    #
+    # Composite helpers are excluded per the manifest rules (their canonical
+    # routes are manifested here):
+    #   - ``EdgeClient.compare()`` fans out to the three *_comparison routes.
+    #   - ``EdgeClient.get_available_seasons()`` reads ``seasonsWithEdgeStats``
+    #     off the skater landing route.
+    #   - ``EdgeClient.get_goal_frames()`` chains the manifested ``play_replay``
+    #     route to the sprites host (listed on play_replay.also_implemented_by).
+    #
+    # The entries invoke the explicit-season form: ``season="now"`` (the
+    # methods' default) collapses the ``{season}/{game-type}`` template tail
+    # into a single ``now`` segment via 307 redirect, which the registry
+    # template cannot express.
+    # ---------------------------------------------------------------------------
+
+    # -- Landing pages (season leaderboards) ---------------------------------
+    "edge_skater_landing": ManifestEntry(
+        registry_key="edge_skater_landing",
+        target="edgework.clients.edge_client.EdgeClient.get_skater_landing",
+        web=True,
+        call={"season": "20252026", "game_type": 2},
+        endpoint_params={"season": 20252026, "game-type": 2},
+        payload={"seasonsWithEdgeStats": _edge_seasons(), "hardestShot": {}},
+        returns=(dict,),
+        also_implemented_by=(
+            "edgework.clients.edge_client.EdgeClient.get_available_seasons",
+        ),
+        note="get_available_seasons is a composite consumer of seasonsWithEdgeStats.",
+    ),
+    "edge_goalie_landing": ManifestEntry(
+        registry_key="edge_goalie_landing",
+        target="edgework.clients.edge_client.EdgeClient.get_goalie_landing",
+        web=True,
+        call={"season": "20252026", "game_type": 2},
+        endpoint_params={"season": 20252026, "game-type": 2},
+        payload={"seasonsWithEdgeStats": _edge_seasons(), "highDangerSavePctg": {}},
+        returns=(dict,),
+    ),
+    "edge_team_landing": ManifestEntry(
+        registry_key="edge_team_landing",
+        target="edgework.clients.edge_client.EdgeClient.get_team_landing",
+        web=True,
+        call={"season": "20252026", "game_type": 2},
+        endpoint_params={"season": 20252026, "game-type": 2},
+        payload={"seasonsWithEdgeStats": _edge_seasons(), "shotAttemptsOver90": {}},
+        returns=(dict,),
+    ),
+    # -- Base detail (percentiles vs league average) --------------------------
+    "edge_skater_detail": ManifestEntry(
+        registry_key="edge_skater_detail",
+        target="edgework.clients.edge_client.EdgeClient.get_skater_detail",
+        web=True,
+        args=(8478402,),
+        call={"season": "20252026", "game_type": 2},
+        endpoint_params={"player-id": 8478402, "season": 20252026, "game-type": 2},
+        payload={"player": {"playerId": 8478402}, "stats": {}},
+        returns=(dict,),
+    ),
+    "edge_goalie_detail": ManifestEntry(
+        registry_key="edge_goalie_detail",
+        target="edgework.clients.edge_client.EdgeClient.get_goalie_detail",
+        web=True,
+        args=(8476979,),
+        call={"season": "20252026", "game_type": 2},
+        endpoint_params={"player-id": 8476979, "season": 20252026, "game-type": 2},
+        payload={"player": {"playerId": 8476979}, "stats": {}},
+        returns=(dict,),
+    ),
+    "edge_team_detail": ManifestEntry(
+        registry_key="edge_team_detail",
+        target="edgework.clients.edge_client.EdgeClient.get_team_detail",
+        web=True,
+        args=(14,),
+        call={"season": "20252026", "game_type": 2},
+        endpoint_params={"team-id": 14, "season": 20252026, "game-type": 2},
+        payload={"team": {"teamId": 14}, "stats": {}},
+        returns=(dict,),
+    ),
+    # -- Comparison payloads (one call per entity; diffed client-side) --------
+    "edge_skater_comparison": ManifestEntry(
+        registry_key="edge_skater_comparison",
+        target="edgework.clients.edge_client.EdgeClient.get_skater_comparison",
+        web=True,
+        args=(8478402,),
+        call={"season": "20252026", "game_type": 2},
+        endpoint_params={"player-id": 8478402, "season": 20252026, "game-type": 2},
+        payload={
+            "shotSpeedDetails": [],
+            "skatingSpeedDetails": [],
+            "skatingDistanceDetails": [],
+            "zoneTimeDetails": [],
+            "shotLocationDetails": [],
+        },
+        returns=(dict,),
+        also_implemented_by=("edgework.clients.edge_client.EdgeClient.compare",),
+        note=(
+            "compare('skater', ...) fans out to this route once per compared "
+            "entity (goalie/team analogues below)."
+        ),
+    ),
+    "edge_goalie_comparison": ManifestEntry(
+        registry_key="edge_goalie_comparison",
+        target="edgework.clients.edge_client.EdgeClient.get_goalie_comparison",
+        web=True,
+        args=(8476979,),
+        call={"season": "20252026", "game_type": 2},
+        endpoint_params={"player-id": 8476979, "season": 20252026, "game-type": 2},
+        payload={
+            "shotSpeedDetails": [],
+            "skatingSpeedDetails": [],
+            "zoneTimeDetails": [],
+            "shotLocationDetails": [],
+        },
+        returns=(dict,),
+        also_implemented_by=("edgework.clients.edge_client.EdgeClient.compare",),
+    ),
+    "edge_team_comparison": ManifestEntry(
+        registry_key="edge_team_comparison",
+        target="edgework.clients.edge_client.EdgeClient.get_team_comparison",
+        web=True,
+        args=(14,),
+        call={"season": "20252026", "game_type": 2},
+        endpoint_params={"team-id": 14, "season": 20252026, "game-type": 2},
+        payload={
+            "shotSpeedDetails": [],
+            "skatingSpeedDetails": [],
+            "skatingDistanceDetails": [],
+            "zoneTimeDetails": [],
+            "shotLocationDetails": [],
+        },
+        returns=(dict,),
+        also_implemented_by=("edgework.clients.edge_client.EdgeClient.compare",),
+    ),
+    # -- View-specific detail (per-metric breakdowns) -------------------------
+    "edge_skater_shot_speed_detail": ManifestEntry(
+        registry_key="edge_skater_shot_speed_detail",
+        target="edgework.clients.edge_client.EdgeClient.get_skater_shot_speed_detail",
+        web=True,
+        args=(8478402,),
+        call={"season": "20252026", "game_type": 2},
+        endpoint_params={"player-id": 8478402, "season": 20252026, "game-type": 2},
+        payload={
+            "topShotSpeed": _edge_measure(102.4, 165.0),
+            "avgShotSpeed": _edge_measure(90.1, 145.0),
+        },
+        returns=(dict,),
+    ),
+    "edge_skater_skating_speed_detail": ManifestEntry(
+        registry_key="edge_skater_skating_speed_detail",
+        target=(
+            "edgework.clients.edge_client."
+            "EdgeClient.get_skater_skating_speed_detail"
+        ),
+        web=True,
+        args=(8478402,),
+        call={"season": "20252026", "game_type": 2},
+        endpoint_params={"player-id": 8478402, "season": 20252026, "game-type": 2},
+        payload={
+            "maxSkatingSpeed": _edge_measure(24.05, 38.7),
+            "burstsOver22": 2,
+            "burstsOver20": 5,
+            "burstsOver18": 9,
+        },
+        returns=(dict,),
+    ),
+    "edge_skater_skating_distance_detail": ManifestEntry(
+        registry_key="edge_skater_skating_distance_detail",
+        target=(
+            "edgework.clients.edge_client."
+            "EdgeClient.get_skater_skating_distance_detail"
+        ),
+        web=True,
+        args=(8478402,),
+        call={"season": "20252026", "game_type": 2},
+        endpoint_params={"player-id": 8478402, "season": 20252026, "game-type": 2},
+        payload={
+            "totalDistanceSkated": _edge_measure(5.0, 8.0),
+            "distanceMaxGame": _edge_measure(0.31, 0.5),
+        },
+        returns=(dict,),
+    ),
+    "edge_skater_shot_location_detail": ManifestEntry(
+        registry_key="edge_skater_shot_location_detail",
+        target=(
+            "edgework.clients.edge_client."
+            "EdgeClient.get_skater_shot_location_detail"
+        ),
+        web=True,
+        args=(8478402,),
+        call={"season": "20252026", "game_type": 2},
+        endpoint_params={"player-id": 8478402, "season": 20252026, "game-type": 2},
+        payload={"shotLocationDetails": [], "shotLocationTotals": []},
+        returns=(dict,),
+    ),
+    "edge_goalie_shot_location_detail": ManifestEntry(
+        registry_key="edge_goalie_shot_location_detail",
+        target=(
+            "edgework.clients.edge_client."
+            "EdgeClient.get_goalie_shot_location_detail"
+        ),
+        web=True,
+        args=(8476979,),
+        call={"season": "20252026", "game_type": 2},
+        endpoint_params={"player-id": 8476979, "season": 20252026, "game-type": 2},
+        payload={
+            "all": {"savePctg": 0.912},
+            "highDanger": {"savePctg": 0.884},
+            "midRange": {},
+            "longRange": {},
+        },
+        returns=(dict,),
+        note="Zone-keyed save percentages; data starts in 2025-26.",
+    ),
+    "edge_team_shot_speed_detail": ManifestEntry(
+        registry_key="edge_team_shot_speed_detail",
+        target="edgework.clients.edge_client.EdgeClient.get_team_shot_speed_detail",
+        web=True,
+        args=(14,),
+        call={"season": "20252026", "game_type": 2},
+        endpoint_params={"team-id": 14, "season": 20252026, "game-type": 2},
+        payload={
+            "topShotSpeed": _edge_measure(101.1, 162.7),
+            "avgShotSpeed": _edge_measure(88.9, 143.1),
+        },
+        returns=(dict,),
+    ),
+    "edge_team_skating_speed_detail": ManifestEntry(
+        registry_key="edge_team_skating_speed_detail",
+        target=(
+            "edgework.clients.edge_client."
+            "EdgeClient.get_team_skating_speed_detail"
+        ),
+        web=True,
+        args=(14,),
+        call={"season": "20252026", "game_type": 2},
+        endpoint_params={"team-id": 14, "season": 20252026, "game-type": 2},
+        payload={
+            "maxSkatingSpeed": _edge_measure(23.4, 37.7),
+            "burstsOver22": 7,
+            "burstsOver20": 18,
+            "burstsOver18": 41,
+        },
+        returns=(dict,),
+    ),
+    "edge_team_skating_distance_detail": ManifestEntry(
+        registry_key="edge_team_skating_distance_detail",
+        target=(
+            "edgework.clients.edge_client."
+            "EdgeClient.get_team_skating_distance_detail"
+        ),
+        web=True,
+        args=(14,),
+        call={"season": "20252026", "game_type": 2},
+        endpoint_params={"team-id": 14, "season": 20252026, "game-type": 2},
+        payload={
+            "totalDistanceSkated": _edge_measure(302.0, 486.0),
+            "distancePer60": _edge_measure(22.5, 36.2),
+        },
+        returns=(dict,),
+    ),
+    "edge_team_shot_location_detail": ManifestEntry(
+        registry_key="edge_team_shot_location_detail",
+        target=(
+            "edgework.clients.edge_client."
+            "EdgeClient.get_team_shot_location_detail"
+        ),
+        web=True,
+        args=(14,),
+        call={"season": "20252026", "game_type": 2},
+        endpoint_params={"team-id": 14, "season": 20252026, "game-type": 2},
+        payload={"shotLocationDetails": [], "shotLocationTotals": []},
+        returns=(dict,),
+    ),
+    "edge_team_zone_time_details": ManifestEntry(
+        registry_key="edge_team_zone_time_details",
+        target="edgework.clients.edge_client.EdgeClient.get_team_zone_time_details",
+        web=True,
+        args=(14,),
+        call={"season": "20252026", "game_type": 2},
+        endpoint_params={"team-id": 14, "season": 20252026, "game-type": 2},
+        payload={
+            "offensiveZoneTime": {},
+            "neutralZoneTime": {},
+            "defensiveZoneTime": {},
+            "shotDifferential": {},
+        },
+        returns=(dict,),
+        note="The only Edge route spelled with the plural -details suffix.",
+    ),
+    # -- Top-10 leaderboards (validated path parameters) ----------------------
+    "edge_skater_shot_speed_top_10": ManifestEntry(
+        registry_key="edge_skater_shot_speed_top_10",
+        target="edgework.clients.edge_client.EdgeClient.get_skater_shot_speed_top_10",
+        web=True,
+        call={
+            "situation": "all",
+            "sort": "max",
+            "season": "20252026",
+            "game_type": 2,
+        },
+        endpoint_params={
+            "situation": "all",
+            "sort": "max",
+            "season": 20252026,
+            "game-type": 2,
+        },
+        payload=[{"playerId": 8478402, "topShotSpeed": _edge_measure(102.4, 165.0)}],
+        returns=(list,),
+    ),
+    "edge_team_shot_speed_top_10": ManifestEntry(
+        registry_key="edge_team_shot_speed_top_10",
+        target="edgework.clients.edge_client.EdgeClient.get_team_shot_speed_top_10",
+        web=True,
+        call={
+            "situation": "all",
+            "sort": "max",
+            "season": "20252026",
+            "game_type": 2,
+        },
+        endpoint_params={
+            "situation": "all",
+            "sort": "max",
+            "season": 20252026,
+            "game-type": 2,
+        },
+        payload=[{"teamId": 14, "topShotSpeed": _edge_measure(101.1, 162.7)}],
+        returns=(list,),
+    ),
+    "edge_team_skating_speed_top_10": ManifestEntry(
+        registry_key="edge_team_skating_speed_top_10",
+        target=(
+            "edgework.clients.edge_client."
+            "EdgeClient.get_team_skating_speed_top_10"
+        ),
+        web=True,
+        call={
+            "situation": "all",
+            "sort": "max",
+            "season": "20252026",
+            "game_type": 2,
+        },
+        endpoint_params={
+            "situation": "all",
+            "sort": "max",
+            "season": 20252026,
+            "game-type": 2,
+        },
+        payload=[{"teamId": 14, "maxSkatingSpeed": _edge_measure(23.4, 37.7)}],
+        returns=(list,),
+    ),
+    "edge_skater_shot_location_top_10": ManifestEntry(
+        registry_key="edge_skater_shot_location_top_10",
+        target=(
+            "edgework.clients.edge_client."
+            "EdgeClient.get_skater_shot_location_top_10"
+        ),
+        web=True,
+        call={
+            "situation": "all",
+            "metric": "sog",
+            "filter": "all",
+            "season": "20252026",
+            "game_type": 2,
+        },
+        endpoint_params={
+            "situation": "all",
+            "metric": "sog",
+            "filter": "all",
+            "season": 20252026,
+            "game-type": 2,
+        },
+        payload=[{"playerId": 8478402, "sog": 120, "goals": 18}],
+        returns=(list,),
+    ),
+    "edge_team_shot_location_top_10": ManifestEntry(
+        registry_key="edge_team_shot_location_top_10",
+        target=(
+            "edgework.clients.edge_client."
+            "EdgeClient.get_team_shot_location_top_10"
+        ),
+        web=True,
+        call={
+            "situation": "all",
+            "metric": "sog",
+            "filter": "all",
+            "season": "20252026",
+            "game_type": 2,
+        },
+        endpoint_params={
+            "situation": "all",
+            "metric": "sog",
+            "filter": "all",
+            "season": 20252026,
+            "game-type": 2,
+        },
+        payload=[{"teamId": 14, "sog": 950, "goals": 88}],
+        returns=(list,),
+    ),
+    "edge_team_skating_distance_top_10": ManifestEntry(
+        registry_key="edge_team_skating_distance_top_10",
+        target=(
+            "edgework.clients.edge_client."
+            "EdgeClient.get_team_skating_distance_top_10"
+        ),
+        web=True,
+        call={
+            "situation": "all",
+            "param": "all",
+            "sort": "total",
+            "season": "20252026",
+            "game_type": 2,
+        },
+        endpoint_params={
+            "situation": "all",
+            "param": "all",
+            "sort": "total",
+            "season": 20252026,
+            "game-type": 2,
+        },
+        payload=[{"teamId": 14, "totalDistanceSkated": _edge_measure(302.0, 486.0)}],
+        returns=(list,),
+        note="Only all/all/total observed returning data for this route.",
+    ),
+    "edge_team_zone_time_top_10": ManifestEntry(
+        registry_key="edge_team_zone_time_top_10",
+        target="edgework.clients.edge_client.EdgeClient.get_team_zone_time_top_10",
+        web=True,
+        call={
+            "situation": "all",
+            "zone": "offensive",
+            "season": "20252026",
+            "game_type": 2,
+        },
+        endpoint_params={
+            "situation": "all",
+            "zone": "offensive",
+            "season": 20252026,
+            "game-type": 2,
+        },
+        payload=[{"teamId": 14, "offensiveZoneTime": 38.2}],
+        returns=(list,),
+    ),
+    "edge_goalie_shot_location_top_10": ManifestEntry(
+        registry_key="edge_goalie_shot_location_top_10",
+        target=(
+            "edgework.clients.edge_client."
+            "EdgeClient.get_goalie_shot_location_top_10"
+        ),
+        web=True,
+        call={
+            "metric": "save-pctg",
+            "situation": "all",
+            "season": "20252026",
+            "game_type": 2,
+        },
+        endpoint_params={
+            "metric": "save-pctg",
+            "situation": "all",
+            "season": 20252026,
+            "game-type": 2,
+        },
+        payload=[{"playerId": 8476979, "savePctg": 0.912}],
+        returns=(list,),
+        note=(
+            "The only Edge top-10 with a differing param order: metric first. "
+            "Data starts in 2025-26."
+        ),
     ),
     # ---------------------------------------------------------------------------
     # Stats API (api.nhle.com/stats/rest) — canonical documented routes
@@ -986,37 +1479,9 @@ REGISTRY_EXCLUSIONS: dict[str, str] = {
         "Legacy alias of 'club_stats_season_game_type' (identical server "
         "route), kept for backward compatibility with pre-Task-1 callers."
     ),
-    # NHL Edge routes (Task E1): implemented in EdgeClient with their own
-    # test suite; manifest entries land in Task E4 once mock payloads are
-    # built from the Edge response schemas. Composite helpers over these
-    # routes (EdgeClient.compare, get_available_seasons) stay unmanifested
-    # permanently per the exclusion rules above.
-    "edge_skater_landing": "Interim: Edge route manifested in Task E4.",
-    "edge_goalie_landing": "Interim: Edge route manifested in Task E4.",
-    "edge_team_landing": "Interim: Edge route manifested in Task E4.",
-    "edge_skater_detail": "Interim: Edge route manifested in Task E4.",
-    "edge_goalie_detail": "Interim: Edge route manifested in Task E4.",
-    "edge_team_detail": "Interim: Edge route manifested in Task E4.",
-    "edge_skater_comparison": "Interim: Edge route manifested in Task E4.",
-    "edge_goalie_comparison": "Interim: Edge route manifested in Task E4.",
-    "edge_team_comparison": "Interim: Edge route manifested in Task E4.",
-    # Task E2: view-detail and top-10 routes.
-    "edge_skater_shot_speed_detail": "Interim: Edge route manifested in Task E4.",
-    "edge_skater_skating_speed_detail": "Interim: Edge route manifested in Task E4.",
-    "edge_skater_skating_distance_detail": "Interim: Edge route manifested in Task E4.",
-    "edge_skater_shot_location_detail": "Interim: Edge route manifested in Task E4.",
-    "edge_goalie_shot_location_detail": "Interim: Edge route manifested in Task E4.",
-    "edge_team_shot_speed_detail": "Interim: Edge route manifested in Task E4.",
-    "edge_team_skating_speed_detail": "Interim: Edge route manifested in Task E4.",
-    "edge_team_skating_distance_detail": "Interim: Edge route manifested in Task E4.",
-    "edge_team_shot_location_detail": "Interim: Edge route manifested in Task E4.",
-    "edge_team_zone_time_details": "Interim: Edge route manifested in Task E4.",
-    "edge_skater_shot_speed_top_10": "Interim: Edge route manifested in Task E4.",
-    "edge_team_shot_speed_top_10": "Interim: Edge route manifested in Task E4.",
-    "edge_team_skating_speed_top_10": "Interim: Edge route manifested in Task E4.",
-    "edge_skater_shot_location_top_10": "Interim: Edge route manifested in Task E4.",
-    "edge_team_shot_location_top_10": "Interim: Edge route manifested in Task E4.",
-    "edge_team_skating_distance_top_10": "Interim: Edge route manifested in Task E4.",
-    "edge_team_zone_time_top_10": "Interim: Edge route manifested in Task E4.",
-    "edge_goalie_shot_location_top_10": "Interim: Edge route manifested in Task E4.",
+    # NHL Edge (Tasks E1–E3): all 27 canonical /v1/edge/... routes are
+    # manifested in ENDPOINT_MANIFEST above (see the NHL Edge block). The
+    # composite EdgeClient helpers (compare, get_available_seasons,
+    # get_goal_frames) are methods, not registry routes, so they are simply
+    # not manifested — their canonical routes carry the entries.
 }
