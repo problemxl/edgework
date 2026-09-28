@@ -268,7 +268,8 @@ class TestEdgeRegistry:
             ),
         ],
     )
-    def test_edge_routes_registered(self, key, expected):
+    @staticmethod
+    def test_edge_routes_registered(key, expected):
         """Verify test edge routes registered."""
         assert API_PATH[key] == expected
 
@@ -316,7 +317,8 @@ class TestEdgePath:
         assert path == f"edge/skater-landing/{SEASON}/3"
 
     @pytest.mark.parametrize("now", ["now", "NOW"])
-    def test_now_replaces_season_and_game_type(self, now):
+    @staticmethod
+    def test_now_replaces_season_and_game_type(now):
         """Verify test now replaces season and game type."""
         path = _edge_path("edge_skater_landing", now, 2)
         assert path == "edge/skater-landing/now"
@@ -350,7 +352,8 @@ class TestEdgePath:
 class TestEdgeLanding:
     """Landing methods target the canonical routes and return raw dicts."""
 
-    def test_get_skater_landing_defaults_to_now(self, mock_client, edge):
+    @staticmethod
+    def test_get_skater_landing_defaults_to_now(mock_client, edge):
         """Verify test get skater landing defaults to now."""
         mock_client.get.return_value = _response(LANDING_PAYLOAD)
 
@@ -367,7 +370,8 @@ class TestEdgeLanding:
             ("get_team_landing", "edge/team-landing"),
         ]
     )
-    def test_goalie_and_team_landing_routes(self, mock_client, edge, method, route):
+    @staticmethod
+    def test_goalie_and_team_landing_routes(mock_client, edge, method, route):
         """Verify test goalie and team landing routes."""
         mock_client.get.return_value = _response({})
 
@@ -377,13 +381,15 @@ class TestEdgeLanding:
             f"{route}/{SEASON}/3", web=True, params={}
         )
 
-    def test_empty_landing_passes_through(self, mock_client, edge):
+    @staticmethod
+    def test_empty_landing_passes_through(mock_client, edge):
         """Valid route with no data returns [] — never raises."""
         mock_client.get.return_value = _response([])
 
         assert edge.get_team_landing() == []
 
-    def test_season_and_game_type_forwarded(self, mock_client, edge):
+    @staticmethod
+    def test_season_and_game_type_forwarded(mock_client, edge):
         """Verify test season and game type forwarded."""
         mock_client.get.return_value = _response({})
 
@@ -397,7 +403,8 @@ class TestEdgeLanding:
 class TestAvailableSeasons:
     """``get_available_seasons`` exposes ``seasonsWithEdgeStats``."""
 
-    def test_returns_seasons_with_edge_stats(self, mock_client, edge):
+    @staticmethod
+    def test_returns_seasons_with_edge_stats(mock_client, edge):
         """Verify test returns seasons with edge stats."""
         mock_client.get.return_value = _response(LANDING_PAYLOAD)
 
@@ -409,13 +416,15 @@ class TestAvailableSeasons:
             "edge/skater-landing/now", web=True, params={}
         )
 
-    def test_missing_field_returns_empty_list(self, mock_client, edge):
+    @staticmethod
+    def test_missing_field_returns_empty_list(mock_client, edge):
         """Verify test missing field returns empty list."""
         mock_client.get.return_value = _response({})
 
         assert edge.get_available_seasons() == []
 
-    def test_none_field_returns_empty_list(self, mock_client, edge):
+    @staticmethod
+    def test_none_field_returns_empty_list(mock_client, edge):
         """Verify test none field returns empty list."""
         mock_client.get.return_value = _response({"seasonsWithEdgeStats": None})
 
@@ -430,7 +439,8 @@ class TestAvailableSeasons:
 class TestEdgeDetail:
     """Detail methods substitute entity ids into the canonical routes."""
 
-    def test_get_skater_detail_defaults_to_now(self, mock_client, edge):
+    @staticmethod
+    def test_get_skater_detail_defaults_to_now(mock_client, edge):
         """Verify test get skater detail defaults to now."""
         mock_client.get.return_value = _response({"player": {}, "stats": {}})
 
@@ -440,7 +450,8 @@ class TestEdgeDetail:
             f"edge/skater-detail/{PLAYER_ID}/now", web=True, params={}
         )
 
-    def test_get_goalie_detail_explicit_season(self, mock_client, edge):
+    @staticmethod
+    def test_get_goalie_detail_explicit_season(mock_client, edge):
         """Verify test get goalie detail explicit season."""
         mock_client.get.return_value = _response({"player": {}, "stats": {}})
 
@@ -450,7 +461,8 @@ class TestEdgeDetail:
             f"edge/goalie-detail/{GOALIE_ID}/{SEASON}/3", web=True, params={}
         )
 
-    def test_get_team_detail_uses_team_id(self, mock_client, edge):
+    @staticmethod
+    def test_get_team_detail_uses_team_id(mock_client, edge):
         """Verify test get team detail uses team id."""
         mock_client.get.return_value = _response({"team": {}})
 
@@ -460,7 +472,8 @@ class TestEdgeDetail:
             f"edge/team-detail/{TEAM_ID}/{SEASON}/2", web=True, params={}
         )
 
-    def test_empty_detail_passes_through(self, mock_client, edge):
+    @staticmethod
+    def test_empty_detail_passes_through(mock_client, edge):
         """Verify test empty detail passes through."""
         mock_client.get.return_value = _response([])
 
@@ -482,7 +495,8 @@ class TestEdgeComparison:
             ("get_team_comparison", "edge/team-comparison", TEAM_ID),
         ]
     )
-    def test_comparison_routes(self, mock_client, edge, method, route, entity_id):
+    @staticmethod
+    def test_comparison_routes(mock_client, edge, method, route, entity_id):
         """Verify test comparison routes."""
         mock_client.get.return_value = _response({})
 
@@ -492,7 +506,8 @@ class TestEdgeComparison:
             f"{route}/{entity_id}/{SEASON}/2", web=True, params={}
         )
 
-    def test_comparison_now(self, mock_client, edge):
+    @staticmethod
+    def test_comparison_now(mock_client, edge):
         """Verify test comparison now."""
         mock_client.get.return_value = _response({})
 
@@ -525,8 +540,9 @@ class TestEdgeViewDetail:
             ("get_team_zone_time_details", "edge/team-zone-time-details", TEAM_ID, "team-id"),
         ]
     )
+    @staticmethod
     def test_view_detail_defaults_to_now(
-        self, mock_client, edge, method, route, entity_id, entity_param
+        mock_client, edge, method, route, entity_id, entity_param
     ):
         """Verify test view detail defaults to now."""
         mock_client.get.return_value = _response({})
@@ -543,8 +559,9 @@ class TestEdgeViewDetail:
             ("get_team_zone_time_details", "edge/team-zone-time-details", TEAM_ID),
         ]
     )
+    @staticmethod
     def test_view_detail_season_and_game_type(
-        self, mock_client, edge, method, route, entity_id
+        mock_client, edge, method, route, entity_id
     ):
         """Verify test view detail season and game type."""
         mock_client.get.return_value = _response({})
@@ -561,7 +578,8 @@ class TestEdgeViewDetail:
         assert "team-zone-time-details" in API_PATH["edge_team_zone_time_details"]
         assert "edge_team_zone_time_detail" not in API_PATH
 
-    def test_empty_view_detail_passes_through(self, mock_client, edge):
+    @staticmethod
+    def test_empty_view_detail_passes_through(mock_client, edge):
         """Valid route with no data returns [] — never raises."""
         mock_client.get.return_value = _response([])
 
@@ -583,7 +601,8 @@ class TestEdgeTop10:
             ("get_team_skating_speed_top_10", "edge/team-skating-speed-top-10"),
         ]
     )
-    def test_speed_top10_param_order(self, mock_client, edge, method, route):
+    @staticmethod
+    def test_speed_top10_param_order(mock_client, edge, method, route):
         """Speed routes: {situation}/{sort} then season/game-type."""
         mock_client.get.return_value = _response([])
 
@@ -594,7 +613,8 @@ class TestEdgeTop10:
         )
         assert result == []
 
-    def test_speed_top10_explicit_season_and_playoffs(self, mock_client, edge):
+    @staticmethod
+    def test_speed_top10_explicit_season_and_playoffs(mock_client, edge):
         """Verify test speed top10 explicit season and playoffs."""
         mock_client.get.return_value = _response([])
 
@@ -612,10 +632,10 @@ class TestEdgeTop10:
             ("get_team_shot_location_top_10", "edge/team-shot-location-top-10"),
         ]
     )
+    @staticmethod
     def test_shot_location_top10_three_param_form(
-        self, mock_client, edge, method, route
+        mock_client, edge, method, route
     ):
-        """Verify test shot location top10 three param form."""
         """Shot-location routes: {situation}/{metric}/{filter} then tail."""
         mock_client.get.return_value = _response([])
 
@@ -625,7 +645,8 @@ class TestEdgeTop10:
             f"{route}/all/goals/all/now", web=True, params={}
         )
 
-    def test_skating_distance_top10_three_param_form(self, mock_client, edge):
+    @staticmethod
+    def test_skating_distance_top10_three_param_form(mock_client, edge):
         """Distance route: {situation}/{param}/{sort} then tail."""
         mock_client.get.return_value = _response([])
 
@@ -639,7 +660,8 @@ class TestEdgeTop10:
             params={},
         )
 
-    def test_zone_time_top10_param_order(self, mock_client, edge):
+    @staticmethod
+    def test_zone_time_top10_param_order(mock_client, edge):
         """Zone-time route: {situation}/{zone} then tail."""
         mock_client.get.return_value = _response([])
 
@@ -649,7 +671,8 @@ class TestEdgeTop10:
             "edge/team-zone-time-top-10/es/neutral/now", web=True, params={}
         )
 
-    def test_goalie_top10_metric_first(self, mock_client, edge):
+    @staticmethod
+    def test_goalie_top10_metric_first(mock_client, edge):
         """⚠️ The goalie route puts the metric FIRST: {metric}/{situation}."""
         mock_client.get.return_value = _response([])
 
@@ -659,7 +682,8 @@ class TestEdgeTop10:
             "edge/goalie-shot-location-top-10/saves/all/now", web=True, params={}
         )
 
-    def test_goalie_top10_metric_position_is_not_situation(self, mock_client, edge):
+    @staticmethod
+    def test_goalie_top10_metric_position_is_not_situation(mock_client, edge):
         """The first path segment after the view is the metric, not situation."""
         mock_client.get.return_value = _response([])
 
@@ -669,7 +693,8 @@ class TestEdgeTop10:
         assert path.startswith("edge/goalie-shot-location-top-10/goals-against/")
         assert not path.startswith("edge/goalie-shot-location-top-10/all/")
 
-    def test_empty_top10_passes_through(self, mock_client, edge):
+    @staticmethod
+    def test_empty_top10_passes_through(mock_client, edge):
         """Valid route + empty result (e.g. es/max speed top-10) returns []."""
         mock_client.get.return_value = _response([])
 
@@ -696,19 +721,22 @@ class TestEdgeParamValidation:
             lambda edge: edge.get_goalie_shot_location_top_10(situation="overtime"),
         ]
     )
-    def test_invalid_params_raise_and_skip_http(self, mock_client, edge, call):
+    @staticmethod
+    def test_invalid_params_raise_and_skip_http(mock_client, edge, call):
         """Verify test invalid params raise and skip http."""
         with pytest.raises(ValueError):
             call(edge)
         mock_client.get.assert_not_called()
 
-    def test_invalid_situation_message_names_choice(self, edge):
+    @staticmethod
+    def test_invalid_situation_message_names_choice(edge):
         """Verify test invalid situation message names choice."""
         with pytest.raises(ValueError, match="situation must be one of") as excinfo:
             edge.get_team_zone_time_top_10(situation="5v5")
         assert "'all', 'es', 'pk', 'pp'" in str(excinfo.value)
 
-    def test_distance_sort_rejects_speed_sort_values(self, edge):
+    @staticmethod
+    def test_distance_sort_rejects_speed_sort_values(edge):
         """The distance route's sort is 'total', not the speed max/avg."""
         with pytest.raises(ValueError, match="sort must be one of"):
             edge.get_team_skating_distance_top_10(sort="avg")
@@ -721,7 +749,8 @@ class TestEdgeParamValidation:
             lambda edge: edge.get_team_skating_distance_top_10(sort="Total"),
         ]
     )
-    def test_params_normalized_case_insensitively(self, mock_client, edge, call):
+    @staticmethod
+    def test_params_normalized_case_insensitively(mock_client, edge, call):
         """Verify test params normalized case insensitively."""
         mock_client.get.return_value = _response([])
 
@@ -757,7 +786,8 @@ class TestEdgeParamValidation:
 class TestCompareFanOut:
     """``compare()`` fetches both sides with exactly two HTTP requests."""
 
-    def test_compare_returns_a_and_b(self, mock_client, edge):
+    @staticmethod
+    def test_compare_returns_a_and_b(mock_client, edge):
         """Verify test compare returns a and b."""
         payload_a = {"playerId": PLAYER_ID, "shotSpeedDetails": []}
         payload_b = {"playerId": 8478402 + 1, "shotSpeedDetails": []}
@@ -775,8 +805,9 @@ class TestCompareFanOut:
             ("team", "edge/team-comparison", TEAM_ID),
         ]
     )
+    @staticmethod
     def test_compare_dispatches_to_entity_route(
-        self, mock_client, edge, entity, route, entity_id
+        mock_client, edge, entity, route, entity_id
     ):
         """Verify test compare dispatches to entity route."""
         mock_client.get.return_value = _response({})
@@ -789,7 +820,8 @@ class TestCompareFanOut:
             f"{route}/{entity_id + 1}/now",
         ]
 
-    def test_compare_forwards_season_and_game_type(self, mock_client, edge):
+    @staticmethod
+    def test_compare_forwards_season_and_game_type(mock_client, edge):
         """Verify test compare forwards season and game type."""
         mock_client.get.return_value = _response({})
 
@@ -801,7 +833,8 @@ class TestCompareFanOut:
             f"edge/team-comparison/{TEAM_ID + 1}/{SEASON}/3",
         ]
 
-    def test_compare_rejects_unknown_entity(self, edge):
+    @staticmethod
+    def test_compare_rejects_unknown_entity(edge):
         """Verify test compare rejects unknown entity."""
         with pytest.raises(ValueError, match="entity must be one of"):
             edge.compare("referee", 1, 2)
@@ -817,7 +850,8 @@ class TestCompareFanOut:
 class TestGoalFrames:
     """``get_goal_frames`` chains ppt-replay metadata → sprites frames."""
 
-    def test_full_pipeline_sends_referer(self, mock_client, edge):
+    @staticmethod
+    def test_full_pipeline_sends_referer(mock_client, edge):
         """Verify test full pipeline sends referer."""
         mock_client.get.return_value = _response(PPT_METADATA)
         mock_client.get_raw.return_value = _response(TRACKING_FRAMES)
@@ -834,7 +868,8 @@ class TestGoalFrames:
         )
         assert result == TRACKING_FRAMES
 
-    def test_returns_none_when_ppt_replay_url_absent(self, mock_client, edge):
+    @staticmethod
+    def test_returns_none_when_ppt_replay_url_absent(mock_client, edge):
         """Preseason/no-coverage goals omit pptReplayUrl — return None."""
         mock_client.get.return_value = _response(
             {"gameId": GAME_ID, "goal": {"eventId": EVENT_ID}}
@@ -844,21 +879,24 @@ class TestGoalFrames:
         mock_client.get.assert_called_once()
         mock_client.get_raw.assert_not_called()
 
-    def test_returns_none_for_empty_payload(self, mock_client, edge):
+    @staticmethod
+    def test_returns_none_for_empty_payload(mock_client, edge):
         """Verify test returns none for empty payload."""
         mock_client.get.return_value = _response({})
 
         assert edge.get_goal_frames(GAME_ID, EVENT_ID) is None
         mock_client.get_raw.assert_not_called()
 
-    def test_returns_none_for_empty_url(self, mock_client, edge):
+    @staticmethod
+    def test_returns_none_for_empty_url(mock_client, edge):
         """Verify test returns none for empty url."""
         mock_client.get.return_value = _response({"goal": {"pptReplayUrl": ""}})
 
         assert edge.get_goal_frames(GAME_ID, EVENT_ID) is None
         mock_client.get_raw.assert_not_called()
 
-    def test_returns_none_for_non_dict_payload(self, mock_client, edge):
+    @staticmethod
+    def test_returns_none_for_non_dict_payload(mock_client, edge):
         """Verify test returns none for non dict payload."""
         mock_client.get.return_value = _response([])
 
@@ -965,8 +1003,9 @@ class TestFrameHelpers:
 class TestEdgeFacade:
     """``Edgework.edge`` exposes the EdgeClient on the shared HTTP client."""
 
+    @staticmethod
     @patch("edgework.edgework.HttpClient")
-    def test_facade_exposes_edge_client(self, mock_http_client):
+    def test_facade_exposes_edge_client(mock_http_client):
         """Verify test facade exposes edge client."""
         mock_http_client.return_value = Mock(spec=HttpClient)
 
