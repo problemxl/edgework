@@ -21,7 +21,7 @@ Quirks every caller should know about:
   ``{"imperial": 102.4, "metric": 165.0, "overlay": {...}}``.
 """
 
-from typing import Dict
+from typing import Dict, FrozenSet
 
 from edgework.const import API_VERSION
 from edgework.endpoints import format_endpoint
@@ -35,6 +35,64 @@ _COMPARISON_ROUTES: Dict[str, str] = {
     "goalie": "edge_goalie_comparison",
     "team": "edge_team_comparison",
 }
+
+# ---------------------------------------------------------------------------
+# Validated path parameters for the top-10 leaderboards. Values were probed
+# against the live API (see ``docs/research/nhl-edge-endpoints.md``); some
+# combos are valid routes that legitimately return ``[]`` while others are
+# enumerated here from the Edge web app's own option lists. Values are
+# matched case-insensitively and normalized to lowercase.
+# ---------------------------------------------------------------------------
+
+#: ``{situation}`` segment across top-10 routes: all, even strength,
+#: power play, penalty kill. Many top-10s only return data for ``all``.
+SITUATION: FrozenSet[str] = frozenset({"all", "es", "pp", "pk"})
+
+#: ``{sort}`` segment of the shot/skating-speed top-10 routes. Only ``max``
+#: was observed returning data; ``avg`` is a valid empty route.
+SORT: FrozenSet[str] = frozenset({"max", "avg"})
+
+#: ``{metric}`` segment of the skater/team shot-location top-10 routes.
+SHOT_METRIC: FrozenSet[str] = frozenset({"sog", "goals"})
+
+#: ``{zone}`` segment of the team zone-time top-10 route.
+ZONE: FrozenSet[str] = frozenset({"offensive", "defensive", "neutral"})
+
+#: ``{metric}`` segment of the goalie shot-location top-10 route (the route
+#: with the metric-first param order).
+GOALIE_METRIC: FrozenSet[str] = frozenset({"save-pctg", "saves", "goals-against"})
+
+#: ``{filter}`` segment of the shot-location top-10 routes — only ``all`` has
+#: been observed returning data so far; widen when the API grows this enum.
+SHOT_LOCATION_FILTER: FrozenSet[str] = frozenset({"all"})
+
+#: ``{param}`` (middle) segment of the team skating-distance top-10 route —
+#: only ``all`` has been observed returning data so far.
+DISTANCE_PARAM: FrozenSet[str] = frozenset({"all"})
+
+#: ``{sort}`` segment of the team skating-distance top-10 route. Unlike the
+#: speed routes, only ``total`` was observed returning data.
+DISTANCE_SORT: FrozenSet[str] = frozenset({"total"})
+
+
+def _validate_choice(name: str, value, allowed: FrozenSet[str]) -> str:
+    """Validate a path parameter against its allowed values.
+
+    Args:
+        name: Parameter name used in the error message (e.g. ``"situation"``).
+        value: Raw parameter value; normalized to lowercase before matching.
+        allowed: The set of accepted lowercase values.
+
+    Returns:
+        The normalized (lowercase) value.
+
+    Raises:
+        ValueError: If the normalized value is not in ``allowed``.
+    """
+    normalized = str(value).lower()
+    if normalized not in allowed:
+        raise ValueError(f"{name} must be one of {sorted(allowed)}, got {value!r}")
+    return normalized
 
 # ``format_endpoint`` fills ``{API_VERSION}``; ``HttpClient.get(web=True)``
 # prepends ``/{API_VERSION}`` itself, so the version segment is stripped.
@@ -328,6 +386,622 @@ class EdgeClient:
         response = self._client.get(
             _edge_path(
                 "edge_team_comparison", season, game_type, **{"team-id": team_id}
+            ),
+            web=True,
+            params={},
+        )
+        return response.json()
+
+    # ------------------------------------------------------------------
+    # View-specific detail (per-metric breakdowns)
+    # ------------------------------------------------------------------
+
+    def get_skater_shot_speed_detail(
+        self, player_id: int, season: str = "now", game_type: int = 2
+    ) -> Dict:
+        """Fetch a skater's shot-speed breakdown (``skater-shot-speed-detail``).
+
+        Returns ``topShotSpeed``/``avgShotSpeed`` plus the attempts buckets
+        (100+ / 90-100 / 80-90 / 70-80 mph).
+
+        Args:
+            player_id: NHL player ID.
+            season: 8-digit season (``"20252026"``) or ``"now"`` (default).
+            game_type: ``2`` for regular season, ``3`` for playoffs.
+                Ignored when ``season="now"``.
+
+        Returns:
+            Raw detail payload as a dictionary (``[]`` when no data).
+        """
+        response = self._client.get(
+            _edge_path(
+                "edge_skater_shot_speed_detail",
+                season,
+                game_type,
+                **{"player-id": player_id},
+            ),
+            web=True,
+            params={},
+        )
+        return response.json()
+
+    def get_skater_skating_speed_detail(
+        self, player_id: int, season: str = "now", game_type: int = 2
+    ) -> Dict:
+        """Fetch a skater's skating-speed breakdown (``skater-skating-speed-detail``).
+
+        Returns ``maxSkatingSpeed`` plus the bursts-over-threshold counts
+        (22 / 20 / 18 mph).
+
+        Args:
+            player_id: NHL player ID.
+            season: 8-digit season (``"20252026"``) or ``"now"`` (default).
+            game_type: ``2`` for regular season, ``3`` for playoffs.
+                Ignored when ``season="now"``.
+
+        Returns:
+            Raw detail payload as a dictionary (``[]`` when no data).
+        """
+        response = self._client.get(
+            _edge_path(
+                "edge_skater_skating_speed_detail",
+                season,
+                game_type,
+                **{"player-id": player_id},
+            ),
+            web=True,
+            params={},
+        )
+        return response.json()
+
+    def get_skater_skating_distance_detail(
+        self, player_id: int, season: str = "now", game_type: int = 2
+    ) -> Dict:
+        """Fetch a skater's skating-distance breakdown.
+
+        Returns distance skated per game and per situation.
+
+        Args:
+            player_id: NHL player ID.
+            season: 8-digit season (``"20252026"``) or ``"now"`` (default).
+            game_type: ``2`` for regular season, ``3`` for playoffs.
+                Ignored when ``season="now"``.
+
+        Returns:
+            Raw detail payload as a dictionary (``[]`` when no data).
+        """
+        response = self._client.get(
+            _edge_path(
+                "edge_skater_skating_distance_detail",
+                season,
+                game_type,
+                **{"player-id": player_id},
+            ),
+            web=True,
+            params={},
+        )
+        return response.json()
+
+    def get_skater_shot_location_detail(
+        self, player_id: int, season: str = "now", game_type: int = 2
+    ) -> Dict:
+        """Fetch a skater's shot-location breakdown.
+
+        Returns ``shotLocationDetails[]`` (per rink area: sog, goals, pctg,
+        percentile) and ``shotLocationTotals[]`` with league averages.
+
+        Args:
+            player_id: NHL player ID.
+            season: 8-digit season (``"20252026"``) or ``"now"`` (default).
+            game_type: ``2`` for regular season, ``3`` for playoffs.
+                Ignored when ``season="now"``.
+
+        Returns:
+            Raw detail payload as a dictionary (``[]`` when no data).
+        """
+        response = self._client.get(
+            _edge_path(
+                "edge_skater_shot_location_detail",
+                season,
+                game_type,
+                **{"player-id": player_id},
+            ),
+            web=True,
+            params={},
+        )
+        return response.json()
+
+    def get_goalie_shot_location_detail(
+        self, player_id: int, season: str = "now", game_type: int = 2
+    ) -> Dict:
+        """Fetch a goalie's save-location breakdown.
+
+        Returns save percentage by danger zone (all / highDanger / midRange /
+        longRange). Data for the goalie shot-location family starts in
+        2025-26 (later than the other Edge views).
+
+        Args:
+            player_id: NHL goalie ID.
+            season: 8-digit season (``"20252026"``) or ``"now"`` (default).
+            game_type: ``2`` for regular season, ``3`` for playoffs.
+                Ignored when ``season="now"``.
+
+        Returns:
+            Raw detail payload as a dictionary (``[]`` when no data).
+        """
+        response = self._client.get(
+            _edge_path(
+                "edge_goalie_shot_location_detail",
+                season,
+                game_type,
+                **{"player-id": player_id},
+            ),
+            web=True,
+            params={},
+        )
+        return response.json()
+
+    def get_team_shot_speed_detail(
+        self, team_id: int, season: str = "now", game_type: int = 2
+    ) -> Dict:
+        """Fetch a team's shot-speed breakdown.
+
+        Args:
+            team_id: Numeric NHL team ID (e.g. ``14`` = Tampa Bay).
+            season: 8-digit season (``"20252026"``) or ``"now"`` (default).
+            game_type: ``2`` for regular season, ``3`` for playoffs.
+                Ignored when ``season="now"``.
+
+        Returns:
+            Raw detail payload as a dictionary (``[]`` when no data).
+        """
+        response = self._client.get(
+            _edge_path(
+                "edge_team_shot_speed_detail",
+                season,
+                game_type,
+                **{"team-id": team_id},
+            ),
+            web=True,
+            params={},
+        )
+        return response.json()
+
+    def get_team_skating_speed_detail(
+        self, team_id: int, season: str = "now", game_type: int = 2
+    ) -> Dict:
+        """Fetch a team's skating-speed breakdown.
+
+        Args:
+            team_id: Numeric NHL team ID.
+            season: 8-digit season (``"20252026"``) or ``"now"`` (default).
+            game_type: ``2`` for regular season, ``3`` for playoffs.
+                Ignored when ``season="now"``.
+
+        Returns:
+            Raw detail payload as a dictionary (``[]`` when no data).
+        """
+        response = self._client.get(
+            _edge_path(
+                "edge_team_skating_speed_detail",
+                season,
+                game_type,
+                **{"team-id": team_id},
+            ),
+            web=True,
+            params={},
+        )
+        return response.json()
+
+    def get_team_skating_distance_detail(
+        self, team_id: int, season: str = "now", game_type: int = 2
+    ) -> Dict:
+        """Fetch a team's skating-distance breakdown.
+
+        Args:
+            team_id: Numeric NHL team ID.
+            season: 8-digit season (``"20252026"``) or ``"now"`` (default).
+            game_type: ``2`` for regular season, ``3`` for playoffs.
+                Ignored when ``season="now"``.
+
+        Returns:
+            Raw detail payload as a dictionary (``[]`` when no data).
+        """
+        response = self._client.get(
+            _edge_path(
+                "edge_team_skating_distance_detail",
+                season,
+                game_type,
+                **{"team-id": team_id},
+            ),
+            web=True,
+            params={},
+        )
+        return response.json()
+
+    def get_team_shot_location_detail(
+        self, team_id: int, season: str = "now", game_type: int = 2
+    ) -> Dict:
+        """Fetch a team's shot-location breakdown.
+
+        Args:
+            team_id: Numeric NHL team ID.
+            season: 8-digit season (``"20252026"``) or ``"now"`` (default).
+            game_type: ``2`` for regular season, ``3`` for playoffs.
+                Ignored when ``season="now"``.
+
+        Returns:
+            Raw detail payload as a dictionary (``[]`` when no data).
+        """
+        response = self._client.get(
+            _edge_path(
+                "edge_team_shot_location_detail",
+                season,
+                game_type,
+                **{"team-id": team_id},
+            ),
+            web=True,
+            params={},
+        )
+        return response.json()
+
+    def get_team_zone_time_details(
+        self, team_id: int, season: str = "now", game_type: int = 2
+    ) -> Dict:
+        """Fetch a team's zone-time breakdown (``team-zone-time-details``).
+
+        ⚠️ The only Edge route spelled with the plural ``-details`` suffix.
+        Returns zone percentage + rank + league average by strength, plus
+        ``shotDifferential``.
+
+        Args:
+            team_id: Numeric NHL team ID.
+            season: 8-digit season (``"20252026"``) or ``"now"`` (default).
+            game_type: ``2`` for regular season, ``3`` for playoffs.
+                Ignored when ``season="now"``.
+
+        Returns:
+            Raw detail payload as a dictionary (``[]`` when no data).
+        """
+        response = self._client.get(
+            _edge_path(
+                "edge_team_zone_time_details",
+                season,
+                game_type,
+                **{"team-id": team_id},
+            ),
+            web=True,
+            params={},
+        )
+        return response.json()
+
+    # ------------------------------------------------------------------
+    # Top-10 leaderboards (validated path parameters)
+    # ------------------------------------------------------------------
+
+    def get_skater_shot_speed_top_10(
+        self,
+        situation: str = "all",
+        sort: str = "max",
+        season: str = "now",
+        game_type: int = 2,
+    ) -> list:
+        """Fetch the top-10 hardest shots (``skater-shot-speed-top-10``).
+
+        Args:
+            situation: ``all`` (default), ``es``, ``pp`` or ``pk``. Many
+                situations legitimately return ``[]``.
+            sort: ``max`` (default; the only sort observed returning data)
+                or ``avg``.
+            season: 8-digit season (``"20252026"``) or ``"now"`` (default).
+            game_type: ``2`` for regular season, ``3`` for playoffs.
+                Ignored when ``season="now"``.
+
+        Returns:
+            Raw leaderboard as a list (``[]`` when no data).
+
+        Raises:
+            ValueError: If ``situation`` or ``sort`` is invalid.
+        """
+        situation = _validate_choice("situation", situation, SITUATION)
+        sort = _validate_choice("sort", sort, SORT)
+        response = self._client.get(
+            _edge_path(
+                "edge_skater_shot_speed_top_10",
+                season,
+                game_type,
+                situation=situation,
+                sort=sort,
+            ),
+            web=True,
+            params={},
+        )
+        return response.json()
+
+    def get_team_shot_speed_top_10(
+        self,
+        situation: str = "all",
+        sort: str = "max",
+        season: str = "now",
+        game_type: int = 2,
+    ) -> list:
+        """Fetch the top-10 hardest-shot teams (``team-shot-speed-top-10``).
+
+        Args:
+            situation: ``all`` (default), ``es``, ``pp`` or ``pk``.
+            sort: ``max`` (default) or ``avg``.
+            season: 8-digit season (``"20252026"``) or ``"now"`` (default).
+            game_type: ``2`` for regular season, ``3`` for playoffs.
+                Ignored when ``season="now"``.
+
+        Returns:
+            Raw leaderboard as a list (``[]`` when no data).
+
+        Raises:
+            ValueError: If ``situation`` or ``sort`` is invalid.
+        """
+        situation = _validate_choice("situation", situation, SITUATION)
+        sort = _validate_choice("sort", sort, SORT)
+        response = self._client.get(
+            _edge_path(
+                "edge_team_shot_speed_top_10",
+                season,
+                game_type,
+                situation=situation,
+                sort=sort,
+            ),
+            web=True,
+            params={},
+        )
+        return response.json()
+
+    def get_team_skating_speed_top_10(
+        self,
+        situation: str = "all",
+        sort: str = "max",
+        season: str = "now",
+        game_type: int = 2,
+    ) -> list:
+        """Fetch the top-10 fastest-skating teams (``team-skating-speed-top-10``).
+
+        Args:
+            situation: ``all`` (default), ``es``, ``pp`` or ``pk``.
+            sort: ``max`` (default) or ``avg``.
+            season: 8-digit season (``"20252026"``) or ``"now"`` (default).
+            game_type: ``2`` for regular season, ``3`` for playoffs.
+                Ignored when ``season="now"``.
+
+        Returns:
+            Raw leaderboard as a list (``[]`` when no data).
+
+        Raises:
+            ValueError: If ``situation`` or ``sort`` is invalid.
+        """
+        situation = _validate_choice("situation", situation, SITUATION)
+        sort = _validate_choice("sort", sort, SORT)
+        response = self._client.get(
+            _edge_path(
+                "edge_team_skating_speed_top_10",
+                season,
+                game_type,
+                situation=situation,
+                sort=sort,
+            ),
+            web=True,
+            params={},
+        )
+        return response.json()
+
+    def get_skater_shot_location_top_10(
+        self,
+        situation: str = "all",
+        metric: str = "sog",
+        filter: str = "all",
+        season: str = "now",
+        game_type: int = 2,
+    ) -> list:
+        """Fetch the top-10 skaters by shot location (three-parameter form).
+
+        Targets ``skater-shot-location-top-10/{situation}/{metric}/{filter}/...``.
+
+        Args:
+            situation: ``all`` (default), ``es``, ``pp`` or ``pk``.
+            metric: ``sog`` (shots on goal, default) or ``goals``.
+            filter: Rink-area filter — only ``all`` has been observed
+                returning data so far.
+            season: 8-digit season (``"20252026"``) or ``"now"`` (default).
+            game_type: ``2`` for regular season, ``3`` for playoffs.
+                Ignored when ``season="now"``.
+
+        Returns:
+            Raw leaderboard as a list (``[]`` when no data).
+
+        Raises:
+            ValueError: If ``situation``, ``metric`` or ``filter`` is invalid.
+        """
+        situation = _validate_choice("situation", situation, SITUATION)
+        metric = _validate_choice("metric", metric, SHOT_METRIC)
+        filter = _validate_choice("filter", filter, SHOT_LOCATION_FILTER)
+        response = self._client.get(
+            _edge_path(
+                "edge_skater_shot_location_top_10",
+                season,
+                game_type,
+                situation=situation,
+                metric=metric,
+                filter=filter,
+            ),
+            web=True,
+            params={},
+        )
+        return response.json()
+
+    def get_team_shot_location_top_10(
+        self,
+        situation: str = "all",
+        metric: str = "sog",
+        filter: str = "all",
+        season: str = "now",
+        game_type: int = 2,
+    ) -> list:
+        """Fetch the top-10 teams by shot location (three-parameter form).
+
+        Targets ``team-shot-location-top-10/{situation}/{metric}/{filter}/...``.
+
+        Args:
+            situation: ``all`` (default), ``es``, ``pp`` or ``pk``.
+            metric: ``sog`` (shots on goal, default) or ``goals``.
+            filter: Rink-area filter — only ``all`` has been observed
+                returning data so far.
+            season: 8-digit season (``"20252026"``) or ``"now"`` (default).
+            game_type: ``2`` for regular season, ``3`` for playoffs.
+                Ignored when ``season="now"``.
+
+        Returns:
+            Raw leaderboard as a list (``[]`` when no data).
+
+        Raises:
+            ValueError: If ``situation``, ``metric`` or ``filter`` is invalid.
+        """
+        situation = _validate_choice("situation", situation, SITUATION)
+        metric = _validate_choice("metric", metric, SHOT_METRIC)
+        filter = _validate_choice("filter", filter, SHOT_LOCATION_FILTER)
+        response = self._client.get(
+            _edge_path(
+                "edge_team_shot_location_top_10",
+                season,
+                game_type,
+                situation=situation,
+                metric=metric,
+                filter=filter,
+            ),
+            web=True,
+            params={},
+        )
+        return response.json()
+
+    def get_team_skating_distance_top_10(
+        self,
+        situation: str = "all",
+        param: str = "all",
+        sort: str = "total",
+        season: str = "now",
+        game_type: int = 2,
+    ) -> list:
+        """Fetch the top-10 teams by skating distance (three-parameter form).
+
+        Targets
+        ``team-skating-distance-top-10/{situation}/{param}/{sort}/...`` —
+        only ``all/all/total`` was observed returning data.
+
+        Args:
+            situation: ``all`` (default), ``es``, ``pp`` or ``pk``.
+            param: Distance qualifier — only ``all`` has been observed
+                returning data so far.
+            sort: ``total`` (default; the only sort observed returning data
+                for this route — note it differs from the speed routes'
+                ``max``/``avg``).
+            season: 8-digit season (``"20252026"``) or ``"now"`` (default).
+            game_type: ``2`` for regular season, ``3`` for playoffs.
+                Ignored when ``season="now"``.
+
+        Returns:
+            Raw leaderboard as a list (``[]`` when no data).
+
+        Raises:
+            ValueError: If ``situation``, ``param`` or ``sort`` is invalid.
+        """
+        situation = _validate_choice("situation", situation, SITUATION)
+        param = _validate_choice("param", param, DISTANCE_PARAM)
+        sort = _validate_choice("sort", sort, DISTANCE_SORT)
+        response = self._client.get(
+            _edge_path(
+                "edge_team_skating_distance_top_10",
+                season,
+                game_type,
+                situation=situation,
+                param=param,
+                sort=sort,
+            ),
+            web=True,
+            params={},
+        )
+        return response.json()
+
+    def get_team_zone_time_top_10(
+        self,
+        situation: str = "all",
+        zone: str = "offensive",
+        season: str = "now",
+        game_type: int = 2,
+    ) -> list:
+        """Fetch the top-10 teams by zone time (``team-zone-time-top-10``).
+
+        Args:
+            situation: ``all`` (default), ``es``, ``pp`` or ``pk``.
+            zone: ``offensive`` (default), ``defensive`` or ``neutral``.
+            season: 8-digit season (``"20252026"``) or ``"now"`` (default).
+            game_type: ``2`` for regular season, ``3`` for playoffs.
+                Ignored when ``season="now"``.
+
+        Returns:
+            Raw leaderboard as a list (``[]`` when no data).
+
+        Raises:
+            ValueError: If ``situation`` or ``zone`` is invalid.
+        """
+        situation = _validate_choice("situation", situation, SITUATION)
+        zone = _validate_choice("zone", zone, ZONE)
+        response = self._client.get(
+            _edge_path(
+                "edge_team_zone_time_top_10",
+                season,
+                game_type,
+                situation=situation,
+                zone=zone,
+            ),
+            web=True,
+            params={},
+        )
+        return response.json()
+
+    def get_goalie_shot_location_top_10(
+        self,
+        metric: str = "save-pctg",
+        situation: str = "all",
+        season: str = "now",
+        game_type: int = 2,
+    ) -> list:
+        """Fetch the top-10 goalies by save location (metric-first route).
+
+        ⚠️ The only Edge top-10 route whose parameter order differs:
+        ``goalie-shot-location-top-10/{metric}/{situation}/...`` puts the
+        metric FIRST, so this method's signature mirrors that order.
+        Data for the goalie shot-location family starts in 2025-26.
+
+        Args:
+            metric: ``save-pctg`` (default), ``saves`` or ``goals-against``.
+            situation: ``all`` (default) — the only situation observed
+                returning data. ``es``/``pp``/``pk`` are accepted.
+            season: 8-digit season (``"20252026"``) or ``"now"`` (default).
+            game_type: ``2`` for regular season, ``3`` for playoffs.
+                Ignored when ``season="now"``.
+
+        Returns:
+            Raw leaderboard as a list (``[]`` when no data).
+
+        Raises:
+            ValueError: If ``metric`` or ``situation`` is invalid.
+        """
+        metric = _validate_choice("metric", metric, GOALIE_METRIC)
+        situation = _validate_choice("situation", situation, SITUATION)
+        response = self._client.get(
+            _edge_path(
+                "edge_goalie_shot_location_top_10",
+                season,
+                game_type,
+                metric=metric,
+                situation=situation,
             ),
             web=True,
             params={},

@@ -83,6 +83,31 @@ API_PATH: dict = {
     "edge_skater_comparison": "/{API_VERSION}/edge/skater-comparison/{player-id}/{season}/{game-type}",
     "edge_goalie_comparison": "/{API_VERSION}/edge/goalie-comparison/{player-id}/{season}/{game-type}",
     "edge_team_comparison": "/{API_VERSION}/edge/team-comparison/{team-id}/{season}/{game-type}",
+    # View-specific detail. Names are spelled exactly as the API serves them —
+    # note ``team-zone-time-details`` is the only plural ``-details`` route.
+    "edge_skater_shot_speed_detail": "/{API_VERSION}/edge/skater-shot-speed-detail/{player-id}/{season}/{game-type}",
+    "edge_skater_skating_speed_detail": "/{API_VERSION}/edge/skater-skating-speed-detail/{player-id}/{season}/{game-type}",
+    "edge_skater_skating_distance_detail": "/{API_VERSION}/edge/skater-skating-distance-detail/{player-id}/{season}/{game-type}",
+    "edge_skater_shot_location_detail": "/{API_VERSION}/edge/skater-shot-location-detail/{player-id}/{season}/{game-type}",
+    "edge_goalie_shot_location_detail": "/{API_VERSION}/edge/goalie-shot-location-detail/{player-id}/{season}/{game-type}",
+    "edge_team_shot_speed_detail": "/{API_VERSION}/edge/team-shot-speed-detail/{team-id}/{season}/{game-type}",
+    "edge_team_skating_speed_detail": "/{API_VERSION}/edge/team-skating-speed-detail/{team-id}/{season}/{game-type}",
+    "edge_team_skating_distance_detail": "/{API_VERSION}/edge/team-skating-distance-detail/{team-id}/{season}/{game-type}",
+    "edge_team_shot_location_detail": "/{API_VERSION}/edge/team-shot-location-detail/{team-id}/{season}/{game-type}",
+    "edge_team_zone_time_details": "/{API_VERSION}/edge/team-zone-time-details/{team-id}/{season}/{game-type}",
+    # Top-10 leaderboards. Param orders differ per family and are intentional:
+    # speed routes are {situation}/{sort}; shot-location routes carry a third
+    # {filter} segment; skating-distance is {situation}/{param}/{sort}; zone
+    # time is {situation}/{zone}; the goalie route puts the metric FIRST
+    # ({metric}/{situation}) — the only Edge route ordered that way.
+    "edge_skater_shot_speed_top_10": "/{API_VERSION}/edge/skater-shot-speed-top-10/{situation}/{sort}/{season}/{game-type}",
+    "edge_team_shot_speed_top_10": "/{API_VERSION}/edge/team-shot-speed-top-10/{situation}/{sort}/{season}/{game-type}",
+    "edge_team_skating_speed_top_10": "/{API_VERSION}/edge/team-skating-speed-top-10/{situation}/{sort}/{season}/{game-type}",
+    "edge_skater_shot_location_top_10": "/{API_VERSION}/edge/skater-shot-location-top-10/{situation}/{metric}/{filter}/{season}/{game-type}",
+    "edge_team_shot_location_top_10": "/{API_VERSION}/edge/team-shot-location-top-10/{situation}/{metric}/{filter}/{season}/{game-type}",
+    "edge_team_skating_distance_top_10": "/{API_VERSION}/edge/team-skating-distance-top-10/{situation}/{param}/{sort}/{season}/{game-type}",
+    "edge_team_zone_time_top_10": "/{API_VERSION}/edge/team-zone-time-top-10/{situation}/{zone}/{season}/{game-type}",
+    "edge_goalie_shot_location_top_10": "/{API_VERSION}/edge/goalie-shot-location-top-10/{metric}/{situation}/{season}/{game-type}",
     # Network endpoints
     "tv_schedule_date": "/{API_VERSION}/network/tv-schedule/{date}",
     "tv_schedule_now": "/{API_VERSION}/network/tv-schedule/now",
