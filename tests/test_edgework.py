@@ -267,7 +267,7 @@ class TestEdgeworkContextManager:
         mock_client_instance.close = Mock()
         mock_http_client.return_value = mock_client_instance
 
-        with Edgework() as edgework:
+        with Edgework():
             pass  # Exit the context
 
         mock_client_instance.close.assert_called_once()

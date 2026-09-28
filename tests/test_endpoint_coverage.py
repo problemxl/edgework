@@ -153,6 +153,7 @@ class TestCoverageCompleteness:
 
     @staticmethod
     def test_every_registry_entry_is_in_manifest_or_excluded():
+        """Verify every registry entry is in manifest or excluded."""
         missing = sorted(
             set(API_PATH) - set(ENDPOINT_MANIFEST) - set(REGISTRY_EXCLUSIONS)
         )
@@ -163,6 +164,7 @@ class TestCoverageCompleteness:
 
     @staticmethod
     def test_every_manifest_key_exists_in_registry():
+        """Verify every manifest key exists in registry."""
         unknown = sorted(set(ENDPOINT_MANIFEST) - set(API_PATH))
         assert unknown == [], (
             "Manifest keys not present in the endpoint registry: "
@@ -171,6 +173,7 @@ class TestCoverageCompleteness:
 
     @staticmethod
     def test_exclusions_reference_registry_keys():
+        """Verify exclusions reference registry keys."""
         unknown = sorted(set(REGISTRY_EXCLUSIONS) - set(API_PATH))
         assert unknown == [], (
             "Exclusions referencing non-existent registry keys: "
@@ -179,11 +182,13 @@ class TestCoverageCompleteness:
 
     @staticmethod
     def test_no_key_is_both_manifested_and_excluded():
+        """Verify no key is both manifested and excluded."""
         overlap = sorted(set(ENDPOINT_MANIFEST) & set(REGISTRY_EXCLUSIONS))
         assert overlap == [], f"Keys both manifested and excluded: {overlap}"
 
     @staticmethod
     def test_manifest_size_matches_documented_route_count():
+        """Verify manifest size matches documented route count."""
         documented = len(API_PATH) - len(REGISTRY_EXCLUSIONS)
         assert len(ENDPOINT_MANIFEST) == documented
         assert documented > 0
@@ -192,7 +197,9 @@ class TestCoverageCompleteness:
 class TestManifestIntegrity:
     """Manifest entries reference existing methods and consistent metadata."""
 
-    def test_targets_resolve_to_callables(self):
+    @staticmethod
+    def test_targets_resolve_to_callables():
+        """Verify targets resolve to callables."""
         broken = []
         for entry in ALL_ENTRIES:
             try:
@@ -204,7 +211,9 @@ class TestManifestIntegrity:
                 broken.append(f"{entry.registry_key} -> {entry.target}: not callable")
         assert broken == [], "Unresolvable manifest targets:\n" + "\n".join(broken)
 
-    def test_also_implemented_by_resolve_to_callables(self):
+    @staticmethod
+    def test_also_implemented_by_resolve_to_callables():
+        """Verify also implemented by resolve to callables."""
         broken = []
         for entry in ALL_ENTRIES:
             for target in entry.also_implemented_by:
@@ -217,7 +226,9 @@ class TestManifestIntegrity:
                     broken.append(f"{entry.registry_key}: {target}: not callable")
         assert broken == [], "Unresolvable duplicate accessors:\n" + "\n".join(broken)
 
-    def test_route_family_matches_web_flag(self):
+    @staticmethod
+    def test_route_family_matches_web_flag():
+        """Verify route family matches web flag."""
         mismatched = []
         for entry in ALL_ENTRIES:
             route = get_endpoint(entry.registry_key)
@@ -232,7 +243,9 @@ class TestManifestIntegrity:
             + "\n".join(mismatched)
         )
 
-    def test_endpoint_params_cover_exactly_the_route_placeholders(self):
+    @staticmethod
+    def test_endpoint_params_cover_exactly_the_route_placeholders():
+        """Verify endpoint params cover exactly the route placeholders."""
         mismatched = []
         for entry in ALL_ENTRIES:
             route = get_endpoint(entry.registry_key)
@@ -248,7 +261,9 @@ class TestManifestIntegrity:
             + "\n".join(mismatched)
         )
 
-    def test_expected_params_are_encodable(self):
+    @staticmethod
+    def test_expected_params_are_encodable():
+        """Verify expected params are encodable."""
         bad = []
         for entry in ALL_ENTRIES:
             if not entry.expected_params:
@@ -260,7 +275,9 @@ class TestManifestIntegrity:
                     bad.append(f"{entry.registry_key}: {key!r}={value!r}")
         assert bad == [], "Non-encodable expected query values:\n" + "\n".join(bad)
 
-    def test_stats_lang_defaults_are_declared(self):
+    @staticmethod
+    def test_stats_lang_defaults_are_declared():
+        """Verify stats lang defaults are declared."""
         undeclared = [
             entry.registry_key
             for entry in ALL_ENTRIES
