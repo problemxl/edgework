@@ -56,7 +56,8 @@ class _FakeResponse:
         """Return the configured fake response payload."""
         return self._payload
 
-    def raise_for_status(self):
+    @staticmethod
+    def raise_for_status():
         """Match the response API without raising an error."""
         return None
 
@@ -203,7 +204,7 @@ class TestManifestIntegrity:
         broken = []
         for entry in ALL_ENTRIES:
             try:
-                cls, func, _ = _resolve(entry.target)
+                _, func, _ = _resolve(entry.target)
             except (ImportError, AttributeError) as exc:
                 broken.append(f"{entry.registry_key} -> {entry.target}: {exc}")
                 continue
@@ -303,8 +304,10 @@ def _assert_params(actual, expected) -> None:
 
 @pytest.mark.parametrize("key", ALL_KEYS)
 def test_route_contract(key):
-    """Every documented route: host+path identity, single request, params in
-    ``params``, Web-vs-Stats host, and the documented return type."""
+    """Every documented route has the expected request and return contract.
+
+    This checks host/path identity, one request, query params, and return type.
+    """
     entry = ENDPOINT_MANIFEST[key]
 
     result, inner = _invoke(entry)
@@ -374,6 +377,7 @@ LIVE_OPENAPI_ENV = "EDGEWORK_OPENAPI_LIVE"
 
 
 def _openapi_enabled() -> bool:
+    """Return whether the opt-in live OpenAPI comparison is enabled."""
     return os.environ.get(LIVE_OPENAPI_ENV, "").lower() in ("1", "true", "yes")
 
 
@@ -413,6 +417,7 @@ def test_live_openapi_comparison_non_blocking():
     }
 
     def _covered(template: str, paths: set[str]) -> bool:
+        """Return whether a template matches at least one live path."""
         regex = _path_template_to_regex(template)
         return any(re.fullmatch(regex, candidate) for candidate in paths)
 
