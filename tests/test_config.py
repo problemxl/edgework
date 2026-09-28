@@ -46,6 +46,7 @@ class TestConfigLazyFetch:
     """Config follows the BaseNHLModel lazy-load conventions."""
 
     def test_attribute_access_triggers_single_lazy_fetch(self):
+        """Verify test attribute access triggers single lazy fetch."""
         http_client = _mock_http_client(CONFIG_PAYLOAD)
         config = Config(http_client)
 
@@ -55,6 +56,7 @@ class TestConfigLazyFetch:
         http_client._client.get.assert_called_once()
 
     def test_fetch_hits_documented_stats_config_route(self):
+        """Verify test fetch hits documented stats config route."""
         http_client = _mock_http_client(CONFIG_PAYLOAD)
         Config(http_client).fetch_data()
 
@@ -64,6 +66,7 @@ class TestConfigLazyFetch:
         assert _captured_url(http_client) == expected
 
     def test_language_flows_through_to_route(self):
+        """Verify test language flows through to route."""
         http_client = _mock_http_client(CONFIG_PAYLOAD)
         Config(http_client, lang="fr").fetch_data()
 
@@ -73,6 +76,7 @@ class TestConfigLazyFetch:
         assert _captured_url(http_client) == expected
 
     def test_fetch_data_populates_data_and_marks_fetched(self):
+        """Verify test fetch data populates data and marks fetched."""
         http_client = _mock_http_client(CONFIG_PAYLOAD)
         config = Config(http_client)
 
@@ -83,6 +87,7 @@ class TestConfigLazyFetch:
             assert config._data[key] == value
 
     def test_explicit_refetch_does_not_double_request_when_fetched(self):
+        """Verify test explicit refetch does not double request when fetched."""
         http_client = _mock_http_client(CONFIG_PAYLOAD)
         config = Config(http_client)
 
@@ -93,6 +98,7 @@ class TestConfigLazyFetch:
         http_client._client.get.assert_called_once()
 
     def test_server_values_win_over_constructor_kwargs(self):
+        """Verify test server values win over constructor kwargs."""
         http_client = _mock_http_client({"title": "from server"})
         config = Config(http_client, title="from constructor")
 

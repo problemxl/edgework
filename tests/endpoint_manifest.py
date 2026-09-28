@@ -77,10 +77,12 @@ def _roster_payload() -> dict:
 
 
 def _schedule_payload() -> dict:
+    """Return a minimal schedule payload for manifest route tests."""
     return {"gameWeek": [], "previousStartDate": None}
 
 
 def _play_by_play_payload() -> dict:
+    """Return a minimal play-by-play payload for manifest route tests."""
     return {
         "id": 2023020204,
         "season": 20232024,
@@ -92,10 +94,12 @@ def _play_by_play_payload() -> dict:
 
 
 def _draft_picks_payload() -> dict:
+    """Return a minimal draft-picks payload for manifest route tests."""
     return {"draftYear": 2023, "rounds": [], "picks": []}
 
 
 def _report_row(skater_id: int = 8478402) -> dict:
+    """Return a minimal stats report row for manifest route tests."""
     return {"skaterId": skater_id, "points": 20}
 
 
