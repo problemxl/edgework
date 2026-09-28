@@ -32,9 +32,12 @@ class DraftClient:
             Draft object containing draft picks data.
         """
         if season:
-            # Shared season normalization ("2023-2024" -> 20232024).
+            # Shared season normalization ("2023-2024" -> 20232024); the
+            # documented route takes the draft year in YYYY format
+            # (e.g. /v1/draft/picks/2023/all), i.e. the season's start year.
             season_id = validate_season_format(season)
-            path = f"draft/picks/{season_id}/{round_num}"
+            draft_year = season_id // 10000
+            path = f"draft/picks/{draft_year}/{round_num}"
         else:
             path = "draft/picks/now"
 
@@ -63,9 +66,12 @@ class DraftClient:
             DraftRanking object containing draft rankings data.
         """
         if season:
-            # Shared season normalization ("2023-2024" -> 20232024).
+            # Shared season normalization ("2023-2024" -> 20232024); the
+            # documented route takes the draft year in YYYY format
+            # (e.g. /v1/draft/rankings/2023/1), i.e. the season's start year.
             season_id = validate_season_format(season)
-            path = f"draft/rankings/{season_id}/{prospect_category}"
+            draft_year = season_id // 10000
+            path = f"draft/rankings/{draft_year}/{prospect_category}"
         else:
             path = "draft/rankings/now"
 

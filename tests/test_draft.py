@@ -363,8 +363,10 @@ class TestDraftClient:
 
         draft = client.get_draft_picks(season="2023-2024")
 
+        # Documented route: /v1/draft/picks/{season}/{round} with the draft
+        # year in YYYY format (see NHL API Documentation.md).
         mock_client.get.assert_called_with(
-            "draft/picks/20232024/all", web=True, params={}
+            "draft/picks/2023/all", web=True, params={}
         )
 
     def test_get_draft_picks_invalid_season(self, mock_client):
@@ -390,8 +392,10 @@ class TestDraftClient:
 
         rankings = client.get_draft_rankings(season="2024-2025")
 
+        # Documented route: /v1/draft/rankings/{season}/{prospect_category}
+        # with the draft year in YYYY format (see NHL API Documentation.md).
         mock_client.get.assert_called_with(
-            "draft/rankings/20242025/all", web=True, params={}
+            "draft/rankings/2024/all", web=True, params={}
         )
 
     def test_get_draft_tracker_picks(self, mock_client):

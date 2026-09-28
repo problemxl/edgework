@@ -792,7 +792,7 @@ curl -X GET "https://api-web.nhle.com/v1/playoff-series/carousel/20232024/"
 ###### Example using cURL:
 
 ```bash
-curl -X GET "https://api-web.nhle.com/v1/schedule/playoff-series/20232024/a"
+curl -X GET "https://api-web.nhle.com/v1/schedule/playoff-series/20232024/a/"
 ```
 
 ### Bracket

@@ -181,22 +181,26 @@ class TestSeasonNormalizationMigration:
         )
         assert series == []
 
-    def test_draft_picks_route_unchanged(self):
+    def test_draft_picks_route_matches_documentation(self):
         http_client = _mock_http_client(
             {"draftYear": 2024, "rounds": [], "picks": []}
         )
         DraftClient(http_client).get_draft_picks(season="2023-2024")
 
+        # Documented route: /v1/draft/picks/{season}/{round} with the draft
+        # year in YYYY format (the season's start year), not the YYYYYYYY id.
         assert _captured_url(http_client) == BASE_WEB_URL + format_endpoint(
-            "draft_picks", season=20232024, round="all"
+            "draft_picks", season=2023, round="all"
         )
 
-    def test_draft_rankings_route_unchanged(self):
+    def test_draft_rankings_route_matches_documentation(self):
         http_client = _mock_http_client({"rankings": []})
         DraftClient(http_client).get_draft_rankings(season="2023-2024")
 
+        # Documented route: /v1/draft/rankings/{season}/{prospect_category}
+        # with the draft year in YYYY format, not the YYYYYYYY id.
         assert _captured_url(http_client) == BASE_WEB_URL + format_endpoint(
-            "draft_rankings", season=20232024, prospect_category="all"
+            "draft_rankings", season=2023, prospect_category="all"
         )
 
     def test_standings_season_query_unchanged(self):
