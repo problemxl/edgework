@@ -51,6 +51,7 @@ from edgework.models.team import Roster, Team
 # ---------------------------------------------------------------------------
 
 def _team_row(team_id: int = 10, abbrev: str = "TOR") -> dict:
+    """Return a minimal team payload for manifest route tests."""
     return {
         "teamId": team_id,
         "fullName": "Toronto Maple Leafs",
@@ -59,10 +60,12 @@ def _team_row(team_id: int = 10, abbrev: str = "TOR") -> dict:
 
 
 def _standings_row() -> dict:
+    """Return a minimal standings row for manifest route tests."""
     return {"teamName": {"default": "Toronto Maple Leafs"}, "teamAbbrev": "TOR"}
 
 
 def _roster_payload() -> dict:
+    """Return a minimal roster payload for manifest route tests."""
     return {
         "season": 20232024,
         "teamAbbrev": "TOR",

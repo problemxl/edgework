@@ -96,7 +96,7 @@ class StatsClient:
         limit: int,
         start: int,
         sort: Optional[str],
-        dir: Optional[str],
+        direction: Optional[str],
         cayenne_exp: str,
         fact_cayenne_exp: Optional[Union[str, list[str]]],
         include: Optional[Union[str, list[str]]],
@@ -117,8 +117,8 @@ class StatsClient:
         }
         if sort is not None:
             params["sort"] = sort
-        if dir is not None:
-            params["dir"] = dir
+        if direction is not None:
+            params["dir"] = direction
         params["cayenneExp"] = cayenne_exp
         if fact_cayenne_exp is not None:
             params["factCayenneExp"] = fact_cayenne_exp
@@ -139,7 +139,7 @@ class StatsClient:
         limit: int,
         start: int,
         sort: Optional[str],
-        dir: Optional[str],
+        direction: Optional[str],
         season: Optional[int],
         game_type: Optional[int],
         cayenne_exp: Optional[str],
@@ -159,7 +159,7 @@ class StatsClient:
             limit=limit,
             start=start,
             sort=sort,
-            dir=dir,
+            direction=direction,
             cayenne_exp=cayenne,
             fact_cayenne_exp=fact_cayenne_exp,
             include=include,
@@ -182,7 +182,7 @@ class StatsClient:
             # The report data is already loaded with the caller's exact
             # filters; mark fetched so lazy attribute access serves it from
             # ``_data`` instead of triggering a refetch with default filters.
-            stats_obj._fetched = True
+            stats_obj.mark_fetched()
             results.append(stats_obj)
         return results
 
@@ -200,13 +200,14 @@ class StatsClient:
         sort: str = "points",
         season: Optional[int] = None,
         game_type: Optional[int] = None,
-        dir: Optional[str] = None,
+        direction: Optional[str] = None,
         cayenne_exp: Optional[str] = None,
         fact_cayenne_exp: Optional[Union[str, list[str]]] = None,
         include: Optional[Union[str, list[str]]] = None,
         exclude: Optional[Union[str, list[str]]] = None,
         lang: str = "en",
         extra_params: Optional[dict[str, Any]] = None,
+        **kwargs: Any,
     ) -> list[SkaterStats]:
         """Fetch skater stats for a report as SkaterStats objects.
 
@@ -224,7 +225,7 @@ class StatsClient:
             season: Season in YYYYYYYY format; defaults to the current season.
             game_type: Optional game type (2=regular season, 3=playoffs)
                 appended to the season filter.
-            dir: Optional sort direction ("ASC"/"DESC") for the ``dir`` query
+            direction: Optional sort direction ("ASC"/"DESC") for the ``dir`` query
                 parameter.
             cayenne_exp: Raw Cayenne filter expression (escape hatch that
                 overrides the season/game-type expression).
@@ -239,6 +240,7 @@ class StatsClient:
         Returns:
             List of SkaterStats objects (one per report row).
         """
+        direction = self._resolve_direction(direction, kwargs)
         return self._get_report(
             family="skater",
             report=report,
@@ -247,7 +249,7 @@ class StatsClient:
             limit=limit,
             start=start,
             sort=sort,
-            dir=dir,
+            direction=direction,
             season=season,
             game_type=game_type,
             cayenne_exp=cayenne_exp,
@@ -257,6 +259,18 @@ class StatsClient:
             lang=lang,
             extra_params=extra_params,
         )
+
+    @staticmethod
+    def _resolve_direction(value: Optional[str], kwargs: dict[str, Any]) -> Optional[str]:
+        """Accept the historical ``dir=`` keyword without shadowing ``dir``."""
+        if "dir" in kwargs:
+            if value is not None:
+                raise TypeError("Got multiple values for argument 'dir'")
+            value = kwargs.pop("dir")
+        if kwargs:
+            unexpected = next(iter(kwargs))
+            raise TypeError(f"Unexpected keyword argument {unexpected!r}")
+        return value
 
     def get_goalies_stats(
         self,
@@ -268,13 +282,14 @@ class StatsClient:
         start: int = 0,
         sort: str = "wins",
         game_type: Optional[int] = None,
-        dir: Optional[str] = None,
+        direction: Optional[str] = None,
         cayenne_exp: Optional[str] = None,
         fact_cayenne_exp: Optional[Union[str, list[str]]] = None,
         include: Optional[Union[str, list[str]]] = None,
         exclude: Optional[Union[str, list[str]]] = None,
         lang: str = "en",
         extra_params: Optional[dict[str, Any]] = None,
+        **kwargs: Any,
     ) -> list[GoalieStats]:
         """Fetch goalie stats for a report as GoalieStats objects.
 
@@ -292,7 +307,7 @@ class StatsClient:
             sort: Field to sort by (default "wins").
             game_type: Optional game type (2=regular season, 3=playoffs)
                 appended to the season filter.
-            dir: Optional sort direction ("ASC"/"DESC") for the ``dir`` query
+            direction: Optional sort direction ("ASC"/"DESC") for the ``dir`` query
                 parameter.
             cayenne_exp: Raw Cayenne filter expression (escape hatch that
                 overrides the season/game-type expression).
@@ -306,6 +321,7 @@ class StatsClient:
         Returns:
             List of GoalieStats objects (one per report row).
         """
+        direction = self._resolve_direction(direction, kwargs)
         return self._get_report(
             family="goalie",
             report=report,
@@ -314,7 +330,7 @@ class StatsClient:
             limit=limit,
             start=start,
             sort=sort,
-            dir=dir,
+            direction=direction,
             season=season,
             game_type=game_type,
             cayenne_exp=cayenne_exp,
@@ -335,13 +351,14 @@ class StatsClient:
         start: int = 0,
         sort: str = "wins",
         game_type: Optional[int] = None,
-        dir: Optional[str] = None,
+        direction: Optional[str] = None,
         cayenne_exp: Optional[str] = None,
         fact_cayenne_exp: Optional[Union[str, list[str]]] = None,
         include: Optional[Union[str, list[str]]] = None,
         exclude: Optional[Union[str, list[str]]] = None,
         lang: str = "en",
         extra_params: Optional[dict[str, Any]] = None,
+        **kwargs: Any,
     ) -> list[TeamStats]:
         """Fetch team stats for a report as TeamStats objects.
 
@@ -359,7 +376,7 @@ class StatsClient:
             sort: Field to sort by (default "wins").
             game_type: Optional game type (2=regular season, 3=playoffs)
                 appended to the season filter.
-            dir: Optional sort direction ("ASC"/"DESC") for the ``dir`` query
+            direction: Optional sort direction ("ASC"/"DESC") for the ``dir`` query
                 parameter.
             cayenne_exp: Raw Cayenne filter expression (escape hatch that
                 overrides the season/game-type expression).
@@ -373,6 +390,7 @@ class StatsClient:
         Returns:
             List of TeamStats objects (one per report row).
         """
+        direction = self._resolve_direction(direction, kwargs)
         return self._get_report(
             family="team",
             report=report,
@@ -381,7 +399,7 @@ class StatsClient:
             limit=limit,
             start=start,
             sort=sort,
-            dir=dir,
+            direction=direction,
             season=season,
             game_type=game_type,
             cayenne_exp=cayenne_exp,

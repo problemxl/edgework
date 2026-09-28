@@ -26,7 +26,7 @@ Quirks every caller should know about:
   ``None`` instead of raising.
 """
 
-from typing import Dict, FrozenSet, List, Optional, Tuple
+from typing import Any, Dict, FrozenSet, List, Optional, Tuple
 
 from edgework.const import API_VERSION
 from edgework.endpoints import format_endpoint
@@ -78,6 +78,18 @@ DISTANCE_PARAM: FrozenSet[str] = frozenset({"all"})
 #: ``{sort}`` segment of the team skating-distance top-10 route. Unlike the
 #: speed routes, only ``total`` was observed returning data.
 DISTANCE_SORT: FrozenSet[str] = frozenset({"total"})
+
+
+def _resolve_keyword_alias(value, kwargs: dict[str, Any], alias: str, default):
+    """Resolve a legacy keyword alias without shadowing a built-in name."""
+    if alias in kwargs:
+        if value != default:
+            raise TypeError(f"Got multiple values for argument {alias!r}")
+        value = kwargs.pop(alias)
+    if kwargs:
+        unexpected = next(iter(kwargs))
+        raise TypeError(f"Unexpected keyword argument {unexpected!r}")
+    return value
 
 
 def _validate_choice(name: str, value, allowed: FrozenSet[str]) -> str:
@@ -891,9 +903,10 @@ class EdgeClient:
         self,
         situation: str = "all",
         metric: str = "sog",
-        filter: str = "all",
+        filter_value: str = "all",
         season: str = "now",
         game_type: int = 2,
+        **kwargs: Any,
     ) -> list:
         """Fetch the top-10 skaters by shot location (three-parameter form).
 
@@ -914,9 +927,12 @@ class EdgeClient:
         Raises:
             ValueError: If ``situation``, ``metric`` or ``filter`` is invalid.
         """
+        filter_value = _resolve_keyword_alias(
+            filter_value, kwargs, "filter", "all"
+        )
         situation = _validate_choice("situation", situation, SITUATION)
         metric = _validate_choice("metric", metric, SHOT_METRIC)
-        filter = _validate_choice("filter", filter, SHOT_LOCATION_FILTER)
+        filter_value = _validate_choice("filter", filter_value, SHOT_LOCATION_FILTER)
         response = self._client.get(
             _edge_path(
                 "edge_skater_shot_location_top_10",
@@ -924,7 +940,7 @@ class EdgeClient:
                 game_type,
                 situation=situation,
                 metric=metric,
-                filter=filter,
+                filter=filter_value,
             ),
             web=True,
             params={},
@@ -935,9 +951,10 @@ class EdgeClient:
         self,
         situation: str = "all",
         metric: str = "sog",
-        filter: str = "all",
+        filter_value: str = "all",
         season: str = "now",
         game_type: int = 2,
+        **kwargs: Any,
     ) -> list:
         """Fetch the top-10 teams by shot location (three-parameter form).
 
@@ -958,9 +975,12 @@ class EdgeClient:
         Raises:
             ValueError: If ``situation``, ``metric`` or ``filter`` is invalid.
         """
+        filter_value = _resolve_keyword_alias(
+            filter_value, kwargs, "filter", "all"
+        )
         situation = _validate_choice("situation", situation, SITUATION)
         metric = _validate_choice("metric", metric, SHOT_METRIC)
-        filter = _validate_choice("filter", filter, SHOT_LOCATION_FILTER)
+        filter_value = _validate_choice("filter", filter_value, SHOT_LOCATION_FILTER)
         response = self._client.get(
             _edge_path(
                 "edge_team_shot_location_top_10",
@@ -968,7 +988,7 @@ class EdgeClient:
                 game_type,
                 situation=situation,
                 metric=metric,
-                filter=filter,
+                filter=filter_value,
             ),
             web=True,
             params={},

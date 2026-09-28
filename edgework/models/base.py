@@ -25,6 +25,10 @@ class BaseNHLModel:
             self.fetch_data()
             self._fetched = True
 
+    def mark_fetched(self) -> None:
+        """Mark the model as populated without exposing its flag to clients."""
+        self._fetched = True
+
     def fetch_data(self):
         """
         Fetch the data for the object.

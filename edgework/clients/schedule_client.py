@@ -1,5 +1,5 @@
 import re
-from datetime import date, datetime
+from datetime import date as Date, datetime
 from typing import Optional, Union
 
 from edgework.http_client import HttpClient
@@ -15,7 +15,7 @@ class ScheduleClient:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _validate_date(value: Union[str, date, datetime], label: str = "date") -> str:
+    def _validate_date(value: Union[str, Date, datetime], label: str = "date") -> str:
         """Normalize a date input to the API's expected ``YYYY-MM-DD`` string.
 
         Accepts ``datetime.date``/``datetime.datetime`` objects (normalized
@@ -35,7 +35,7 @@ class ScheduleClient:
         """
         if isinstance(value, datetime):
             return value.date().isoformat()
-        if isinstance(value, date):
+        if isinstance(value, Date):
             return value.isoformat()
         if isinstance(value, str) and re.fullmatch(r"\d{4}-\d{2}-\d{2}", value):
             try:
@@ -50,7 +50,7 @@ class ScheduleClient:
         )
 
     @staticmethod
-    def _validate_month(value: Union[str, date, datetime]) -> str:
+    def _validate_month(value: Union[str, Date, datetime]) -> str:
         """Normalize a month input to the API's expected ``YYYY-MM`` string.
 
         Accepts ``datetime.date``/``datetime.datetime`` objects (truncated to
@@ -68,7 +68,7 @@ class ScheduleClient:
         """
         if isinstance(value, datetime):
             return value.strftime("%Y-%m")
-        if isinstance(value, date):
+        if isinstance(value, Date):
             return value.strftime("%Y-%m")
         if isinstance(value, str) and re.fullmatch(r"\d{4}-\d{2}", value):
             month = int(value[5:7])
@@ -111,7 +111,7 @@ class ScheduleClient:
         return Schedule.from_api(self._client, data)
 
     def get_schedule_for_date(
-        self, date: Union[str, date, datetime]
+        self, date: Union[str, Date, datetime]
     ) -> Schedule:
         """Get the schedule for the given date.
 
@@ -132,10 +132,83 @@ class ScheduleClient:
         data = response.json()
         return Schedule.from_api(self._client, data)
 
+    @staticmethod
+    def _merge_schedule_page(data: dict, games: list, seen_game_ids: set) -> None:
+        """Add unseen games from one schedule response to ``games``."""
+        for day in data.get("gameWeek", []):
+            for game in day.get("games", []):
+                game_id = game.get("id")
+                if game_id not in seen_game_ids:
+                    seen_game_ids.add(game_id)
+                    games.append(game)
+
+    @staticmethod
+    def _update_schedule_metadata(schedule_data: dict, data: dict) -> None:
+        """Merge season metadata from one schedule response."""
+        if not schedule_data["previousStartDate"]:
+            schedule_data["previousStartDate"] = data.get("previousStartDate")
+            schedule_data["preSeasonStartDate"] = data.get("preSeasonStartDate")
+        for key in (
+            "regularSeasonStartDate",
+            "regularSeasonEndDate",
+            "playoffEndDate",
+        ):
+            if data.get(key):
+                schedule_data[key] = data[key]
+
+    def _fetch_schedule_pages(
+        self, start_date: str, end_date: datetime, web: bool
+    ) -> tuple[list, dict]:
+        """Fetch and merge paginated schedule responses through ``end_date``."""
+        games = []
+        schedule_data = {
+            "previousStartDate": None,
+            "games": [],
+            "preSeasonStartDate": None,
+            "regularSeasonStartDate": None,
+            "regularSeasonEndDate": None,
+            "playoffEndDate": None,
+            "numberOfGames": 0,
+        }
+        seen_game_ids = set()
+        current_date = start_date
+        while current_date:
+            data = self._client.get(
+                f"schedule/{current_date}", web=web
+            ).json()
+            self._merge_schedule_page(data, games, seen_game_ids)
+            self._update_schedule_metadata(schedule_data, data)
+            next_start_date = data.get("nextStartDate")
+            if not next_start_date:
+                break
+            next_start_dt = datetime.fromisoformat(next_start_date)
+            if next_start_dt.date() > end_date.date():
+                break
+            current_date = next_start_date[:10]
+        return games, schedule_data
+
+    @staticmethod
+    def _filter_schedule_games(
+        games: list, start_date: datetime, end_date: datetime
+    ) -> list:
+        """Keep games whose UTC start date is within the requested range."""
+        filtered_games = []
+        for game in games:
+            try:
+                game_date = datetime.fromisoformat(
+                    game.get("startTimeUTC", "").replace("Z", "+00:00")
+                ).date()
+            except (ValueError, AttributeError):
+                filtered_games.append(game)
+            else:
+                if start_date.date() <= game_date <= end_date.date():
+                    filtered_games.append(game)
+        return filtered_games
+
     def get_schedule_for_date_range(
         self,
-        start_date: Union[str, date, datetime],
-        end_date: Union[str, date, datetime],
+        start_date: Union[str, Date, datetime],
+        end_date: Union[str, Date, datetime],
         web: bool = True,
     ) -> Schedule:
         """Get schedule for the given date range.
@@ -166,79 +239,8 @@ class ScheduleClient:
         if start_dt > end_dt:
             raise ValueError("Start date cannot be after end date.")
 
-        games = []
-        schedule_data = {
-            "previousStartDate": None,
-            "games": [],
-            "preSeasonStartDate": None,
-            "regularSeasonStartDate": None,
-            "regularSeasonEndDate": None,
-            "playoffEndDate": None,
-            "numberOfGames": 0,
-        }
-
-        # Track seen game IDs to avoid duplicates
-        seen_game_ids = set()
-
-        current_date = start_date
-        while current_date:
-            response = self._client.get(f"schedule/{current_date}", web=web)
-            data = response.json()
-
-            # Extract games from this page
-            page_games = [
-                game
-                for day in data.get("gameWeek", [])
-                for game in day.get("games", [])
-            ]
-
-            # Filter out duplicates
-            for game in page_games:
-                game_id = game.get("id")
-                if game_id not in seen_game_ids:
-                    seen_game_ids.add(game_id)
-                    games.append(game)
-
-            # Set metadata from first page
-            if not schedule_data["previousStartDate"]:
-                schedule_data["previousStartDate"] = data.get("previousStartDate")
-                schedule_data["preSeasonStartDate"] = data.get("preSeasonStartDate")
-
-            # Update season dates
-            if data.get("regularSeasonStartDate"):
-                schedule_data["regularSeasonStartDate"] = data.get(
-                    "regularSeasonStartDate"
-                )
-            if data.get("regularSeasonEndDate"):
-                schedule_data["regularSeasonEndDate"] = data.get("regularSeasonEndDate")
-            if data.get("playoffEndDate"):
-                schedule_data["playoffEndDate"] = data.get("playoffEndDate")
-
-            # Check if there's a next page
-            next_start_date = data.get("nextStartDate")
-            if next_start_date:
-                # Parse the next start date
-                next_start_dt = datetime.fromisoformat(next_start_date)
-                # Stop if we've gone past the requested end date
-                if next_start_dt.date() > end_dt.date():
-                    current_date = None
-                else:
-                    current_date = next_start_date[:10]  # YYYY-MM-DD format
-            else:
-                current_date = None
-
-        # Filter games to ensure they're within the requested date range
-        filtered_games = []
-        for game in games:
-            try:
-                game_date = datetime.fromisoformat(
-                    game.get("startTimeUTC", "").replace("Z", "+00:00")
-                ).date()
-                if start_dt.date() <= game_date <= end_dt.date():
-                    filtered_games.append(game)
-            except (ValueError, AttributeError):
-                # If we can't parse the date, include the game to avoid losing data
-                filtered_games.append(game)
+        games, schedule_data = self._fetch_schedule_pages(start_date, end_dt, web)
+        filtered_games = self._filter_schedule_games(games, start_dt, end_dt)
 
         schedule_data["numberOfGames"] = len(filtered_games)
         schedule_data["games"] = filtered_games
@@ -262,7 +264,7 @@ class ScheduleClient:
         return Schedule.from_api(self._client, data)
 
     def get_schedule_for_team_for_week(
-        self, team_abbr: str, date: Optional[Union[str, date, datetime]] = None
+        self, team_abbr: str, date: Optional[Union[str, Date, datetime]] = None
     ) -> Schedule:
         """Get the schedule for the given team for a week.
 
@@ -290,7 +292,7 @@ class ScheduleClient:
         return self._get_club_schedule(team_abbr, "week", normalized_date)
 
     def get_schedule_for_team_for_month(
-        self, team_abbr: str, month: Optional[Union[str, date, datetime]] = None
+        self, team_abbr: str, month: Optional[Union[str, Date, datetime]] = None
     ) -> Schedule:
         """Get the schedule for the given team for a month.
 
@@ -327,7 +329,7 @@ class ScheduleClient:
         return response.json()
 
     def get_schedule_calendar_for_date(
-        self, date: Union[str, date, datetime]
+        self, date: Union[str, Date, datetime]
     ) -> dict:
         """Get the schedule calendar for a specific date.
 
