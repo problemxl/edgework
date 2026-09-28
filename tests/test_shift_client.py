@@ -154,7 +154,8 @@ class TestShiftClientRoutes:
 class TestGameModelShiftDelegation:
     """The Game model must delegate shift fetching to the canonical client."""
 
-    def _game(self, http_client):
+    @staticmethod
+    def _game(http_client):
         """Build a Game marked as fetched so lazy boxscore fetch is skipped."""
         game = Game(edgework_client=http_client, obj_id=GAME_ID, game_id=GAME_ID)
         game._fetched = True
