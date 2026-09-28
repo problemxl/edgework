@@ -139,6 +139,7 @@ class TestModelsValidateAgainstSharedSource:
 
     @pytest.fixture
     def mock_client(self):
+        """Provide an HTTP client returning an empty stats response."""
         client = Mock(spec=HttpClient)
         response = Mock()
         response.status_code = 200

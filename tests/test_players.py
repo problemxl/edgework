@@ -29,8 +29,8 @@ class TestPlayersMethod:
             mock_player_client.return_value = self.mock_player_client_instance
             self.client = Edgework()
 
+    @staticmethod
     def _make_player(
-        self,
         player_id=8478402,
         first_name="Connor",
         last_name="McDavid",

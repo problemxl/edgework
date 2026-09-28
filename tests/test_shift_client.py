@@ -179,8 +179,10 @@ class TestGameModelShiftDelegation:
         game_http = _mock_http_client(_shift_payload())
         client_http = _mock_http_client(_shift_payload())
 
-        self._game(game_http).shifts
-        ShiftClient(client_http).get_shifts(GAME_ID)
+        game_shifts = self._game(game_http).shifts
+        client_shifts = ShiftClient(client_http).get_shifts(GAME_ID)
+
+        assert len(game_shifts) == len(client_shifts)
 
         assert game_http._client.get.call_args == client_http._client.get.call_args
 
@@ -189,9 +191,10 @@ class TestGameModelShiftDelegation:
         http_client = _mock_http_client(_shift_payload())
         game = self._game(http_client)
 
-        game.shifts
-        game.shifts
+        first_shifts = game.shifts
+        second_shifts = game.shifts
 
+        assert first_shifts is second_shifts
         assert http_client._client.get.call_count == 1
 
 

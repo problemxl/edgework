@@ -21,6 +21,7 @@ SEASON = 20232024
 
 
 def _skater_payload():
+    """Build a minimal skater stats payload for mocked responses."""
     return {
         "data": [
             {
@@ -74,6 +75,7 @@ class TestStatsReportQueries:
 
     @pytest.fixture
     def http_client(self):
+        """Provide an HTTP client returning a skater stats payload."""
         return _mock_http_client(_skater_payload())
 
     @pytest.mark.parametrize(
@@ -369,6 +371,7 @@ class TestStatsResources:
 
     @pytest.fixture
     def http_client(self):
+        """Provide an HTTP client returning an empty resource payload."""
         return _mock_http_client({"data": []})
 
     @pytest.mark.parametrize(
@@ -497,6 +500,7 @@ class TestLeaderboards:
 
     @pytest.fixture
     def http_client(self):
+        """Provide an HTTP client returning an empty leaderboard payload."""
         return _mock_http_client({"points": []})
 
     @staticmethod
