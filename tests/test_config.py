@@ -45,7 +45,8 @@ def _captured_url(http_client):
 class TestConfigLazyFetch:
     """Config follows the BaseNHLModel lazy-load conventions."""
 
-    def test_attribute_access_triggers_single_lazy_fetch(self):
+    @staticmethod
+    def test_attribute_access_triggers_single_lazy_fetch():
         """Verify test attribute access triggers single lazy fetch."""
         http_client = _mock_http_client(CONFIG_PAYLOAD)
         config = Config(http_client)
@@ -55,7 +56,8 @@ class TestConfigLazyFetch:
         # Exactly one request, on first attribute access only.
         http_client._client.get.assert_called_once()
 
-    def test_fetch_hits_documented_stats_config_route(self):
+    @staticmethod
+    def test_fetch_hits_documented_stats_config_route():
         """Verify test fetch hits documented stats config route."""
         http_client = _mock_http_client(CONFIG_PAYLOAD)
         Config(http_client).fetch_data()
@@ -65,7 +67,8 @@ class TestConfigLazyFetch:
         ).lstrip("/")
         assert _captured_url(http_client) == expected
 
-    def test_language_flows_through_to_route(self):
+    @staticmethod
+    def test_language_flows_through_to_route():
         """Verify test language flows through to route."""
         http_client = _mock_http_client(CONFIG_PAYLOAD)
         Config(http_client, lang="fr").fetch_data()
@@ -75,7 +78,8 @@ class TestConfigLazyFetch:
         ).lstrip("/")
         assert _captured_url(http_client) == expected
 
-    def test_fetch_data_populates_data_and_marks_fetched(self):
+    @staticmethod
+    def test_fetch_data_populates_data_and_marks_fetched():
         """Verify test fetch data populates data and marks fetched."""
         http_client = _mock_http_client(CONFIG_PAYLOAD)
         config = Config(http_client)
@@ -86,7 +90,8 @@ class TestConfigLazyFetch:
         for key, value in CONFIG_PAYLOAD.items():
             assert config._data[key] == value
 
-    def test_explicit_refetch_does_not_double_request_when_fetched(self):
+    @staticmethod
+    def test_explicit_refetch_does_not_double_request_when_fetched():
         """Verify test explicit refetch does not double request when fetched."""
         http_client = _mock_http_client(CONFIG_PAYLOAD)
         config = Config(http_client)
@@ -97,14 +102,16 @@ class TestConfigLazyFetch:
         # Lazy path (attribute access) must not refetch after fetch_data.
         http_client._client.get.assert_called_once()
 
-    def test_server_values_win_over_constructor_kwargs(self):
+    @staticmethod
+    def test_server_values_win_over_constructor_kwargs():
         """Verify test server values win over constructor kwargs."""
         http_client = _mock_http_client({"title": "from server"})
         config = Config(http_client, title="from constructor")
 
         assert config.title == "from server"
 
-    def test_non_dict_payload_rejected(self):
+    @staticmethod
+    def test_non_dict_payload_rejected():
         """Verify test non dict payload rejected."""
         http_client = _mock_http_client(["unexpected", "list"])
         config = Config(http_client)
@@ -116,7 +123,8 @@ class TestConfigLazyFetch:
 class TestConfigNotLocalRegistry:
     """The local API_PATH registry must not be stored as server config."""
 
-    def test_registry_keys_not_stored(self):
+    @staticmethod
+    def test_registry_keys_not_stored():
         """Verify test registry keys not stored."""
         http_client = _mock_http_client(CONFIG_PAYLOAD)
         config = Config(http_client)
@@ -127,7 +135,8 @@ class TestConfigNotLocalRegistry:
         assert "api_base_url" not in config._data
         assert "api_url" not in config._data
 
-    def test_local_registry_dict_not_referenced_from_data(self):
+    @staticmethod
+    def test_local_registry_dict_not_referenced_from_data():
         """Verify test local registry dict not referenced from data."""
         from edgework.endpoints import API_PATH
 
@@ -143,7 +152,8 @@ class TestConfigDelegation:
     """Config and StatsClient.get_config construct identical requests."""
 
     @pytest.mark.parametrize("lang", ["en", "fr", "fi"])
-    def test_model_and_client_urls_are_identical(self, lang):
+    @staticmethod
+    def test_model_and_client_urls_are_identical(lang):
         """Verify test model and client urls are identical."""
         model_client = _mock_http_client(CONFIG_PAYLOAD)
         client_client = _mock_http_client(CONFIG_PAYLOAD)
