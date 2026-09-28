@@ -4,7 +4,7 @@ Player-related functionality in Edgework.
 
 ## Player Methods
 
-::: edgework.Edgework.players
+::: edgework.clients.player_client.PlayerClient
     options:
       show_root_heading: false
 

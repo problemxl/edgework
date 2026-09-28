@@ -4,7 +4,7 @@ Team-related functionality in Edgework.
 
 ## Team Methods
 
-::: edgework.Edgework.team_stats
+::: edgework.clients.team_client.TeamClient
     options:
       show_root_heading: false
 
