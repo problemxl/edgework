@@ -71,6 +71,18 @@ API_PATH: dict = {
     "game_story": "/{API_VERSION}/wsc/game-story/{game_id}",
     "game_right_rail": "/{API_VERSION}/gamecenter/{game_id}/right-rail",
     "wsc_play_by_play": "/{API_VERSION}/wsc/play-by-play/{game_id}",
+    # NHL Edge endpoints (puck & player tracking; data exists from 2024-25 on).
+    # ``now`` may replace the {season}/{game-type} pair — the API 307-redirects
+    # to the resolved current season.
+    "edge_skater_landing": "/{API_VERSION}/edge/skater-landing/{season}/{game-type}",
+    "edge_goalie_landing": "/{API_VERSION}/edge/goalie-landing/{season}/{game-type}",
+    "edge_team_landing": "/{API_VERSION}/edge/team-landing/{season}/{game-type}",
+    "edge_skater_detail": "/{API_VERSION}/edge/skater-detail/{player-id}/{season}/{game-type}",
+    "edge_goalie_detail": "/{API_VERSION}/edge/goalie-detail/{player-id}/{season}/{game-type}",
+    "edge_team_detail": "/{API_VERSION}/edge/team-detail/{team-id}/{season}/{game-type}",
+    "edge_skater_comparison": "/{API_VERSION}/edge/skater-comparison/{player-id}/{season}/{game-type}",
+    "edge_goalie_comparison": "/{API_VERSION}/edge/goalie-comparison/{player-id}/{season}/{game-type}",
+    "edge_team_comparison": "/{API_VERSION}/edge/team-comparison/{team-id}/{season}/{game-type}",
     # Network endpoints
     "tv_schedule_date": "/{API_VERSION}/network/tv-schedule/{date}",
     "tv_schedule_now": "/{API_VERSION}/network/tv-schedule/now",

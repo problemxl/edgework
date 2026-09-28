@@ -1,4 +1,5 @@
 from edgework.clients.draft_client import DraftClient
+from edgework.clients.edge_client import EdgeClient
 from edgework.clients.game_client import GameClient
 from edgework.clients.glossary_client import GlossaryClient
 from edgework.clients.network_client import NetworkClient
@@ -53,6 +54,7 @@ class Edgework:
         self.games = GameClient(client=self._client)
         self.standings = StandingClient(client=self._client)
         self.draft = DraftClient(client=self._client)
+        self.edge = EdgeClient(http_client=self._client)
         self.stats = StatsClient(client=self._client)
         self.playoffs = PlayoffClient(client=self._client)
         self.network = NetworkClient(client=self._client)

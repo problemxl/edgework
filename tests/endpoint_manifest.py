@@ -986,4 +986,18 @@ REGISTRY_EXCLUSIONS: dict[str, str] = {
         "Legacy alias of 'club_stats_season_game_type' (identical server "
         "route), kept for backward compatibility with pre-Task-1 callers."
     ),
+    # NHL Edge routes (Task E1): implemented in EdgeClient with their own
+    # test suite; manifest entries land in Task E4 once mock payloads are
+    # built from the Edge response schemas. Composite helpers over these
+    # routes (EdgeClient.compare, get_available_seasons) stay unmanifested
+    # permanently per the exclusion rules above.
+    "edge_skater_landing": "Interim: Edge route manifested in Task E4.",
+    "edge_goalie_landing": "Interim: Edge route manifested in Task E4.",
+    "edge_team_landing": "Interim: Edge route manifested in Task E4.",
+    "edge_skater_detail": "Interim: Edge route manifested in Task E4.",
+    "edge_goalie_detail": "Interim: Edge route manifested in Task E4.",
+    "edge_team_detail": "Interim: Edge route manifested in Task E4.",
+    "edge_skater_comparison": "Interim: Edge route manifested in Task E4.",
+    "edge_goalie_comparison": "Interim: Edge route manifested in Task E4.",
+    "edge_team_comparison": "Interim: Edge route manifested in Task E4.",
 }
