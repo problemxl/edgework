@@ -9,10 +9,12 @@ import pytest
 
 from edgework.clients.draft_client import DraftClient
 from edgework.clients.game_client import GameClient
+from edgework.clients.glossary_client import GlossaryClient
 from edgework.clients.network_client import NetworkClient
 from edgework.clients.player_client import PlayerClient
 from edgework.clients.playoff_client import PlayoffClient
 from edgework.clients.schedule_client import ScheduleClient
+from edgework.clients.shift_client import ShiftClient
 from edgework.clients.standings_client import StandingClient
 from edgework.clients.stats_client import StatsClient
 from edgework.clients.team_client import TeamClient
@@ -91,6 +93,22 @@ class TestEdgeworkInitialization:
         assert isinstance(edgework.playoffs, PlayoffClient)
         assert isinstance(edgework.network, NetworkClient)
         assert isinstance(edgework.utility, UtilityClient)
+        assert isinstance(edgework.glossary, GlossaryClient)
+        assert isinstance(edgework.shifts, ShiftClient)
+
+    @patch("edgework.edgework.PlayerClient")
+    @patch("edgework.edgework.HttpClient")
+    def test_init_glossary_and_shift_clients_share_http_client(
+        self, mock_http_client, mock_player_client
+    ):
+        """Glossary and shift clients are wired with the shared HTTP client."""
+        mock_client_instance = Mock()
+        mock_http_client.return_value = mock_client_instance
+
+        edgework = Edgework()
+
+        assert edgework.glossary._client is mock_client_instance
+        assert edgework.shifts._client is mock_client_instance
 
     @patch("edgework.edgework.PlayerClient")
     @patch("edgework.edgework.HttpClient")

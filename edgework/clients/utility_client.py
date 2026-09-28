@@ -2,6 +2,7 @@
 
 from typing import Dict, Optional
 
+from edgework.endpoints import format_endpoint
 from edgework.http_client import HttpClient
 
 
@@ -94,4 +95,28 @@ class UtilityClient:
             Dictionary with location data for the postal code.
         """
         response = self._client.get(f"postal-lookup/{postal_code}", web=True)
+        return response.json()
+
+    def get_openapi_spec(self) -> Dict:
+        """
+        Fetch the Web API OpenAPI specification.
+
+        Targets the documented ``/model/v1/openapi.json`` route, which is
+        served *outside* the versioned ``/v1`` namespace; the ``model/``
+        prefix must therefore not be double-versioned (see ``HttpClient``
+        URL construction and the ``openapi_spec`` registry entry).
+
+        Note:
+            The NHL endpoint has been observed to return 404 at times.
+
+        Returns:
+            Dictionary with the OpenAPI specification.
+
+        Raises:
+            httpx.HTTPStatusError: If the endpoint returns an error status.
+        """
+        # format_endpoint fills {API_VERSION}; strip the leading slash so the
+        # HttpClient "model/" prefix detection kicks in and /v1 is not doubled.
+        target = format_endpoint("openapi_spec").lstrip("/")
+        response = self._client.get(target, web=True)
         return response.json()

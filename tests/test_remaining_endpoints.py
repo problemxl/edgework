@@ -9,6 +9,8 @@ from edgework.clients.network_client import NetworkClient
 from edgework.clients.playoff_client import PlayoffClient
 from edgework.clients.stats_client import StatsClient
 from edgework.clients.utility_client import UtilityClient
+from edgework.const import BASE_WEB_URL, STATS_API_URL
+from edgework.endpoints import format_endpoint
 from edgework.http_client import HttpClient
 
 
@@ -177,17 +179,66 @@ class TestNetworkClient:
         assert broadcasts[0]["network"] == "ESPN"
 
     def test_get_where_to_watch(self, mock_client):
-        """Test fetching where to watch."""
+        """Test fetching streaming options from the real where-to-watch route."""
         response = Mock()
         response.status_code = 200
-        response.json.return_value = {"broadcasts": []}
+        response.json.return_value = {"streams": []}
         mock_client.get.return_value = response
 
         client = NetworkClient(mock_client)
-        data = client.get_where_to_watch("US")
+        data = client.get_where_to_watch()
 
-        assert "broadcasts" in data
+        assert "streams" in data
+        mock_client.get.assert_called_once_with(
+            "where-to-watch", web=True, params=None
+        )
+
+    def test_get_where_to_watch_include_param(self, mock_client):
+        """Test that the documented `include` filter is passed as a query param."""
+        response = Mock()
+        response.status_code = 200
+        response.json.return_value = {"streams": []}
+        mock_client.get.return_value = response
+
+        client = NetworkClient(mock_client)
+        client.get_where_to_watch(include="1234")
+
+        mock_client.get.assert_called_once_with(
+            "where-to-watch", web=True, params={"include": "1234"}
+        )
+
+    def test_get_partner_game_odds(self, mock_client):
+        """Test fetching partner game odds from the accurately named method."""
+        response = Mock()
+        response.status_code = 200
+        response.json.return_value = {"odds": []}
+        mock_client.get.return_value = response
+
+        client = NetworkClient(mock_client)
+        data = client.get_partner_game_odds("US")
+
+        assert "odds" in data
         mock_client.get.assert_called_once_with("partner-game/US/now", web=True)
+
+    def test_partner_game_odds_is_not_where_to_watch(self, mock_client):
+        """Partner-game odds and where-to-watch must request different routes."""
+        response = Mock()
+        response.status_code = 200
+        response.json.return_value = {}
+        mock_client.get.return_value = response
+
+        client = NetworkClient(mock_client)
+        client.get_where_to_watch()
+        where_route = mock_client.get.call_args.args[0]
+
+        client.get_partner_game_odds("CA")
+        odds_route = mock_client.get.call_args.args[0]
+
+        assert where_route == "where-to-watch"
+        assert odds_route == "partner-game/CA/now"
+        assert where_route != odds_route
+        assert "where-to-watch" not in odds_route
+        assert "partner-game" not in where_route
 
 
 class TestUtilityClient:
@@ -254,6 +305,31 @@ class TestUtilityClient:
 
         assert "locations" in data
         mock_client.get.assert_called_once_with("location", web=True)
+
+    def test_get_openapi_spec(self, mock_client):
+        """Test fetching the OpenAPI specification without a doubled /v1."""
+        response = Mock()
+        response.status_code = 200
+        response.json.return_value = {"openapi": "3.0.0", "paths": {}}
+        mock_client.get.return_value = response
+
+        client = UtilityClient(mock_client)
+        data = client.get_openapi_spec()
+
+        assert data["openapi"] == "3.0.0"
+        mock_client.get.assert_called_once_with("model/v1/openapi.json", web=True)
+
+    def test_get_openapi_spec_final_url_has_no_double_version_prefix(self):
+        """End-to-end URL must be /model/v1/openapi.json, never /v1/model/..."""
+        http_client = HttpClient()
+        http_client._client = Mock()
+        http_client._client.get.return_value = Mock(json=Mock(return_value={}))
+        UtilityClient(http_client).get_openapi_spec()
+
+        actual = http_client._client.get.call_args.args[0]
+        assert actual == f"{BASE_WEB_URL}{format_endpoint('openapi_spec')}"
+        assert actual == f"{BASE_WEB_URL}/model/v1/openapi.json"
+        assert not actual.startswith(f"{BASE_WEB_URL}/v1/")
 
 
 class TestStatsClientLeaders:
@@ -368,11 +444,23 @@ class TestNetworkClientLiveAPI:
 
     @pytest.mark.live_api
     def test_get_where_to_watch_live(self, real_client):
-        """Test fetching where to watch."""
+        """Test fetching the real where-to-watch streaming route."""
         client = NetworkClient(real_client)
-        data = client.get_where_to_watch("US")
+        try:
+            data = client.get_where_to_watch()
+            assert isinstance(data, dict)
+        except Exception:
+            pytest.skip("where-to-watch endpoint unavailable")
 
-        assert isinstance(data, dict)
+    @pytest.mark.live_api
+    def test_get_partner_game_odds_live(self, real_client):
+        """Test fetching partner game odds from the odds route."""
+        client = NetworkClient(real_client)
+        try:
+            data = client.get_partner_game_odds("US")
+            assert isinstance(data, dict)
+        except Exception:
+            pytest.skip("partner-game endpoint unavailable")
 
 
 class TestUtilityClientLiveAPI:

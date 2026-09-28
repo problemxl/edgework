@@ -1,9 +1,11 @@
 from edgework.clients.draft_client import DraftClient
 from edgework.clients.game_client import GameClient
+from edgework.clients.glossary_client import GlossaryClient
 from edgework.clients.network_client import NetworkClient
 from edgework.clients.player_client import PlayerClient
 from edgework.clients.playoff_client import PlayoffClient
 from edgework.clients.schedule_client import ScheduleClient
+from edgework.clients.shift_client import ShiftClient
 from edgework.clients.standings_client import StandingClient
 from edgework.clients.stats_client import StatsClient
 from edgework.clients.team_client import TeamClient
@@ -55,6 +57,8 @@ class Edgework:
         self.playoffs = PlayoffClient(client=self._client)
         self.network = NetworkClient(client=self._client)
         self.utility = UtilityClient(client=self._client)
+        self.glossary = GlossaryClient(client=self._client)
+        self.shifts = ShiftClient(client=self._client)
 
         # Initialize model handlers
         self._skaters = SkaterStats(edgework_client=self._client)

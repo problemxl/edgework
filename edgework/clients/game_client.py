@@ -1,8 +1,10 @@
 """Game client for fetching NHL game data."""
 
+import warnings
 from datetime import datetime
 from typing import Dict, List, Optional, Union
 
+from edgework.clients.shift_client import ShiftClient
 from edgework.http_client import HttpClient
 from edgework.models.game import Game
 from edgework.models.game_events import GameEvent
@@ -15,6 +17,9 @@ class GameClient:
 
     def __init__(self, client: HttpClient):
         self._client = client
+        # Canonical shiftcharts access is owned by ShiftClient; game-level
+        # shift methods delegate to it so routes stay in one place.
+        self._shift_client = ShiftClient(client)
 
     def get_game(self, game_id: int) -> Game:
         """Fetch game boxscore data.
@@ -137,20 +142,104 @@ class GameClient:
         response = self._client.get("scoreboard/now", web=True)
         return response.json()
 
-    def get_where_to_watch(self, country_code: str = "US") -> Dict:
-        """Fetch broadcast information for games.
+    def get_goal_replay(self, game_id: int, event_number: int) -> Dict:
+        """Fetch goal replay information for a specific game event.
+
+        Targets the documented ``/ppt-replay/goal/{game-id}/{event-number}``
+        route.
 
         Args:
-            country_code: Country code for broadcast info (default: "US").
+            game_id: The NHL game ID.
+            event_number: The event number within the game.
 
         Returns:
-            Dictionary with where to watch information.
+            Dictionary with goal replay information.
+        """
+        response = self._client.get(
+            f"ppt-replay/goal/{game_id}/{event_number}", web=True
+        )
+        return response.json()
+
+    def get_play_replay(self, game_id: int, event_number: int) -> Dict:
+        """Fetch replay information for a specific game event.
+
+        Targets the documented ``/ppt-replay/{game-id}/{event-number}`` route.
+
+        Args:
+            game_id: The NHL game ID.
+            event_number: The event number within the game.
+
+        Returns:
+            Dictionary with play replay information.
+        """
+        response = self._client.get(f"ppt-replay/{game_id}/{event_number}", web=True)
+        return response.json()
+
+    def get_wsc_play_by_play(self, game_id: int) -> Dict:
+        """Fetch WSC play-by-play data for a game.
+
+        Targets the documented ``/wsc/play-by-play/{game-id}`` route, which is
+        distinct from the gamecenter play-by-play route used by
+        :meth:`get_play_by_play`.
+
+        Args:
+            game_id: The NHL game ID.
+
+        Returns:
+            Dictionary with WSC play-by-play data.
+        """
+        response = self._client.get(f"wsc/play-by-play/{game_id}", web=True)
+        return response.json()
+
+    def get_partner_game_odds(self, country_code: str = "US") -> Dict:
+        """Fetch odds for games in a specific country as of the current moment.
+
+        Targets the documented ``/partner-game/{country-code}/now`` route.
+
+        Note:
+            This is the documented *odds* endpoint and is NOT the
+            ``/where-to-watch`` streaming endpoint (see
+            ``NetworkClient.get_where_to_watch`` for that route).
+
+        Args:
+            country_code: Country code for odds info (default: "US").
+
+        Returns:
+            Dictionary with partner game odds information.
         """
         response = self._client.get(f"partner-game/{country_code}/now", web=True)
         return response.json()
 
+    def get_where_to_watch(self, country_code: str = "US") -> Dict:
+        """Deprecated alias for :meth:`get_partner_game_odds`.
+
+        This method has always fetched partner-game odds from
+        ``/partner-game/{country-code}/now``; it does NOT request the real
+        ``/where-to-watch`` streaming endpoint. Use
+        :meth:`get_partner_game_odds` (or ``NetworkClient.get_where_to_watch``
+        for the actual streaming route) instead.
+
+        Args:
+            country_code: Country code for odds info (default: "US").
+
+        Returns:
+            Dictionary with partner game odds information.
+        """
+        warnings.warn(
+            "GameClient.get_where_to_watch() fetches partner-game odds, not "
+            "the /where-to-watch streaming endpoint; use "
+            "get_partner_game_odds() (or NetworkClient.get_where_to_watch() "
+            "for the real streaming route).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.get_partner_game_odds(country_code)
+
     def get_shifts(self, game_id: int) -> List[Shift]:
         """Fetch shift data for a game.
+
+        Delegates to the canonical :class:`ShiftClient` wrapper for the
+        documented ``/{lang}/shiftcharts`` route.
 
         Args:
             game_id: The NHL game ID.
@@ -158,9 +247,9 @@ class GameClient:
         Returns:
             List of Shift objects.
         """
-        response = self._client.get(f"shiftcharts?cayenneExp=gameId={game_id}")
-        data = response.json()["data"]
-        return [Shift.from_api(d) for d in data]
+        # Intentional delegation: ShiftClient owns the shiftcharts route and
+        # query construction.
+        return self._shift_client.get_shifts(game_id)
 
     def get_games_for_date(self, date: Union[datetime, str]) -> List[Game]:
         """Fetch all games for a specific date.
