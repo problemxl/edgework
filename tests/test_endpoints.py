@@ -84,7 +84,9 @@ class TestRegistryCoverage:
             "openapi_spec",
         ],
     )
-    def test_documented_web_endpoints_present(self, key):
+    @staticmethod
+    def test_documented_web_endpoints_present(key):
+        """Verify documented web endpoints present."""
         assert key in API_PATH
 
     @pytest.mark.parametrize(
@@ -115,26 +117,33 @@ class TestRegistryCoverage:
             ("stats_content_module", "/{lang}/content/module/{template_key}"),
         ],
     )
-    def test_documented_stats_endpoints_present(self, key, expected):
+    @staticmethod
+    def test_documented_stats_endpoints_present(key, expected):
+        """Verify documented stats endpoints present."""
         assert API_PATH[key] == expected
 
 
 class TestCorrectedRoutes:
     """Routes that previously drifted from the documentation."""
 
-    def test_club_stats_season_game_type_route_is_documented_route(self):
+    @staticmethod
+    def test_club_stats_season_game_type_route_is_documented_route():
         """club-stats season+game-type lives under /club-stats, not /club-stats-season."""
         assert API_PATH["club_stats_season_game_type"] == (
             "/{API_VERSION}/club-stats/{team}/{season}/{game-type}"
         )
 
-    def test_club_stats_season_game_type_formats_correctly(self):
+    @staticmethod
+    def test_club_stats_season_game_type_formats_correctly():
+        """Format the corrected club-stats route with all path values."""
         route = format_endpoint(
             "club_stats_season_game_type", team="TOR", season="20232024", **{"game-type": 2}
         )
         assert route == f"/{API_VERSION}/club-stats/TOR/20232024/2"
 
-    def test_openapi_spec_route(self):
+    @staticmethod
+    def test_openapi_spec_route():
+        """Verify openapi spec route."""
         assert API_PATH["openapi_spec"] == "/model/{API_VERSION}/openapi.json"
         assert format_endpoint("openapi_spec") == f"/model/{API_VERSION}/openapi.json"
 
@@ -142,7 +151,9 @@ class TestCorrectedRoutes:
 class TestLegacyAliases:
     """Legacy keys remain available and point at corrected routes."""
 
-    def test_club_stats_season_season_game_type_alias(self):
+    @staticmethod
+    def test_club_stats_season_season_game_type_alias():
+        """Verify club stats season season game type alias."""
         assert "club_stats_season_season_game_type" in API_PATH
         assert (
             API_PATH["club_stats_season_season_game_type"]
@@ -153,22 +164,32 @@ class TestLegacyAliases:
 class TestRegistryHelpers:
     """Registry access helpers."""
 
-    def test_get_endpoint_returns_route(self):
+    @staticmethod
+    def test_get_endpoint_returns_route():
+        """Verify get endpoint returns route."""
         assert get_endpoint("standings") == "/{API_VERSION}/standings/now"
 
-    def test_get_endpoint_unknown_key_raises(self):
+    @staticmethod
+    def test_get_endpoint_unknown_key_raises():
+        """Verify get endpoint unknown key raises."""
         with pytest.raises(KeyError):
             get_endpoint("not_a_real_endpoint")
 
-    def test_format_endpoint_substitutes_version_and_params(self):
+    @staticmethod
+    def test_format_endpoint_substitutes_version_and_params():
+        """Verify format endpoint substitutes version and params."""
         route = format_endpoint("player_game_logs", player_id=8478402,
                                 season="20232024", **{"game-type": 2})
         assert route == f"/{API_VERSION}/player/8478402/game-log/20232024/2"
 
-    def test_format_endpoint_missing_param_raises(self):
+    @staticmethod
+    def test_format_endpoint_missing_param_raises():
+        """Verify format endpoint missing param raises."""
         with pytest.raises(KeyError):
             format_endpoint("player_landing")
 
-    def test_stats_routes_use_lang_placeholder(self):
+    @staticmethod
+    def test_stats_routes_use_lang_placeholder():
+        """Verify stats routes use lang placeholder."""
         assert "{lang}" in API_PATH["stats_franchise"]
         assert "{lang}" not in API_PATH["stats_ping"]
