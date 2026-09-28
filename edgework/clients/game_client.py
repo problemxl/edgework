@@ -4,7 +4,6 @@ import warnings
 from datetime import datetime
 from typing import Dict, List, Optional, Union
 
-from edgework.clients.shift_client import ShiftClient
 from edgework.http_client import HttpClient
 from edgework.models.game import Game
 from edgework.models.game_events import GameEvent
@@ -19,7 +18,7 @@ class GameClient:
         self._client = client
         # Canonical shiftcharts access is owned by ShiftClient; game-level
         # shift methods delegate to it so routes stay in one place.
-        self._shift_client = ShiftClient(client)
+        self._shift_client = None
 
     def get_game(self, game_id: int) -> Game:
         """Fetch game boxscore data.
@@ -255,6 +254,10 @@ class GameClient:
         """
         # Intentional delegation: ShiftClient owns the shiftcharts route and
         # query construction.
+        from edgework.clients.shift_client import ShiftClient
+
+        if self._shift_client is None:
+            self._shift_client = ShiftClient(self._client)
         return self._shift_client.get_shifts(game_id)
 
     def get_games_for_date(self, date: Union[datetime, str]) -> List[Game]:

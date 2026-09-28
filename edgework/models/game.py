@@ -1,7 +1,6 @@
 from datetime import datetime
 from typing import List, Optional
 
-from edgework.clients.shift_client import ShiftClient
 from edgework.http_client import HttpClient
 from edgework.models.base import BaseNHLModel
 from edgework.models.shift import Shift
@@ -142,6 +141,8 @@ class Game(BaseNHLModel):
         Intentional delegation: ShiftClient is the canonical shiftcharts
         wrapper, so the model and GameClient construct identical requests.
         """
+        from edgework.clients.shift_client import ShiftClient
+
         return ShiftClient(self._client).get_shifts(self.game_id)
 
     def _get_play_by_play(self):

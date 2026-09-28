@@ -4,7 +4,7 @@ from typing import Any, Dict, Optional
 
 import httpx
 
-from . import __version__
+from ._version import __version__
 from .const import BASE_API_URL, BASE_WEB_URL, STATS_API_URL
 
 # Legacy route prefixes that older callers may still embed in endpoint paths.
