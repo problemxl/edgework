@@ -7,15 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+No unreleased changes.
+
+## [0.11.0] - 2026-09-28
+
 ### Added
-- Comprehensive documentation site with auto-generated API docs
-- GitHub Pages deployment with MkDocs
-- Advanced usage examples and patterns
-- Complete API reference documentation
+- Complete NHL endpoint coverage with a registry-to-client coverage manifest and contract tests.
+- NHL Edge support through `client.edge`, including landing, detail, comparison, metric detail, and top-10 endpoints.
+- Goal Visualizer puck and player tracking frames through `get_goal_frames()` and frame helpers.
+- Research and API documentation for NHL Edge and Goal Visualizer routes.
+- Comprehensive documentation site with auto-generated API docs.
+- GitHub Pages deployment with MkDocs.
+- Advanced usage examples and patterns.
+- Complete API reference documentation.
 
 ### Changed
-- Documentation now auto-generated from docstrings using mkdocstrings
-- Improved navigation and organization of documentation
+- Extended NHL clients, endpoint routing, HTTP handling, and models for the complete endpoint surface.
+- Documentation is auto-generated from docstrings using mkdocstrings.
+- Improved documentation navigation and organization.
+
+### Tests
+- Full suite: 967 passed, 9 skipped.
 
 ## [Previous Versions]
 

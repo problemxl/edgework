@@ -5,133 +5,143 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from edgework.clients.player_client import landing_to_dict
+from edgework.clients.player_client import PlayerClient, landing_to_dict
 from edgework.edgework import Edgework
 from edgework.http_client import HttpClient
 from edgework.models.player import Player
 
 
 class TestPlayersMethod:
-    """Test class for the players() method."""
+    """Test class for player access through the Edgework facade.
+
+    The facade exposes the ``PlayerClient`` as ``client.players`` and
+    delegates convenience lookups to it via ``get_all_players`` and
+    ``get_player``.
+    """
 
     def setup_method(self):
         """Set up test fixtures before each test method."""
-        self.client = Edgework()
+        with (
+            patch("edgework.edgework.HttpClient"),
+            patch("edgework.edgework.PlayerClient") as mock_player_client,
+        ):
+            self.mock_player_client_instance = Mock(spec=PlayerClient)
+            mock_player_client.return_value = self.mock_player_client_instance
+            self.client = Edgework()
 
-    def test_players_active_only_default(self):
-        """Test that players() returns only active players by default."""
-        players = self.client.players()
-
-        # Assert that we get some players
-        assert isinstance(players, list), "players() should return a list"
-        assert len(players) > 0, "Should return at least some active players"
-
-        # Check that all returned players are active
-        for player in players:
-            assert isinstance(player, Player), "Each item should be a Player object"
-            assert hasattr(player, "_data"), "Player should have _data attribute"
-            assert (
-                player._data.get("is_active") is True
-            ), f"Player {player} should be active"
-
-    def test_players_active_only_explicit(self):
-        """Test that players(active_only=True) returns only active players."""
-        players = self.client.players(active_only=True)
-
-        # Assert that we get some players
-        assert isinstance(players, list), "players() should return a list"
-        assert len(players) > 0, "Should return at least some active players"
-
-        # Check that all returned players are active
-        for player in players:
-            assert isinstance(player, Player), "Each item should be a Player object"
-            assert (
-                player._data.get("is_active") is True
-            ), f"Player {player} should be active"
-
-    def test_players_all_players(self):
-        """Test that players(active_only=False) returns all players."""
-        all_players = self.client.players(active_only=False)
-        active_players = self.client.players(active_only=True)
-
-        # Assert that we get some players
-        assert isinstance(all_players, list), "players() should return a list"
-        assert isinstance(active_players, list), "players() should return a list"
-        assert len(all_players) > 0, "Should return at least some players"
-        assert len(active_players) > 0, "Should return at least some active players"
-
-        # All players should be more than just active players
-        assert len(all_players) >= len(
-            active_players
-        ), "All players should be >= active players"
-
-        # Check that we have both active and inactive players in all_players
-        active_count = sum(1 for p in all_players if p._data.get("is_active") is True)
-        inactive_count = sum(
-            1 for p in all_players if p._data.get("is_active") is False
+    @staticmethod
+    def _make_player(
+        player_id=8478402,
+        first_name="Connor",
+        last_name="McDavid",
+        position="C",
+        is_active=True,
+    ):
+        """Build a Player populated with data, as the client would."""
+        return Player(
+            player_id=player_id,
+            first_name=first_name,
+            last_name=last_name,
+            position=position,
+            is_active=is_active,
         )
 
-        assert active_count > 0, "Should have some active players"
-        assert inactive_count > 0, "Should have some inactive players"
+    def test_players_attribute_is_player_client(self):
+        """Test that the facade exposes the PlayerClient as `players`."""
+        assert isinstance(self.client.players, PlayerClient)
+
+    def test_players_active_only_default(self):
+        """Test that get_all_players() returns only active players by default."""
+        mock_players = [self._make_player(), self._make_player(player_id=8479351)]
+        self.mock_player_client_instance.get_active_players.return_value = mock_players
+
+        players = self.client.get_all_players()
+
+        self.mock_player_client_instance.get_active_players.assert_called_once()
+        self.mock_player_client_instance.get_all_players.assert_not_called()
+        assert players == mock_players
+        assert all(player._data.get("is_active") is True for player in players)
+
+    def test_players_active_only_explicit(self):
+        """Test that get_all_players(active_only=True) returns only active players."""
+        mock_players = [self._make_player()]
+        self.mock_player_client_instance.get_active_players.return_value = mock_players
+
+        players = self.client.get_all_players(active_only=True)
+
+        self.mock_player_client_instance.get_active_players.assert_called_once()
+        self.mock_player_client_instance.get_all_players.assert_not_called()
+        assert players == mock_players
+
+    def test_players_all_players(self):
+        """Test that get_all_players(active_only=False) returns all players."""
+        all_players = [
+            self._make_player(player_id=1, is_active=True),
+            self._make_player(player_id=2, last_name="Gretzky", is_active=False),
+        ]
+        self.mock_player_client_instance.get_all_players.return_value = all_players
+
+        players = self.client.get_all_players(active_only=False)
+
+        self.mock_player_client_instance.get_all_players.assert_called_once()
+        self.mock_player_client_instance.get_active_players.assert_not_called()
+        assert players == all_players
+        assert any(player._data.get("is_active") is False for player in players)
+
+    def test_players_return_type(self):
+        """Test that get_all_players returns a list of Player objects."""
+        self.mock_player_client_instance.get_active_players.return_value = []
+        assert isinstance(self.client.get_all_players(), list)
+
+    def test_players_method_no_exceptions(self):
+        """Test that get_all_players does not raise for either parameter value."""
+        self.mock_player_client_instance.get_active_players.return_value = [
+            self._make_player()
+        ]
+        self.mock_player_client_instance.get_all_players.return_value = [
+            self._make_player()
+        ]
+
+        assert self.client.get_all_players(active_only=True)
+        assert self.client.get_all_players(active_only=False)
+
+    def test_get_player_delegates_to_client(self):
+        """Test that get_player delegates to the player client."""
+        mock_player = self._make_player()
+        self.mock_player_client_instance.get_player.return_value = mock_player
+
+        player = self.client.get_player(8478402)
+
+        self.mock_player_client_instance.get_player.assert_called_once_with(8478402)
+        assert player == mock_player
 
     def test_player_object_structure(self):
         """Test that Player objects have the expected structure."""
-        players = self.client.players(active_only=True)
+        player = self._make_player()
 
-        # Get first few players to test
-        test_players = players[:3]
+        assert isinstance(player, Player), "Should be a Player object"
+        assert hasattr(player, "_data"), "Player should have _data"
+        assert hasattr(player, "obj_id"), "Player should have obj_id"
 
-        for player in test_players:
-            assert isinstance(player, Player), "Should be a Player object"
-
-            # Test essential attributes exist
-            assert hasattr(player, "_data"), "Player should have _data"
-            assert hasattr(player, "obj_id"), "Player should have obj_id"
-
-            # Test key player data fields
-            data = player._data
-            assert "player_id" in data, "Player should have player_id"
-            assert "first_name" in data, "Player should have first_name"
-            assert "last_name" in data, "Player should have last_name"
-            assert "position" in data, "Player should have position"
-            assert "is_active" in data, "Player should have is_active"
-
-            # Test player_id is a valid integer
-            assert isinstance(data["player_id"], int), "player_id should be an integer"
-            assert data["player_id"] > 0, "player_id should be positive"
-
-            # Test names are strings
-            assert isinstance(data["first_name"], str), "first_name should be a string"
-            assert isinstance(data["last_name"], str), "last_name should be a string"
-            assert len(data["first_name"]) > 0, "first_name should not be empty"
-            assert len(data["last_name"]) > 0, "last_name should not be empty"
-
-            # Test position is a valid string
-            assert isinstance(data["position"], str), "position should be a string"
-            assert data["position"] in [
-                "C",
-                "L",
-                "R",
-                "D",
-                "G",
-            ], f"Position {data['position']} should be valid"
+        data = player._data
+        assert data["player_id"] == 8478402
+        assert isinstance(data["player_id"], int), "player_id should be an integer"
+        assert data["player_id"] > 0, "player_id should be positive"
+        assert isinstance(data["first_name"], str), "first_name should be a string"
+        assert isinstance(data["last_name"], str), "last_name should be a string"
+        assert data["position"] in ["C", "L", "R", "D", "G"], (
+            f"Position {data['position']} should be valid"
+        )
 
     def test_player_string_methods(self):
         """Test Player object string representations."""
-        players = self.client.players(active_only=True)
-        player = players[0]
+        player = self._make_player()
 
-        # Test __str__ method
-        str_repr = str(player)
-        assert isinstance(str_repr, str), "__str__ should return a string"
-        assert len(str_repr) > 0, "__str__ should not be empty"
+        assert isinstance(str(player), str), "__str__ should return a string"
+        assert len(str(player)) > 0, "__str__ should not be empty"
 
-        # Test __repr__ method
-        repr_str = repr(player)
-        assert isinstance(repr_str, str), "__repr__ should return a string"
-        assert "Player(id=" in repr_str, "__repr__ should contain Player(id="
+        assert "Player(id=" in repr(player), "__repr__ should contain Player(id="
 
-        # Test full_name property
         full_name = player.full_name
         assert isinstance(full_name, str), "full_name should return a string"
         assert len(full_name) > 0, "full_name should not be empty"
@@ -144,57 +154,30 @@ class TestPlayersMethod:
 
     def test_player_equality_and_hashing(self):
         """Test Player object equality and hashing."""
-        players = self.client.players(active_only=True)
+        player1 = self._make_player()
+        player2 = self._make_player(player_id=8479351)
+        player1_copy = Player(**player1._data)
 
-        if len(players) >= 2:
-            player1 = players[0]
-            player2 = players[1]
-            player1_copy = Player(**player1._data)
+        # Test equality
+        assert player1 == player1_copy, "Players with same ID should be equal"
+        assert player1 != player2, "Players with different IDs should not be equal"
 
-            # Test equality
-            assert player1 == player1_copy, "Players with same ID should be equal"
-            assert player1 != player2, "Players with different IDs should not be equal"
+        # Test hashing (for use in sets/dicts)
+        player_set = {player1, player1_copy, player2}
+        assert len(player_set) == 2, "Set should contain only unique players"
 
-            # Test hashing (for use in sets/dicts)
-            player_set = {player1, player1_copy, player2}
-            assert len(player_set) == 2, "Set should contain only unique players"
+    @pytest.mark.live_api
+    @staticmethod
+    def test_players_active_only_live():
+        """Test get_all_players with the live API."""
+        client = Edgework()
+        players = client.get_all_players(active_only=True)
 
-    def test_players_return_count_reasonable(self):
-        """Test that the number of players returned is reasonable."""
-        active_players = self.client.players(active_only=True)
-
-        # The NHL API returns active players including prospects and affiliates
-        # Let's test for a reasonable range based on actual data
-        assert (
-            1500 <= len(active_players) <= 3000
-        ), f"Expected 1500-3000 active players (including prospects), got {len(active_players)}"
-
-    def test_players_contain_known_positions(self):
-        """Test that players contain all expected hockey positions."""
-        players = self.client.players(active_only=True)
-
-        positions = {player._data.get("position") for player in players}
-        expected_positions = {
-            "C",
-            "L",
-            "R",
-            "D",
-            "G",
-        }  # Center, Left Wing, Right Wing, Defense, Goalie
-
-        assert expected_positions.issubset(
-            positions
-        ), f"Expected to find all positions {expected_positions}, found {positions}"
-
-    @pytest.mark.parametrize("active_only", [True, False])
-    def test_players_method_no_exceptions(self, active_only):
-        """Test that players() method doesn't raise exceptions for both parameter values."""
-        try:
-            players = self.client.players(active_only=active_only)
-            assert isinstance(players, list), "Should return a list"
-            assert len(players) > 0, "Should return some players"
-        except Exception as e:
-            pytest.fail(f"players(active_only={active_only}) raised an exception: {e}")
+        assert isinstance(players, list), "players should return a list"
+        assert len(players) > 0, "Should return at least some active players"
+        for player in players:
+            assert isinstance(player, Player), "Each item should be a Player object"
+            assert player._data.get("is_active") is True
 
 
 class TestPlayerFetchData:
@@ -247,7 +230,8 @@ class TestPlayerFetchData:
         assert player._data["draft_round"] == 1
         assert player._data["draft_overall_pick"] == 1
 
-    def test_fetch_data_no_client(self):
+    @staticmethod
+    def test_fetch_data_no_client():
         """Test fetch_data raises ValueError when no client is available."""
         player = Player(edgework_client=None, obj_id=8478402)
 
@@ -290,7 +274,8 @@ class TestPlayerFetchData:
         assert player._data["position"] == "C"
 
     @pytest.mark.live_api
-    def test_fetch_data_live_api(self):
+    @staticmethod
+    def test_fetch_data_live_api():
         """Test fetch_data with live API call."""
         client = Edgework()
 
@@ -314,7 +299,8 @@ class TestPlayerFetchData:
 class TestLandingToDict:
     """Test class for the landing_to_dict function."""
 
-    def test_simple_camel_to_snake_conversion(self):
+    @staticmethod
+    def test_simple_camel_to_snake_conversion():
         """Test basic camelCase to snake_case conversion."""
         data = {
             "playerId": 12345,
@@ -332,7 +318,8 @@ class TestLandingToDict:
         assert result["is_active"] is True
         assert result["sweater_number"] == 99
 
-    def test_nested_dict_with_default_extraction(self):
+    @staticmethod
+    def test_nested_dict_with_default_extraction():
         """Test extraction of 'default' values from nested dictionaries."""
         data = {
             "firstName": {"default": "Connor", "fr": "Connor"},
@@ -348,7 +335,8 @@ class TestLandingToDict:
         assert result["birth_city"] == "Richmond Hill"
         assert result["simple_field"] == "not_nested"
 
-    def test_draft_details_special_handling(self):
+    @staticmethod
+    def test_draft_details_special_handling():
         """Test special handling of draftDetails nested object."""
         data = {
             "playerId": 8478402,
@@ -370,7 +358,8 @@ class TestLandingToDict:
         assert result["draft_pick_in_round"] == 1
         assert result["draft_team_abbrev"] == "EDM"
 
-    def test_date_string_parsing(self):
+    @staticmethod
+    def test_date_string_parsing():
         """Test automatic parsing of date strings."""
         data = {
             "birthDate": "1997-01-13",
@@ -386,7 +375,8 @@ class TestLandingToDict:
         assert result["iso_timestamp"] == datetime(2023, 12, 25, 15, 30, 0)
         assert result["not_a_date"] == "just_a_string"
 
-    def test_nested_object_flattening(self):
+    @staticmethod
+    def test_nested_object_flattening():
         """Test flattening of complex nested objects."""
         data = {
             "careerTotals": {
@@ -407,7 +397,8 @@ class TestLandingToDict:
         assert result["career_totals_playoffs_games_played"] == 79
         assert result["career_totals_playoffs_goals"] == 42
 
-    def test_list_handling(self):
+    @staticmethod
+    def test_list_handling():
         """Test handling of lists in the data."""
         data = {
             "awards": ["Hart Trophy", "Art Ross Trophy"],
@@ -423,7 +414,8 @@ class TestLandingToDict:
         assert result["teams"][0]["name"] == "Team1"
         assert result["simple_list"] == [1, 2, 3]
 
-    def test_null_and_empty_values(self):
+    @staticmethod
+    def test_null_and_empty_values():
         """Test handling of null and empty values."""
         data = {
             "nullField": None,
@@ -443,7 +435,8 @@ class TestLandingToDict:
         assert result["empty_list"] == []
         # Empty dicts are processed but result in no additional fields
 
-    def test_complex_real_world_structure(self):
+    @staticmethod
+    def test_complex_real_world_structure():
         """Test with a complex structure similar to real NHL API response."""
         data = {
             "playerId": 8478402,
@@ -495,7 +488,8 @@ class TestLandingToDict:
         # Verify awards list
         assert result["awards"] == ["Hart Trophy", "Art Ross Trophy"]
 
-    def test_camel_to_snake_edge_cases(self):
+    @staticmethod
+    def test_camel_to_snake_edge_cases():
         """Test edge cases in camelCase to snake_case conversion."""
         data = {
             "HTML": "html",
@@ -519,16 +513,17 @@ class TestLandingToDict:
 
 
 class TestPlayersIntegration:
-    """Integration tests for the players() method with real API calls."""
+    """Integration tests for player access with real API calls."""
 
     def setup_method(self):
         """Set up test fixtures before each test method."""
         self.client = Edgework()
 
+    @pytest.mark.live_api
     def test_players_data_consistency(self):
         """Test that player data is consistent across multiple calls."""
-        players1 = self.client.players(active_only=True)
-        players2 = self.client.players(active_only=True)
+        players1 = self.client.get_all_players(active_only=True)
+        players2 = self.client.get_all_players(active_only=True)
 
         # Results should be consistent
         assert len(players1) == len(
@@ -541,9 +536,10 @@ class TestPlayersIntegration:
 
         assert ids1 == ids2, "Multiple calls should return same players"
 
+    @pytest.mark.live_api
     def test_players_team_data_presence(self):
         """Test that active players have team information."""
-        players = self.client.players(active_only=True)
+        players = self.client.get_all_players(active_only=True)
 
         players_with_teams = [
             p

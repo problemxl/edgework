@@ -89,8 +89,10 @@ def mock_team_response():
 class TestSkaterStats:
 
     @pytest.fixture(autouse=True)
-    def test_init(self, mock_client: Mock):
+    @staticmethod
+    def test_init(mock_client: Mock):
         # Test with obj_id and no kwargs
+        """Verify init."""
         stats1 = SkaterStats(mock_client, obj_id=8478402)
         # skipcq: BAN-B101
         assert stats1._client == mock_client
@@ -107,7 +109,9 @@ class TestSkaterStats:
         assert stats2._data["another_key"] == 123
 
     @pytest.fixture(autouse=True)
-    def test_fetch_data(self, mock_client: Mock, mock_skater_response: Mock):
+    @staticmethod
+    def test_fetch_data(mock_client: Mock, mock_skater_response: Mock):
+        """Verify fetch data."""
         mock_client.get.return_value = mock_skater_response
 
         stats = SkaterStats(mock_client, obj_id=8478402)
@@ -130,9 +134,11 @@ class TestSkaterStats:
         assert player.assists == 60
 
     @pytest.fixture(autouse=True)
+    @staticmethod
     def test_fetch_data_default_season(
-        self, mock_client: Mock, mock_skater_response: Mock
+        mock_client: Mock, mock_skater_response: Mock
     ):
+        """Verify fetch data default season."""
         mock_client.get.return_value = mock_skater_response
 
         stats = SkaterStats(mock_client, obj_id=8478402)
@@ -149,7 +155,9 @@ class TestSkaterStats:
             )
 
     @pytest.fixture(autouse=True)
-    def test_fetch_data_empty_response(self, mock_client: Mock):
+    @staticmethod
+    def test_fetch_data_empty_response(mock_client: Mock):
+        """Verify fetch data empty response."""
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.json.return_value = {"data": []}
@@ -165,7 +173,9 @@ class TestSkaterStats:
         assert stats._data == initial_data
 
     @pytest.fixture(autouse=True)
-    def test_fetch_data_key_error_if_data_key_missing(self, mock_client: Mock):
+    @staticmethod
+    def test_fetch_data_key_error_if_data_key_missing(mock_client: Mock):
+        """Verify fetch data key error if data key missing."""
         mock_response = Mock()
         mock_response.status_code = 200  # Status code is fine, but data key is missing
         mock_response.json.return_value = {"not_data": []}  # Missing "data" key
@@ -177,9 +187,11 @@ class TestSkaterStats:
         assert "'data'" in str(exc_info.value)
 
     @pytest.fixture(autouse=True)
+    @staticmethod
     def test_fetch_data_with_all_params(
-        self, mock_client: Mock, mock_skater_response: Mock
+        mock_client: Mock, mock_skater_response: Mock
     ):
+        """Verify fetch data with all params."""
         mock_client.get.return_value = mock_skater_response
         stats = SkaterStats(mock_client, obj_id=8478402)
         stats.fetch_data(
@@ -199,7 +211,9 @@ class TestSkaterStats:
         )
 
     @pytest.fixture(autouse=True)
-    def test_fetch_data_live(self, real_client: HttpClient):
+    @staticmethod
+    def test_fetch_data_live(real_client: HttpClient):
+        """Verify fetch data live."""
         stats = SkaterStats(real_client, obj_id=8478402)  # Connor McDavid
         stats.fetch_data(season=20232024)  # Use a recent season
 
@@ -221,7 +235,9 @@ class TestSkaterStats:
 class TestGoalieStats:
 
     @pytest.fixture(autouse=True)
-    def test_init(self, mock_client: Mock):
+    @staticmethod
+    def test_init(mock_client: Mock):
+        """Verify init."""
         stats1 = GoalieStats(mock_client, obj_id=8478402)
         assert stats1._client == mock_client
         assert stats1.obj_id == 8478402
@@ -230,7 +246,9 @@ class TestGoalieStats:
         stats2 = GoalieStats(mock_client, obj_id=123, custom_field="test")
         assert stats2._data == {"custom_field": "test"}
 
-    def test_fetch_data(self, mock_client: Mock, mock_goalie_response: Mock):
+    @staticmethod
+    def test_fetch_data(mock_client: Mock, mock_goalie_response: Mock):
+        """Verify fetch data."""
         mock_client.get.return_value = mock_goalie_response
 
         stats = GoalieStats(mock_client, obj_id=8478402)
@@ -257,9 +275,11 @@ class TestGoalieStats:
         assert player.save_percentage == 0.925
         assert player.goals_against_average == 2.50
 
+    @staticmethod
     def test_fetch_data_default_season(
-        self, mock_client: Mock, mock_goalie_response: Mock
+        mock_client: Mock, mock_goalie_response: Mock
     ):
+        """Verify fetch data default season."""
         mock_client.get.return_value = mock_goalie_response
 
         stats = GoalieStats(mock_client, obj_id=8478402)
@@ -275,7 +295,9 @@ class TestGoalieStats:
                 web=False,
             )
 
-    def test_fetch_data_empty_response(self, mock_client: Mock):
+    @staticmethod
+    def test_fetch_data_empty_response(mock_client: Mock):
+        """Verify fetch data empty response."""
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.json.return_value = {"data": []}
@@ -285,7 +307,9 @@ class TestGoalieStats:
         stats.fetch_data(report="summary", season=20232024)
         assert stats._data == {}
 
-    def test_fetch_data_key_error_if_data_key_missing(self, mock_client: Mock):
+    @staticmethod
+    def test_fetch_data_key_error_if_data_key_missing(mock_client: Mock):
+        """Verify fetch data key error if data key missing."""
         mock_response = Mock()
         mock_response.status_code = 200  # Status code is fine, but data key is missing
         mock_response.json.return_value = {}  # Missing "data" key
@@ -295,7 +319,9 @@ class TestGoalieStats:
         with pytest.raises(KeyError):
             stats.fetch_data(report="summary", season=20232024)
 
-    def test_fetch_data_live(self, real_client: HttpClient):
+    @staticmethod
+    def test_fetch_data_live(real_client: HttpClient):
+        """Verify fetch data live."""
         stats = GoalieStats(real_client, obj_id=0)  # Connor Hellebuyck
         stats.fetch_data(season=20232024)  # Use a recent season
 
@@ -317,7 +343,9 @@ class TestGoalieStats:
 
 
 class TestTeamStats:
-    def test_init(self, mock_client: Mock):
+    @staticmethod
+    def test_init(mock_client: Mock):
+        """Verify init."""
         stats1 = TeamStats(mock_client, obj_id=10)
         assert stats1._client == mock_client
         assert stats1.obj_id == 10
@@ -328,7 +356,9 @@ class TestTeamStats:
         assert stats2.obj_id is None  # No obj_id passed
         assert stats2._data == {"team_location": "Toronto"}
 
-    def test_fetch_data(self, mock_client: Mock, mock_team_response: Mock):
+    @staticmethod
+    def test_fetch_data(mock_client: Mock, mock_team_response: Mock):
+        """Verify fetch data."""
         mock_client.get.return_value = mock_team_response
 
         stats = TeamStats(mock_client, obj_id=10)
@@ -357,9 +387,11 @@ class TestTeamStats:
         assert team.power_play_percentage == 25.5
         assert team.penalty_kill_percentage == 82.5
 
+    @staticmethod
     def test_fetch_data_default_season(
-        self, mock_client: Mock, mock_team_response: Mock
+        mock_client: Mock, mock_team_response: Mock
     ):
+        """Verify fetch data default season."""
         mock_client.get.return_value = mock_team_response
 
         stats = TeamStats(mock_client, obj_id=10)
@@ -377,7 +409,9 @@ class TestTeamStats:
                 web=False,
             )
 
-    def test_fetch_data_empty_response(self, mock_client: Mock):
+    @staticmethod
+    def test_fetch_data_empty_response(mock_client: Mock):
+        """Verify fetch data empty response."""
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.json.return_value = {"data": []}
@@ -389,7 +423,9 @@ class TestTeamStats:
         # Verify data wasn't updated since response was empty
         assert stats._data == {}
 
-    def test_fetch_data_key_error_if_data_key_missing(self, mock_client: Mock):
+    @staticmethod
+    def test_fetch_data_key_error_if_data_key_missing(mock_client: Mock):
+        """Verify fetch data key error if data key missing."""
         mock_response = Mock()
         mock_response.status_code = 200  # Status code is fine, but data key is missing
         mock_response.json.return_value = {
@@ -402,7 +438,9 @@ class TestTeamStats:
             stats.fetch_data(report="summary", season=20232024)
         assert "'data'" in str(exc_info.value)
 
-    def test_fetch_data_live(self, real_client: HttpClient):
+    @staticmethod
+    def test_fetch_data_live(real_client: HttpClient):
+        """Verify fetch data live."""
         stats = TeamStats(real_client, obj_id=10)  # Toronto Maple Leafs
         stats.fetch_data(season=20232024)  # Use a recent season
 

@@ -1,11 +1,12 @@
-import re
-
 from edgework.clients.draft_client import DraftClient
+from edgework.clients.edge_client import EdgeClient
 from edgework.clients.game_client import GameClient
+from edgework.clients.glossary_client import GlossaryClient
 from edgework.clients.network_client import NetworkClient
 from edgework.clients.player_client import PlayerClient
 from edgework.clients.playoff_client import PlayoffClient
 from edgework.clients.schedule_client import ScheduleClient
+from edgework.clients.shift_client import ShiftClient
 from edgework.clients.standings_client import StandingClient
 from edgework.clients.stats_client import StatsClient
 from edgework.clients.team_client import TeamClient
@@ -16,38 +17,7 @@ from edgework.models.player import Player
 from edgework.models.schedule import Schedule
 from edgework.models.stats import GoalieStats, SkaterStats, TeamStats
 from edgework.models.team import Roster, Team
-
-
-def _validate_season_format(season: str) -> int:
-    """
-    Validates season string format and converts to integer.
-
-    Args:
-        season (str): Season string in format "YYYY-YYYY" (e.g., "2023-2024")
-
-    Returns:
-        int: Season as integer in format YYYYYYYY (e.g., 20232024)
-
-    Raises:
-        ValueError: If season format is invalid
-    """
-    if not isinstance(season, str):
-        raise ValueError("Invalid season format. Expected 'YYYY-YYYY'")
-
-    if not re.match(r"^\d{4}-\d{4}$", season):
-        raise ValueError("Invalid season format. Expected 'YYYY-YYYY'")
-
-    try:
-        first_year_str, second_year_str = season.split("-")
-        first_year = int(first_year_str)
-        second_year = int(second_year_str)
-    except ValueError:
-        raise ValueError("Invalid season format. Expected 'YYYY-YYYY'")
-
-    if second_year != first_year + 1:
-        raise ValueError("Invalid season format. Expected 'YYYY-YYYY'")
-
-    return first_year * 10000 + second_year
+from edgework.utilities import validate_season_format as _validate_season_format
 
 
 class Edgework:
@@ -67,13 +37,13 @@ class Edgework:
         >>> player = client.players.get_player(8478402)
     """
 
-    def __init__(self, user_agent: str = "EdgeworkClient/0.10.0"):
+    def __init__(self, user_agent: str = "EdgeworkClient/2.0"):
         """
         Initializes the Edgework API client with all sub-clients.
 
         Args:
             user_agent (str, optional): The User-Agent string for requests.
-                Defaults to "EdgeworkClient/0.10.0".
+                Defaults to "EdgeworkClient/2.0".
         """
         self._client = HttpClient(user_agent=user_agent)
 
@@ -84,10 +54,13 @@ class Edgework:
         self.games = GameClient(client=self._client)
         self.standings = StandingClient(client=self._client)
         self.draft = DraftClient(client=self._client)
+        self.edge = EdgeClient(http_client=self._client)
         self.stats = StatsClient(client=self._client)
         self.playoffs = PlayoffClient(client=self._client)
         self.network = NetworkClient(client=self._client)
         self.utility = UtilityClient(client=self._client)
+        self.glossary = GlossaryClient(client=self._client)
+        self.shifts = ShiftClient(client=self._client)
 
         # Initialize model handlers
         self._skaters = SkaterStats(edgework_client=self._client)

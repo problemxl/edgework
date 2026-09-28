@@ -23,15 +23,12 @@ Is this change?
 
 ## Current Status
 
-- **Latest Release**: v0.6.0 (play-by-play features)
-- **Previous Release**: v0.5.0 (bug fixes)
+- **Latest Release**: v0.11.0 (complete NHL endpoint coverage, NHL Edge, and Goal Visualizer support)
+- **Previous Release**: v0.10.0 (playoff, network, utility, and stats leaderboard endpoints)
 
-> **Note**: v0.6.0 introduces new play-by-play functionality (MINOR version bump):
-> - New Play and PlayByPlay models for play-by-play data
-> - New Game.play_by_play property with lazy loading
-> - 23 new tests for play-by-play functionality
->
-> v0.5.0 contained only bug fixes (PATCH).
+> **Note**: v0.11.0 is a MINOR feature release. It adds complete NHL endpoint coverage,
+> NHL Edge support, Goal Visualizer puck/player tracking frames, and the associated
+> coverage manifest, tests, and documentation.
 
 ## Planned Releases
 
@@ -73,6 +70,16 @@ Is this change?
 - Add Team history model
 - Implement team comparison methods
 - Enhanced roster data with player roles
+
+### v0.11.0 - Complete NHL Endpoint Coverage (MINOR)
+**Status**: Planned
+**Target**: 2026-09-28
+
+**Features**:
+- Complete NHL endpoint coverage and registry-to-client manifest validation
+- NHL Edge landing, detail, comparison, metric, and top-10 endpoints
+- Goal Visualizer puck and player tracking frames
+- Expanded tests and API documentation
 
 ### v1.0.0 - Stable Release (MAJOR)
 **Status**: Planned
@@ -174,11 +181,11 @@ Before releasing any version:
 
 ## Decision Guidelines
 
-### Current Version: v0.6.0
+### Current Version: v0.11.0
 
 Based on current version, next versions would be:
-- **PATCH fix** → v0.6.1
-- **MINOR feature** → v0.7.0
+- **PATCH fix** → v0.11.1
+- **MINOR feature** → v0.12.0
 - **MAJOR breaking change** → v1.0.0
 
 ### When to Use MAJOR Bumps

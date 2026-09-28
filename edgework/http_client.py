@@ -4,8 +4,33 @@ from typing import Any, Dict, Optional
 
 import httpx
 
-from . import __version__
+from ._version import __version__
 from .const import BASE_API_URL, BASE_WEB_URL, STATS_API_URL
+
+# Legacy route prefixes that older callers may still embed in endpoint paths.
+# They are stripped before the canonical URL is assembled so that routes such
+# as ``stats/rest/en/glossary`` resolve to ``{STATS_API_URL}/en/glossary``.
+_LEGACY_ROUTE_PREFIXES = ("stats/rest/", "rest/")
+
+# Route prefix served outside the versioned Web API namespace (the OpenAPI
+# specification lives at ``https://api-web.nhle.com/model/v1/openapi.json``).
+_UNVERSIONED_WEB_PREFIX = "model/"
+
+
+def _strip_legacy_prefixes(target: str) -> str:
+    """Strip legacy ``stats/rest/``, ``rest/`` and ``en/`` route prefixes."""
+    target = target.lstrip("/")
+    changed = True
+    while changed:
+        changed = False
+        for prefix in _LEGACY_ROUTE_PREFIXES:
+            if target.startswith(prefix):
+                target = target[len(prefix) :]
+                changed = True
+        if target.startswith("en/"):
+            target = target[len("en/") :]
+            changed = True
+    return target
 
 
 class HttpClient:
@@ -29,6 +54,7 @@ class HttpClient:
         path: Optional[str] = None,
         params: Optional[Dict[str, Any]] = None,
         web: bool = False,
+        lang: Optional[str] = "en",
     ) -> httpx.Response:
         """
         Make a GET request to an NHL API endpoint.
@@ -36,8 +62,12 @@ class HttpClient:
         Args:
             endpoint: API endpoint (without base URL)
             path: Optional full path to override endpoint
-            params: Optional query parameters
+            params: Optional query parameters. Query parameters must always be
+                passed here (they are never embedded in the route string).
             web: If True, use the web API base URL
+            lang: Language code for Stats API requests (default ``"en"``).
+                Pass ``None`` for Stats routes that are not language-prefixed
+                (e.g. ``/ping``). Ignored for Web API requests.
 
         Returns:
             httpx.Response object
@@ -45,21 +75,30 @@ class HttpClient:
         target = path or endpoint
 
         if web:
-            url = f"{BASE_WEB_URL}/v1/{target}"
-        else:
             target = target.lstrip("/")
-            if target.startswith("rest/"):
-                target = target[5:]
-            if target.startswith("en/"):
-                target = target[3:]
-            url = f"{STATS_API_URL}en/{target}"
+            if target.startswith(_UNVERSIONED_WEB_PREFIX):
+                # The OpenAPI spec is served outside the /{version} namespace.
+                url = f"{BASE_WEB_URL}/{target}"
+            else:
+                url = f"{BASE_WEB_URL}/v1/{target}"
+        else:
+            target = _strip_legacy_prefixes(target)
+            if target.startswith(_UNVERSIONED_WEB_PREFIX):
+                url = f"{STATS_API_URL}{target}"
+            elif lang:
+                url = f"{STATS_API_URL}{lang}/{target}"
+            else:
+                url = f"{STATS_API_URL}{target}"
 
         response = self._client.get(url, params=params)
         response.raise_for_status()
         return response
 
     def get_raw(
-        self, url: str, params: Optional[Dict[str, Any]] = None
+        self,
+        url: str,
+        params: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, str]] = None,
     ) -> httpx.Response:
         """
         Make a GET request to a raw URL.
@@ -67,11 +106,15 @@ class HttpClient:
         Args:
             url: Full URL to request
             params: Optional query parameters
+            headers: Optional headers merged over the client defaults
+                (per-request values win on conflicts). The NHL sprites host
+                (``wsr.nhle.com``) requires ``Referer: https://www.nhl.com/``
+                — a user agent alone is answered with 403.
 
         Returns:
             httpx.Response object
         """
-        response = self._client.get(url, params=params)
+        response = self._client.get(url, params=params, headers=headers)
         response.raise_for_status()
         return response
 

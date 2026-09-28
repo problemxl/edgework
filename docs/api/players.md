@@ -4,15 +4,15 @@ Player-related functionality in Edgework.
 
 ## Player Methods
 
-::: edgework.Edgework.players
+::: edgework.clients.player_client.PlayerClient
     options:
       show_root_heading: false
 
-::: edgework.Edgework.skater_stats
+::: edgework.clients.stats_client.StatsClient.get_skaters_stats
     options:
       show_root_heading: false
 
-::: edgework.Edgework.goalie_stats
+::: edgework.clients.stats_client.StatsClient.get_goalies_stats
     options:
       show_root_heading: false
 

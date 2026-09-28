@@ -94,15 +94,41 @@ class NetworkClient:
 
         return broadcasts
 
-    def get_where_to_watch(self, country_code: str = "US") -> Dict:
+    def get_where_to_watch(self, include: Optional[str] = None) -> Dict:
         """
-        Get broadcast information for current games.
+        Fetch streaming options from the documented ``/where-to-watch`` route.
+
+        Note:
+            This is the real where-to-watch endpoint. It is distinct from
+            ``/partner-game/{country-code}/now`` (odds), which earlier
+            versions of this method incorrectly requested — use
+            :meth:`get_partner_game_odds` for that data.
 
         Args:
-            country_code: Country code for broadcasts (default: "US")
+            include: Optional ``include`` query filter documented for the
+                route. Passed as a query parameter, never embedded in the
+                route string.
 
         Returns:
-            Dictionary with where to watch information for games.
+            Dictionary with streaming options.
+        """
+        params = {"include": include} if include is not None else None
+        response = self._client.get("where-to-watch", web=True, params=params)
+        return response.json()
+
+    def get_partner_game_odds(self, country_code: str = "US") -> Dict:
+        """
+        Fetch odds for games in a specific country as of the current moment.
+
+        Targets the documented ``/partner-game/{country-code}/now`` route.
+        This is an *odds* endpoint and is NOT where-to-watch streaming
+        information.
+
+        Args:
+            country_code: Country code for odds (default: "US")
+
+        Returns:
+            Dictionary with partner game odds information.
         """
         response = self._client.get(f"partner-game/{country_code}/now", web=True)
         return response.json()

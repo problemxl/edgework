@@ -26,7 +26,8 @@ def get_valid_game_id():
 class TestGameFromApi:
     """Test class for Game.from_api() method."""
 
-    def test_from_api_basic_parsing(self):
+    @staticmethod
+    def test_from_api_basic_parsing():
         """Test basic parsing of game data from API response."""
         api_data = {
             "id": 2023020001,
@@ -63,7 +64,8 @@ class TestGameFromApi:
         assert game._data["season"] == 20232024
         assert game._data["venue"] == "Bell Centre"
 
-    def test_from_api_different_game_states(self):
+    @staticmethod
+    def test_from_api_different_game_states():
         """Test parsing games in different states."""
         game_states = ["FUT", "LIVE", "OFF", "FINAL", "CRIT"]
 
@@ -82,7 +84,8 @@ class TestGameFromApi:
             game = Game.from_api(api_data, mock_client)
             assert game._data["game_state"] == state
 
-    def test_from_api_zero_scores(self):
+    @staticmethod
+    def test_from_api_zero_scores():
         """Test parsing games with zero scores."""
         api_data = {
             "id": 2023020001,
@@ -159,7 +162,8 @@ class TestGameFetchData:
         assert game._data["season"] == 20232024
         assert game._data["venue"] == "Bell Centre"
 
-    def test_fetch_data_no_client(self):
+    @staticmethod
+    def test_fetch_data_no_client():
         """Test fetch_data raises ValueError when no client is available."""
         game = Game(edgework_client=None, obj_id=2023020001)
 
@@ -659,7 +663,8 @@ class TestGameEdgeCases:
         """Set up test fixtures before each test method."""
         self.mock_client = Mock(spec=HttpClient)
 
-    def test_from_api_missing_optional_fields(self):
+    @staticmethod
+    def test_from_api_missing_optional_fields():
         """Test from_api handles missing optional fields gracefully."""
         # Minimal required data
         api_data = {
@@ -679,7 +684,8 @@ class TestGameEdgeCases:
         assert isinstance(game, Game)
         assert game._data["game_id"] == 2023020001
 
-    def test_high_scoring_game(self):
+    @staticmethod
+    def test_high_scoring_game():
         """Test handling of high-scoring games."""
         api_data = {
             "id": 2023020001,
@@ -701,7 +707,8 @@ class TestGameEdgeCases:
         str_repr = str(game)
         assert "12 - 10" in str_repr
 
-    def test_from_dict_basic(self):
+    @staticmethod
+    def test_from_dict_basic():
         """Test Game.from_dict() creates game from dictionary."""
         game_dict = {
             "game_id": 2023020001,

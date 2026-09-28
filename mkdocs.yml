@@ -20,6 +20,7 @@ nav:
     - Stats: api/stats.md
     - Schedule: api/schedule.md
     - Games: api/games.md
+    - NHL Edge Research: research/nhl-edge-endpoints.md
   - Examples:
     - Basic Usage: examples/basic-usage.md
     - Advanced Examples: examples/advanced.md

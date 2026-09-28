@@ -1,14 +1,26 @@
-from typing import List, Optional
+from typing import List, Optional, Union
 
-from httpx import Client
-
+from edgework.http_client import HttpClient
 from edgework.models.team import Roster, Team, roster_api_to_dict, team_api_to_dict
+from edgework.utilities import validate_season_format
+
+
+def _normalize_season(season: Optional[Union[int, str]]) -> Optional[int]:
+    """Normalize a season argument to the YYYYYYYY integer format.
+
+    ``"YYYY-YYYY"`` strings are converted through the shared
+    :func:`edgework.utilities.validate_season_format` helper; integers are
+    passed through unchanged (including ``None`` for "current").
+    """
+    if season is None or isinstance(season, int):
+        return season
+    return validate_season_format(season)
 
 
 class TeamClient:
     """Client for team-related API operations."""
 
-    def __init__(self, client: Client):
+    def __init__(self, client: HttpClient):
         self.client = client
 
     def get_teams(self) -> List[Team]:
@@ -57,8 +69,9 @@ class TeamClient:
         Team
             A Team object.
         """
-        # Use the NHL Stats API team endpoint for a specific team
-        response = self.client.get(f"team/{team_id}", web=False)
+        # Use the documented Stats API route /{lang}/team/id/{id} for a
+        # specific team (registry key ``stats_team_by_id``)
+        response = self.client.get(f"team/id/{team_id}", web=False)
 
         if response.status_code != 200:
             raise Exception(
@@ -95,6 +108,7 @@ class TeamClient:
         Roster
             A roster for the team.
         """
+        season = _normalize_season(season)
         if season:
             endpoint = f"roster/{team_code}/{season}"
         else:
@@ -114,6 +128,63 @@ class TeamClient:
         team_id = roster_data.get("team_id")
 
         return Roster(self.client, team_id, **roster_data)
+
+    def get_club_stats_season(self, team_code: str) -> dict:
+        """
+        Fetch season-by-season club stats metadata for a team.
+
+        Uses the documented Web API route ``/v1/club-stats-season/{team}``
+        (registry key ``club_stats_season``). The response indicates which
+        game types were played in each season; no dedicated model exists, so
+        the raw JSON payload is returned.
+
+        Parameters
+        ----------
+        team_code : str
+            The team code for the team (e.g., 'TOR', 'NYR')
+
+        Returns
+        -------
+        dict
+            Raw season-by-season club stats metadata.
+        """
+        response = self.client.get(f"club-stats-season/{team_code}", web=True)
+
+        if response.status_code != 200:
+            raise Exception(
+                f"Failed to fetch club stats season: "
+                f"{response.status_code} {response.text}"
+            )
+
+        return response.json()
+
+    def get_roster_season(self, team_code: str) -> dict:
+        """
+        Fetch the list of seasons in which a team iced a roster.
+
+        Uses the documented Web API route ``/v1/roster-season/{team}``
+        (registry key ``roster_season_team``). No dedicated model exists, so
+        the raw JSON payload is returned.
+
+        Parameters
+        ----------
+        team_code : str
+            The team code for the team (e.g., 'TOR', 'NYR')
+
+        Returns
+        -------
+        dict
+            Raw roster season metadata.
+        """
+        response = self.client.get(f"roster-season/{team_code}", web=True)
+
+        if response.status_code != 200:
+            raise Exception(
+                f"Failed to fetch roster season: "
+                f"{response.status_code} {response.text}"
+            )
+
+        return response.json()
 
     def get_team_stats(
         self, team_code: str, season: Optional[int] = None, game_type: int = 2
@@ -135,6 +206,7 @@ class TeamClient:
         dict
             Team statistics data.
         """
+        season = _normalize_season(season)
         if season:
             endpoint = f"club-stats/{team_code}/{season}/{game_type}"
         else:
@@ -165,6 +237,7 @@ class TeamClient:
         dict
             Team schedule data.
         """
+        season = _normalize_season(season)
         if season:
             endpoint = f"club-schedule-season/{team_code}/{season}"
         else:
